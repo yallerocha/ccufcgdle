@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
 import { HelpCircle, Search, Trophy, Share2, CheckCircle, Info } from 'lucide-react';
@@ -17,6 +18,7 @@ interface CharacterOption {
 
 export default function GamePage() {
   const { t } = useTranslation();
+  const { user, loading: authLoading } = useAuth();
   const [characters, setCharacters] = useState<CharacterOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -39,26 +41,41 @@ export default function GamePage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const todayStr = getLocalDateString();
 
-  // Load characters list and restored saved guesses from local storage
+  // The saved board is scoped per account (and per day), so switching accounts
+  // in the same browser never inherits the previous user's progress/win.
+  const storageKey = `lsdle-game-state-${todayStr}-${user?.id ?? 'anon'}`;
+
+  // Clears the in-memory board to its initial (unplayed) state.
+  const resetBoard = () => {
+    setGuesses([]);
+    setIsWon(false);
+    setShowWinModal(false);
+    setTargetName('');
+    setTargetPhoto('');
+    setStartTime(null);
+  };
+
+  // Load characters list and restore this account's saved guesses. Re-runs when
+  // the account changes (login/logout/switch) so the board follows the user.
   useEffect(() => {
+    if (authLoading) return; // wait until we know who (if anyone) is logged in
+    let cancelled = false;
+
     async function loadGameData() {
       try {
         setLoading(true);
         // 1. Fetch autocomplete characters list + today's daily key
         const res = await apiFetch('/api/game/active-characters');
         const data = await res.json();
-        if (data.characters) {
-          setCharacters(data.characters);
-        } else {
-          setCharacters([]);
-        }
+        if (cancelled) return;
+        setCharacters(data.characters || []);
         const currentDailyKey: number | null = data.dailyKey ?? null;
         setDailyKey(currentDailyKey);
 
-        // 2. Restore game state from localStorage — unless an admin reset the
-        // round today (the daily key changed), in which case discard the stale
-        // local board and start fresh.
-        const savedStateStr = localStorage.getItem(`lsdle-game-state-${todayStr}`);
+        // 2. Restore this account's board from localStorage — unless an admin
+        // reset the round today (daily key changed), in which case discard it.
+        const savedStateStr = localStorage.getItem(storageKey);
+        let restored = false;
         if (savedStateStr) {
           const savedState = JSON.parse(savedStateStr);
           const roundWasReset =
@@ -67,31 +84,37 @@ export default function GamePage() {
             savedState.dailyKey !== currentDailyKey;
 
           if (roundWasReset) {
-            localStorage.removeItem(`lsdle-game-state-${todayStr}`);
+            localStorage.removeItem(storageKey);
           } else {
             setGuesses(savedState.guesses || []);
             setIsWon(savedState.isWon || false);
             setTargetName(savedState.targetName || '');
             setTargetPhoto(savedState.targetPhoto || '');
             setStartTime(savedState.startTime ?? null);
-            if (savedState.isWon) {
-              setShowWinModal(true);
-            }
+            setShowWinModal(!!savedState.isWon);
+            restored = true;
           }
         }
+        // No saved board for this account → make sure nothing from a previous
+        // account/session is left on screen.
+        if (!restored) resetBoard();
       } catch (err) {
         console.error('Error loading game data:', err);
-        setErrorMsg(t('home.errors.loadGame'));
+        if (!cancelled) setErrorMsg(t('home.errors.loadGame'));
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadGameData();
+    return () => {
+      cancelled = true;
+    };
     // Intentionally excludes `t`: game state must not reload (and reopen the
-    // victory modal) just because the language changed. Only reload per day.
+    // victory modal) just because the language changed. Re-runs per day and per
+    // account.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayStr]);
+  }, [todayStr, user?.id, authLoading]);
 
   // Click outside listener for dropdown
   useEffect(() => {
@@ -151,10 +174,10 @@ export default function GamePage() {
         // (using the server's own attempt count and timing).
       }
 
-      // Save state to local storage (with the daily key so a later admin reset
-      // of today's round can be detected on reload).
+      // Save state to local storage, scoped to this account (storageKey) and
+      // tagged with the daily key so a later admin reset can be detected.
       localStorage.setItem(
-        `lsdle-game-state-${todayStr}`,
+        storageKey,
         JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo, startTime: effectiveStart, dailyKey })
       );
 
