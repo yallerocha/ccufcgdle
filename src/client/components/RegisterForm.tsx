@@ -91,7 +91,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
     <div style={{ maxWidth: '600px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
       <div className="card">
         <h2 className="card-title">
-          <UserPlus size={22} style={{ color: 'var(--primary)' }} /> Registrar no UFCGdle
+          <UserPlus size={22} style={{ color: 'var(--primary)' }} /> Registrar no CCDLE
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
           Insira suas informações para ser criado como personagem do jogo. Outras pessoas tentarão adivinhar quem você é comparando os atributos abaixo!

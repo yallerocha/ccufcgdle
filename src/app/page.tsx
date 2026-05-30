@@ -177,7 +177,7 @@ export default function GamePage() {
         .join('');
     }).join('\n');
 
-    const textToShare = `Joguei UFCGdle de hoje (${todayStr}) e acertei em ${guesses.length} tentativa(s)! 🎓💻\n\n${emojiRows}\n\nJogue também em: ${window.location.origin}`;
+    const textToShare = `Joguei CCDLE de hoje (${todayStr}) e acertei em ${guesses.length} tentativa(s)! 🎓💻\n\n${emojiRows}\n\nJogue também em: ${window.location.origin}`;
 
     navigator.clipboard.writeText(textToShare).then(() => {
       setShareSuccess(true);
@@ -209,7 +209,7 @@ export default function GamePage() {
       
       {/* Hero Section */}
       <section className="hero">
-        <h1>UFCGdle</h1>
+        <h1>CCDLE</h1>
         <p>Adivinhe quem é a pessoa do curso de Computação da UFCG hoje!</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button 

@@ -166,7 +166,7 @@ export default function AdminPage() {
           <AlertTriangle size={48} style={{ color: '#ef4444', margin: '0 auto 1rem auto' }} />
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>Acesso Negado</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-            Apenas administradores do UFCGdle têm permissão para acessar o painel de gerenciamento.
+            Apenas administradores do CCDLE têm permissão para acessar o painel de gerenciamento.
           </p>
         </div>
       </div>
@@ -191,7 +191,7 @@ export default function AdminPage() {
             <ShieldAlert style={{ color: 'var(--primary)' }} /> Painel do Administrador
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Gerencie personagens do UFCGdle e configure o sorteio diário.
+            Gerencie personagens do CCDLE e configure o sorteio diário.
           </p>
         </div>
       </div>

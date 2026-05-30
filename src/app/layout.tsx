@@ -4,7 +4,7 @@ import { AuthProvider } from "@/client/context/AuthContext";
 import Navbar from "@/client/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "UFCGdle - Jogo do Curso de Computação da UFCG",
+  title: "CCDLE - Jogo do Curso de Computação da UFCG",
   description: "Adivinhe o personagem do dia do curso de Computação da UFCG baseado em suas informações de curso e preferências! Registre-se para ser um dos personagens.",
 };
 
@@ -31,7 +31,7 @@ export default function RootLayout({
               backgroundColor: 'rgba(11, 13, 25, 0.4)',
               marginTop: 'auto'
             }}>
-              <p>UFCGdle © 2026. Feito para o curso de Ciência da Computação - UFCG.</p>
+              <p>CCDLE © 2026. Feito para o curso de Ciência da Computação - UFCG.</p>
             </footer>
           </div>
         </AuthProvider>

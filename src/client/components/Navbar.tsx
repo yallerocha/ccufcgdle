@@ -10,14 +10,14 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <div className="navbar-content">
-        <Link href="/" className="navbar-brand">
+      <div className="navbar-content container">
+        <Link href="/" className="nav-logo">
           <Terminal size={24} style={{ color: 'var(--primary)' }} />
-          <span className="navbar-title">UFCGdle</span>
-          <span className="navbar-subtitle">Comp-UFCG</span>
+          <span>CCDLE</span>
+          <span className="nav-logo-sub">Comp-UFCG</span>
         </Link>
 
-        <div className="navbar-links">
+        <div className="nav-links">
           <Link href="/" className="nav-link">
             <Gamepad2 size={18} /> Jogar
           </Link>
