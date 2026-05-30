@@ -8,7 +8,7 @@ import { INACTIVITY_DAYS } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
-const ROLE_OPTIONS = ['Estudante', 'Professor', 'Ex-aluno', 'Técnico'];
+const ROLE_OPTIONS = ['Professor', 'Graduando', 'Mestrando', 'Doutorando', 'Pesquisador', 'Funcionário'];
 const ENTRY_OPTIONS = [
   'Antes de 2018',
   '2018.1', '2018.2', '2019.1', '2019.2',

@@ -14,7 +14,7 @@ model User {
   
   // Game attributes
   gender           String           // "Masculino", "Feminino", "Outro"
-  role             String           // "Estudante", "Professor", "Ex-aluno", "Técnico"
+  role             String           // "Professor", "Graduando", "Mestrando", "Doutorando", "Pesquisador", "Funcionário"
   entrySemester    String           // e.g. "2020.1", "2023.2", "Antes de 2018"
   isColab          String           // "Sim", "Não" — se a pessoa é do Colabs
   area             String           // "Engenharia de Software", "Sistemas", "Ciência de Dados / IA", "Teoria", "Hardware", "Segurança", "Outra"

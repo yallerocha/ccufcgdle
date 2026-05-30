@@ -444,7 +444,7 @@ export default function GamePage() {
                       : 'incorrect'
                   }`}>
                     <span className="tile-label">{t('home.tiles.lab')}</span>
-                    <span className="tile-value">{guess.fields?.projects?.value}</span>
+                    <span className="tile-value tile-value-projects" title={guess.fields?.projects?.value}>{guess.fields?.projects?.value}</span>
                   </div>
 
                   {/* Likes Coffee */}

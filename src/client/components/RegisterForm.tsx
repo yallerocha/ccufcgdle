@@ -6,7 +6,7 @@ import { UserPlus, Camera } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
-const ROLE_OPTIONS = ['Estudante', 'Professor', 'Ex-aluno', 'Técnico'];
+const ROLE_OPTIONS = ['Professor', 'Graduando', 'Mestrando', 'Doutorando', 'Pesquisador', 'Funcionário'];
 const ENTRY_OPTIONS = [
   'Antes de 2018',
   '2018.1', '2018.2',
