@@ -58,35 +58,44 @@ router.post('/guess', withAuth, async (req, res) => {
 
     const feedback = compareCharacters(guessUser, target);
 
-    // Track progress only for logged-in players (only they can be ranked).
+    // Track progress only for logged-in players whose account still exists
+    // (the seed may have recreated users with new IDs while old JWTs persist).
     if (req.auth) {
       const date = getLocalDateString();
       const playerId = req.auth.userId;
 
-      // Atomically count this guess; create the row on the first guess.
-      const progress = await prisma.dailyProgress.upsert({
-        where: { date_playerId: { date, playerId } },
-        create: { date, playerId, attempts: 1, firstGuessAt: new Date() },
-        update: { attempts: { increment: 1 } },
+      // Guard: ensure the player referenced by the JWT still exists.
+      const playerExists = await prisma.user.findUnique({
+        where: { id: playerId },
+        select: { id: true },
       });
 
-      // On the first correct guess, lock in the ranking result using the
-      // server's own attempt count and elapsed time.
-      if (feedback.correct && !progress.solved) {
-        const solvedAt = new Date();
-        const durationMs = Math.max(0, solvedAt.getTime() - progress.firstGuessAt.getTime());
+      if (playerExists) {
+        // Atomically count this guess; create the row on the first guess.
+        const progress = await prisma.dailyProgress.upsert({
+          where: { date_playerId: { date, playerId } },
+          create: { date, playerId, attempts: 1, firstGuessAt: new Date() },
+          update: { attempts: { increment: 1 } },
+        });
 
-        await prisma.$transaction([
-          prisma.dailyProgress.update({
-            where: { date_playerId: { date, playerId } },
-            data: { solved: true, solvedAt },
-          }),
-          prisma.gameResult.upsert({
-            where: { date_playerId: { date, playerId } },
-            create: { date, playerId, attempts: progress.attempts, durationMs },
-            update: {},
-          }),
-        ]);
+        // On the first correct guess, lock in the ranking result using the
+        // server's own attempt count and elapsed time.
+        if (feedback.correct && !progress.solved) {
+          const solvedAt = new Date();
+          const durationMs = Math.max(0, solvedAt.getTime() - progress.firstGuessAt.getTime());
+
+          await prisma.$transaction([
+            prisma.dailyProgress.update({
+              where: { date_playerId: { date, playerId } },
+              data: { solved: true, solvedAt },
+            }),
+            prisma.gameResult.upsert({
+              where: { date_playerId: { date, playerId } },
+              create: { date, playerId, attempts: progress.attempts, durationMs },
+              update: {},
+            }),
+          ]);
+        }
       }
     }
 

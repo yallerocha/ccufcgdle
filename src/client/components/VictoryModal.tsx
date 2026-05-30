@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Share2, Clock, Image as ImageIcon } from 'lucide-react';
+import { Trophy, Clock, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/client/lib/api';
 
@@ -30,11 +30,8 @@ interface VictoryModalProps {
   targetPhoto: string;
   attempts: number;
   guesses: any[];
-  shareSuccess: boolean;
-  onShare: () => void;
   onShareImage: () => void;
   imageSharing: boolean;
-  imageNote: string;
   onClose: () => void;
   todayStr: string;
 }
@@ -45,11 +42,8 @@ export function VictoryModal({
   targetPhoto,
   attempts,
   guesses,
-  shareSuccess,
-  onShare,
   onShareImage,
   imageSharing,
-  imageNote,
   onClose,
   todayStr,
 }: VictoryModalProps) {
@@ -85,8 +79,8 @@ export function VictoryModal({
   // Render through a portal on <body> so the fixed overlay isn't trapped by the
   // transformed `main.fade-in` ancestor and can span the full viewport.
   return createPortal(
-    <div className="modal-overlay">
-      <div className="modal-content">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
         <h2 className="modal-title">{t('victory.title')}</h2>
         <p className="modal-subtitle">
@@ -142,19 +136,36 @@ export function VictoryModal({
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600 }}>
             {t('victory.gridPreview')}
           </p>
-          <div className="share-blocks" style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ whiteSpace: 'pre', fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.4' }}>
-              {guesses.map((guess, idx) => {
-                return Object.entries(guess.fields)
-                  .filter(([key]) => key !== 'name')
-                  .map(([_, f]: any) => {
+          <div className="share-blocks" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            {(() => {
+              const MAX_ROWS = 6;
+              const overflow = guesses.length > MAX_ROWS ? guesses.length - MAX_ROWS : 0;
+              // Get the last 6 guesses and reverse them so latest is at the top (matches the board)
+              const visibleGuesses = [...(overflow > 0 ? guesses.slice(-MAX_ROWS) : guesses)].reverse();
+              const keysOrder = ['gender', 'role', 'entrySemester', 'area', 'projects', 'isColab', 'likesCoffee'];
+              const rows = visibleGuesses.map((guess: any) => {
+                return keysOrder
+                  .map(key => {
+                    const f = guess.fields[key];
                     if (f.result === 'correct') return '🟩';
                     if (f.result === 'higher' || f.result === 'lower' || f.result === 'partial') return '🟧';
                     return '⬛';
                   })
                   .join('');
-              }).join('\n')}
-            </div>
+              }).join('\n');
+              return (
+                <>
+                  <div style={{ whiteSpace: 'pre', fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                    {rows}
+                  </div>
+                  {overflow > 0 && (
+                    <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.4', textAlign: 'center' }}>
+                      + {overflow}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -245,15 +256,6 @@ export function VictoryModal({
           <button onClick={onShareImage} disabled={imageSharing} className="btn" style={{ width: '100%' }}>
             <ImageIcon size={18} />
             {imageSharing ? t('victory.sharingImage') : t('victory.shareImage')}
-          </button>
-          {imageNote && (
-            <div className="alert alert-info" style={{ padding: '0.5rem 0.75rem', fontSize: '0.82rem', textAlign: 'center' }}>
-              {imageNote}
-            </div>
-          )}
-          <button onClick={onShare} className="btn btn-secondary" style={{ width: '100%' }}>
-            <Share2 size={18} />
-            {shareSuccess ? t('victory.copied') : t('victory.share')}
           </button>
           <button onClick={onClose} className="btn btn-secondary">
             {t('victory.back')}

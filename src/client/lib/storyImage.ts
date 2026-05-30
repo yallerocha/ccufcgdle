@@ -182,14 +182,21 @@ export async function buildStoryCanvas(data: StoryImageData): Promise<HTMLCanvas
   ctx.fillText(data.labels.attemptsWord, W / 2, cursorY + 30);
   cursorY += 30 + 56;
 
-  // Grid of tiles (auto-fits the remaining vertical space)
-  const rows = data.grid.length;
-  const cols = rows > 0 ? data.grid[0].length : 0;
+  // Grid of tiles (auto-fits the remaining vertical space).
+  // Show at most 6 rows; when there are more, draw a "+ N" label below the grid.
+  const MAX_GRID_ROWS = 6;
+  const totalRows = data.grid.length;
+  const overflow = totalRows > MAX_GRID_ROWS ? totalRows - MAX_GRID_ROWS : 0;
+  // Reverse the slice so the latest (winning) guess is at the top
+  const visibleGrid = [...(overflow > 0 ? data.grid.slice(-MAX_GRID_ROWS) : data.grid)].reverse();
+  const rows = visibleGrid.length;
+  const cols = rows > 0 ? visibleGrid[0].length : 0;
+
   if (rows > 0 && cols > 0) {
     const gap = 14;
     const maxGridW = 720;
     const gridBottomLimit = 1640; // leave room for the footer
-    const availH = gridBottomLimit - cursorY;
+    const availH = gridBottomLimit - cursorY - (overflow > 0 ? 60 : 0); // reserve space at bottom for overflow text
     const cellByW = (maxGridW - gap * (cols - 1)) / cols;
     const cellByH = (availH - gap * (rows - 1)) / rows;
     const cell = Math.max(24, Math.min(cellByW, cellByH));
@@ -201,11 +208,18 @@ export async function buildStoryCanvas(data: StoryImageData): Promise<HTMLCanvas
       for (let c = 0; c < cols; c++) {
         const x = startX + c * (cell + gap);
         const y = startY + r * (cell + gap);
-        ctx.fillStyle = TILE_COLORS[data.grid[r][c]] ?? TILE_COLORS.incorrect;
+        ctx.fillStyle = TILE_COLORS[visibleGrid[r][c]] ?? TILE_COLORS.incorrect;
         roundRect(ctx, x, y, cell, cell, cell * 0.18);
         ctx.fill();
       }
     }
+    cursorY += rows * (cell + gap) - gap;
+  }
+
+  if (overflow > 0) {
+    ctx.font = '700 40px Inter, system-ui, sans-serif';
+    ctx.fillStyle = INK_MUTED;
+    ctx.fillText(`+ ${overflow}`, W / 2, cursorY + 50);
   }
 
   // Footer URL
