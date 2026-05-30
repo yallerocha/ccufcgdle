@@ -10,6 +10,7 @@ import { VictoryModal } from '@/client/components/VictoryModal';
 interface CharacterOption {
   id: string;
   name: string;
+  photoUrl?: string | null;
 }
 
 export default function GamePage() {
@@ -293,8 +294,20 @@ export default function GamePage() {
                       key={c.id}
                       className={`autocomplete-item ${i === dropdownIndex ? 'selected' : ''}`}
                       onClick={() => handleGuess(c.id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
                     >
-                      {c.name}
+                      {c.photoUrl ? (
+                        <img 
+                          src={c.photoUrl} 
+                          alt={c.name} 
+                          style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255, 255, 255, 0.2)', flexShrink: 0 }}
+                        />
+                      ) : (
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-primary)', fontSize: '0.65rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 255, 255, 0.15)', flexShrink: 0 }}>
+                          {c.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <span>{c.name}</span>
                     </div>
                   ))
                 ) : (
@@ -336,9 +349,22 @@ export default function GamePage() {
               {[...guesses].reverse().map((guess, index) => (
                 <div key={guesses.length - 1 - index} className="grid-row">
                   {/* Name (displays feedback) */}
-                  <div className={`tile ${guess.fields.name.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                  <div className={`tile tile-photo ${guess.fields.name.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">Nome</span>
-                    <span className="tile-value">{guess.fields.name.value}</span>
+                    <div className="tile-photo-container">
+                      {guess.photoUrl ? (
+                        <img 
+                          src={guess.photoUrl} 
+                          alt={guess.fields.name.value} 
+                          className="guess-photo"
+                        />
+                      ) : (
+                        <div className="guess-photo-placeholder">
+                          {guess.fields.name.value.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <span className="tile-value guess-name-hover">{guess.fields.name.value}</span>
                   </div>
 
                   {/* Gender */}

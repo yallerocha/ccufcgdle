@@ -92,6 +92,7 @@ export async function getOrCreateDailyCharacter(dateStr?: string): Promise<User 
 // Compare a guess user with the target user
 export interface GuessFeedback {
   correct: boolean;
+  photoUrl?: string | null;
   fields: {
     name: { value: string; result: 'correct' | 'incorrect' };
     gender: { value: string; result: 'correct' | 'incorrect' };
@@ -136,6 +137,7 @@ export function compareCharacters(guess: User, target: User): GuessFeedback {
 
   return {
     correct,
+    photoUrl: guess.photoUrl,
     fields: {
       name: {
         value: guess.name,

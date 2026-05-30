@@ -5,10 +5,10 @@ export async function GET() {
   try {
     const activeUsers = await getActiveUsers();
     
-    // We only return the ID and name for the search dropdown
     const list = activeUsers.map(u => ({
       id: u.id,
-      name: u.name
+      name: u.name,
+      photoUrl: u.photoUrl,
     }));
     
     return NextResponse.json({ characters: list });
