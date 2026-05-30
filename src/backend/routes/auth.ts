@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../../server/db';
 import { signToken } from '../../server/auth';
 import { requireAuth } from '../middleware/auth';
-import { validateCharacterFields } from '../../shared/validation';
+import { validateCharacterFields, isAllowedEmailDomain, isStrongPassword } from '../../shared/validation';
 
 const router = Router();
 
@@ -88,8 +88,16 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email inválido.' });
     }
 
-    if (typeof password !== 'string' || password.length < 6) {
-      return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres.' });
+    if (!isAllowedEmailDomain(email)) {
+      return res.status(400).json({
+        error: 'Apenas emails @ccc.ufcg.edu.br e @computacao.ufcg.edu.br podem se cadastrar.',
+      });
+    }
+
+    if (typeof password !== 'string' || !isStrongPassword(password)) {
+      return res.status(400).json({
+        error: 'A senha deve ter ao menos 8 caracteres, incluindo letra maiúscula, minúscula e número.',
+      });
     }
 
     const fieldError = validateCharacterFields({

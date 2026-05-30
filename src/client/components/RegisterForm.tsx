@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Camera } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
+import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
+import { PasswordInput } from '@/client/components/PasswordInput';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
 const ROLE_OPTIONS = ['Professor', 'Graduando', 'Mestrando', 'Doutorando', 'Pesquisador', 'Funcionário'];
@@ -43,6 +45,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [gender, setGender] = useState(GENDER_OPTIONS[0]);
   const [role, setRole] = useState(ROLE_OPTIONS[0]);
   const [entrySemester, setEntrySemester] = useState(ENTRY_OPTIONS[0]);
@@ -75,6 +78,20 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+
+    if (!isAllowedEmailDomain(email)) {
+      setErrorMsg(t('register.errorEmailDomain'));
+      return;
+    }
+    if (!isStrongPassword(password)) {
+      setErrorMsg(t('register.errorPasswordWeak'));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMsg(t('register.errorPasswordMismatch'));
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await apiFetch('/api/auth/register', {
@@ -120,11 +137,18 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
             <div className="form-group">
               <label>{t('register.emailLabel')}</label>
               <input type="email" placeholder={t('register.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{t('register.emailHint')}</span>
             </div>
             <div className="form-group">
               <label>{t('register.passwordLabel')}</label>
-              <input type="password" placeholder={t('register.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+              <PasswordInput placeholder={t('register.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{t('register.passwordHint')}</span>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>{t('register.confirmPasswordLabel')}</label>
+            <PasswordInput placeholder={t('register.confirmPasswordPlaceholder')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} />
           </div>
 
           <div className="form-row" style={{ borderTop: '1px solid var(--border-color)', marginTop: '1rem', paddingTop: '1rem' }}>

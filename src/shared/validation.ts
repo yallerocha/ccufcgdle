@@ -53,6 +53,31 @@ export const PROJECT_OPTIONS = [
 
 export const COFFEE_OPTIONS = ['Sim', 'Não', 'Só energético'] as const;
 
+// Only members of the Computing programs at UFCG may register.
+export const ALLOWED_EMAIL_DOMAINS = ['ccc.ufcg.edu.br', 'computacao.ufcg.edu.br'] as const;
+
+export function isAllowedEmailDomain(email: string): boolean {
+  if (typeof email !== 'string') return false;
+  const at = email.lastIndexOf('@');
+  if (at < 0) return false;
+  const domain = email.slice(at + 1).toLowerCase();
+  return (ALLOWED_EMAIL_DOMAINS as readonly string[]).includes(domain);
+}
+
+// Password policy: at least 8 chars with an uppercase letter, a lowercase
+// letter and a digit.
+export const PASSWORD_MIN_LENGTH = 8;
+
+export function isStrongPassword(password: string): boolean {
+  return (
+    typeof password === 'string' &&
+    password.length >= PASSWORD_MIN_LENGTH &&
+    /[a-z]/.test(password) &&
+    /[A-Z]/.test(password) &&
+    /[0-9]/.test(password)
+  );
+}
+
 // Max size of an accepted profile photo, in bytes of decoded image data (~2MB,
 // matching the client-side limit). Photos are stored inline as base64 data URLs.
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;

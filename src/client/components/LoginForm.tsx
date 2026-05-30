@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogIn, UserPlus } from 'lucide-react';
+import { PasswordInput } from '@/client/components/PasswordInput';
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -62,8 +63,7 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
 
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
             <label>{t('login.passwordLabel')}</label>
-            <input
-              type="password"
+            <PasswordInput
               placeholder={t('login.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
