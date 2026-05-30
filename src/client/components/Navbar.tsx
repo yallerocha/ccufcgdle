@@ -16,8 +16,8 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-content container">
         <Link href="/" className="nav-logo">
-          <Terminal size={24} style={{ color: 'var(--primary)' }} />
-          <span>LSDLE</span>
+          <img src="/logo_icone.png" alt="LSD Logo Icon" style={{ height: '32px', width: 'auto' }} />
+          <span style={{ marginLeft: '4px' }}>LSDLE</span>
           <span className="nav-logo-sub">LSD-UFCG</span>
         </Link>
 
@@ -54,6 +54,7 @@ export default function Navbar() {
           <ThemeToggle />
         </div>
       </div>
+      <div className="navbar-color-bar lsd-gradient-bg"></div>
     </nav>
   );
 }

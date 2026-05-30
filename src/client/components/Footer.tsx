@@ -9,15 +9,25 @@ export default function Footer() {
     <footer
       style={{
         textAlign: 'center',
-        padding: '2rem 0',
         color: 'var(--text-dim)',
-        borderTop: '1px solid var(--border-color)',
-        fontSize: '0.9rem',
         backgroundColor: 'var(--bg-translucent)',
         marginTop: 'auto',
+        position: 'relative'
       }}
     >
-      <p>{t('footer.text')}</p>
+      {/* Faixa colorida sólida baseada na logo */}
+      <div style={{ display: 'flex', height: '8px', width: '100%' }}>
+        <div style={{ flex: 1, backgroundColor: 'var(--lsd-teal)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--lsd-blue)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--lsd-purple)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--lsd-magenta)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--lsd-red)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--lsd-orange)' }}></div>
+      </div>
+      
+      <div style={{ padding: '2rem 0', borderTop: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+        <p>{t('footer.text')}</p>
+      </div>
     </footer>
   );
 }

@@ -239,8 +239,14 @@ export default function GamePage() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       
       {/* Hero Section */}
-      <section className="hero">
-        <h1>LSDLE</h1>
+      <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* Substitua "logo.png" pelo nome real do arquivo se você o colocar na pasta public/ */}
+        <img 
+          src="/logo.png" 
+          alt="LSD Logo" 
+          style={{ width: '180px', maxWidth: '100%', marginBottom: '1rem' }} 
+        />
+        <h1 className="lsd-gradient-text" style={{ paddingBottom: '0.2rem', display: 'none' }}>LSDLE</h1>
         <p>{t('home.tagline')}</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button 

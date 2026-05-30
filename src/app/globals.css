@@ -6,42 +6,49 @@
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Fira Code', monospace;
 
-  /* Theme Colors */
-  --bg-main: #0b0d19;
-  --bg-card: #131625;
-  --bg-card-hover: #1b1f33;
-  --bg-input: #1a1e36;
+  /* Theme Colors - LSD Redesign */
+  --lsd-teal: #4ab5c4;
+  --lsd-blue: #4562c1;
+  --lsd-purple: #6b52a4;
+  --lsd-magenta: #a55a8e;
+  --lsd-red: #de5d60;
+  --lsd-orange: #e19d53;
+
+  --bg-main: #0a0a0c;
+  --bg-card: #121215;
+  --bg-card-hover: #18181d;
+  --bg-input: #1a1a20;
   
-  --primary: #8b5cf6;
-  --primary-glow: rgba(139, 92, 246, 0.4);
-  --primary-hover: #7c3aed;
-  --accent: #3b82f6;
+  --primary: var(--lsd-blue);
+  --primary-glow: rgba(69, 98, 193, 0.4);
+  --primary-hover: #3d56a6;
+  --accent: var(--lsd-red);
   
   --text-primary: #f8fafc;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
   
-  --border-color: #242946;
-  --border-focus: #3b82f6;
+  --border-color: #27272a;
+  --border-focus: var(--lsd-teal);
   
   /* Game Feedbacks */
   --color-correct: #10b981;
-  --color-incorrect: #334155;
+  --color-incorrect: #27272a;
   --color-partial: #f59e0b;
-  --color-higher: #3b82f6;
-  --color-lower: #ec4899;
+  --color-higher: var(--lsd-blue);
+  --color-lower: var(--lsd-red);
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.2);
+  --shadow-glow: 0 0 20px rgba(69, 98, 193, 0.2);
 
   /* Surfaces that need to flip between themes */
-  --bg-translucent: rgba(11, 13, 25, 0.85);
-  --bg-board: rgba(19, 22, 37, 0.4);
+  --bg-translucent: rgba(10, 10, 12, 0.85);
+  --bg-board: rgba(18, 18, 21, 0.4);
   --overlay-bg: rgba(0, 0, 0, 0.8);
-  --row-hover: rgba(255, 255, 255, 0.02);
-  --tile-incorrect-bg: linear-gradient(135deg, #1e293b, #0f172a);
+  --row-hover: rgba(255, 255, 255, 0.03);
+  --tile-incorrect-bg: #1a1a20;
   --tile-incorrect-text: var(--text-muted);
 
   --border-radius: 12px;
@@ -50,38 +57,50 @@
 
 /* Light theme overrides */
 :root[data-theme="light"] {
-  --bg-main: #f3f4fb;
+  --bg-main: #fafafa;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f2f9;
-  --bg-input: #f7f8fc;
+  --bg-card-hover: #f4f4f5;
+  --bg-input: #f4f4f5;
 
-  --primary: #7c3aed;
-  --primary-glow: rgba(124, 58, 237, 0.25);
-  --primary-hover: #6d28d9;
-  --accent: #2563eb;
+  --primary: var(--lsd-blue);
+  --primary-glow: rgba(69, 98, 193, 0.25);
+  --primary-hover: #3d56a6;
+  --accent: var(--lsd-red);
 
-  --text-primary: #1e293b;
-  --text-muted: #5b6577;
-  --text-dim: #94a3b8;
+  --text-primary: #18181b;
+  --text-muted: #52525b;
+  --text-dim: #a1a1aa;
 
-  --border-color: #e2e8f0;
-  --border-focus: #2563eb;
+  --border-color: #e4e4e7;
+  --border-focus: var(--lsd-teal);
 
-  --color-incorrect: #e2e8f0;
+  --color-incorrect: #e4e4e7;
 
-  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -1px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.06);
-  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.18);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 20px rgba(69, 98, 193, 0.15);
 
   --bg-translucent: rgba(255, 255, 255, 0.85);
-  --bg-board: rgba(241, 242, 249, 0.6);
-  --overlay-bg: rgba(15, 23, 42, 0.45);
-  --row-hover: rgba(15, 23, 42, 0.03);
-  --tile-incorrect-bg: linear-gradient(135deg, #e2e8f0, #cbd5e1);
-  --tile-incorrect-text: #475569;
+  --bg-board: rgba(244, 244, 245, 0.6);
+  --overlay-bg: rgba(0, 0, 0, 0.45);
+  --row-hover: rgba(0, 0, 0, 0.03);
+  --tile-incorrect-bg: #e4e4e7;
+  --tile-incorrect-text: #52525b;
 
   color-scheme: light;
+}
+
+/* LSD Specific Classes */
+.lsd-gradient-bg {
+  background: linear-gradient(90deg, var(--lsd-teal) 0%, var(--lsd-blue) 20%, var(--lsd-purple) 40%, var(--lsd-magenta) 60%, var(--lsd-red) 80%, var(--lsd-orange) 100%);
+}
+
+.lsd-gradient-text {
+  background: linear-gradient(90deg, var(--lsd-teal) 0%, var(--lsd-blue) 20%, var(--lsd-purple) 40%, var(--lsd-magenta) 60%, var(--lsd-red) 80%, var(--lsd-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 * {
@@ -150,25 +169,30 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 1rem 0;
+  padding: 0;
+}
+
+.navbar-color-bar {
+  height: 4px;
+  width: 100%;
 }
 
 .navbar-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 1rem 0;
 }
 
 .nav-logo {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 800;
   text-decoration: none;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  letter-spacing: -0.5px;
 }
 
 .nav-logo-sub {
