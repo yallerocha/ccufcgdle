@@ -153,29 +153,29 @@ export function VictoryModal({
         </div>
 
         {/* Right Side: Ranking Preview */}
-        {rankingPreview.length > 0 && (
-          <Link href="/ranking" className="ranking-preview-card" style={{
-            flex: '1.2 1 160px',
-            padding: '0.75rem',
-            borderRadius: 'var(--border-radius)',
-            backgroundColor: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid var(--border-color)',
-            textDecoration: 'none',
-            color: 'inherit',
-            display: 'block'
+        <Link href="/ranking" className="ranking-preview-card" style={{
+          flex: '1.2 1 160px',
+          padding: '0.75rem',
+          borderRadius: 'var(--border-radius)',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid var(--border-color)',
+          textDecoration: 'none',
+          color: 'inherit',
+          display: 'block'
+        }}>
+          <h3 style={{
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            marginBottom: '0.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            color: 'var(--text-primary)'
           }}>
-            <h3 style={{
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              marginBottom: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              color: 'var(--text-primary)'
-            }}>
-              <Trophy size={14} style={{ color: 'var(--color-partial)' }} />
-              {t('victory.rankingPreviewTitle')}
-            </h3>
+            <Trophy size={14} style={{ color: 'var(--color-partial)' }} />
+            {t('victory.rankingPreviewTitle') || 'Ranking de Hoje'}
+          </h3>
+          {rankingPreview.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {rankingPreview.map((entry) => (
                 <div key={entry.rank} style={{
@@ -216,8 +216,23 @@ export function VictoryModal({
                 </div>
               ))}
             </div>
-          </Link>
-        )}
+          ) : (
+            <div style={{ 
+              fontSize: '0.78rem', 
+              color: 'var(--text-dim)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              height: '80px',
+              textAlign: 'center',
+              border: '1px dashed var(--border-color)',
+              borderRadius: '6px',
+              padding: '0.5rem'
+            }}>
+              Ninguém no ranking hoje ainda. Seja o primeiro!
+            </div>
+          )}
+        </Link>
       </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

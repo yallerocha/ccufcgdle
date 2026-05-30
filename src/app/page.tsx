@@ -379,78 +379,78 @@ export default function GamePage() {
               {[...guesses].reverse().map((guess, index) => (
                 <div key={guesses.length - 1 - index} className="grid-row">
                   {/* Name (displays feedback) */}
-                  <div className={`tile tile-photo ${guess.fields.name.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                  <div className={`tile tile-photo ${guess.fields?.name?.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">{t('home.tiles.name')}</span>
                     <div className="tile-photo-container">
                       {guess.photoUrl ? (
                         <img 
                           src={guess.photoUrl} 
-                          alt={guess.fields.name.value} 
+                          alt={guess.fields?.name?.value} 
                           className="guess-photo"
                         />
                       ) : (
                         <div className="guess-photo-placeholder">
-                          {guess.fields.name.value.slice(0, 2).toUpperCase()}
+                          {guess.fields?.name?.value?.slice(0, 2).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <span className="tile-value guess-name-hover">{guess.fields.name.value}</span>
+                    <span className="tile-value guess-name-hover">{guess.fields?.name?.value}</span>
                   </div>
 
                   {/* Gender */}
-                  <div className={`tile ${guess.fields.gender.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                  <div className={`tile ${guess.fields?.gender?.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">{t('home.tiles.gender')}</span>
-                    <span className="tile-value">{guess.fields.gender.value}</span>
+                    <span className="tile-value">{guess.fields?.gender?.value}</span>
                   </div>
 
                   {/* Role */}
-                  <div className={`tile ${guess.fields.role.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                  <div className={`tile ${guess.fields?.role?.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">{t('home.tiles.role')}</span>
-                    <span className="tile-value">{guess.fields.role.value}</span>
+                    <span className="tile-value">{guess.fields?.role?.value}</span>
                   </div>
 
                   {/* Entry Semester (higher / lower arrow feedback) */}
                   <div className={`tile ${
-                    guess.fields.entrySemester.result === 'correct' 
+                    guess.fields?.entrySemester?.result === 'correct' 
                       ? 'correct' 
-                      : guess.fields.entrySemester.result === 'higher' || guess.fields.entrySemester.result === 'lower'
+                      : guess.fields?.entrySemester?.result === 'higher' || guess.fields?.entrySemester?.result === 'lower'
                       ? 'higher' 
                       : 'incorrect'
                   }`}>
                     <span className="tile-label">{t('home.tiles.entry')}</span>
-                    <span className="tile-value">{guess.fields.entrySemester.value}</span>
-                    {guess.fields.entrySemester.result === 'higher' && <span className="tile-arrow">↑</span>}
-                    {guess.fields.entrySemester.result === 'lower' && <span className="tile-arrow">↓</span>}
+                    <span className="tile-value">{guess.fields?.entrySemester?.value}</span>
+                    {guess.fields?.entrySemester?.result === 'higher' && <span className="tile-arrow">↑</span>}
+                    {guess.fields?.entrySemester?.result === 'lower' && <span className="tile-arrow">↓</span>}
                   </div>
 
                   {/* Favorite Language */}
-                  <div className={`tile ${guess.fields.favoriteLanguage.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                  <div className={`tile ${guess.fields?.favoriteLanguage?.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">{t('home.tiles.language')}</span>
-                    <span className="tile-value">{guess.fields.favoriteLanguage.value}</span>
+                    <span className="tile-value">{guess.fields?.favoriteLanguage?.value}</span>
                   </div>
 
                   {/* Area */}
-                  <div className={`tile ${guess.fields.area.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                  <div className={`tile ${guess.fields?.area?.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">{t('home.tiles.area')}</span>
-                    <span className="tile-value">{guess.fields.area.value}</span>
+                    <span className="tile-value">{guess.fields?.area?.value}</span>
                   </div>
 
                   {/* Projetos (multivalor: parcial = laranja quando há projeto em comum) */}
                   <div className={`tile ${
-                    guess.fields.projects.result === 'correct'
+                    guess.fields?.projects?.result === 'correct'
                       ? 'correct'
-                      : guess.fields.projects.result === 'partial'
+                      : guess.fields?.projects?.result === 'partial'
                       ? 'partial'
                       : 'incorrect'
                   }`}>
                     <span className="tile-label">{t('home.tiles.lab')}</span>
-                    <span className="tile-value">{guess.fields.projects.value}</span>
+                    <span className="tile-value">{guess.fields?.projects?.value}</span>
                   </div>
 
                   {/* Likes Coffee */}
-                  <div className={`tile ${guess.fields.likesCoffee.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                  <div className={`tile ${guess.fields?.likesCoffee?.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">{t('home.tiles.coffee')}</span>
-                    <span className="tile-value">{guess.fields.likesCoffee.value}</span>
+                    <span className="tile-value">{guess.fields?.likesCoffee?.value}</span>
                   </div>
                 </div>
               ))}
