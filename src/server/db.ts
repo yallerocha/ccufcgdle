@@ -1,21 +1,21 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import path from 'path';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 const getPrismaInstance = () => {
-  let url = process.env.DATABASE_URL || 'file:./dev.db';
-  
-  // Ensure the file path is absolute relative to the workspace root for Next.js consistency
-  if (url.startsWith('file:')) {
-    const relativePath = url.replace(/^file:/, '');
-    const absolutePath = path.resolve(process.cwd(), relativePath);
-    url = `file:${absolutePath}`;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is not defined.');
   }
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
   
-  const adapter = new PrismaBetterSqlite3({ url });
-  return new PrismaClient({ adapter });
+  return new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
 };
 
 export const prisma = globalForPrisma.prisma || getPrismaInstance();

@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: ccdle-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ccdle}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ccdle}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ccdle-app
+    restart: always
+    ports:
+      - "${APP_PORT:-3003}:3002"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ccdle}?schema=public
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET nao definido. Copie .env.example para .env e defina um valor.}
+      PORT: 3002
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma db push && npx prisma db seed && npm run start -- -p 3002"
+
+volumes:
+  postgres_data:

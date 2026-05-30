@@ -1,20 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
-import path from 'path';
 
-const getPrismaInstance = () => {
-  let url = process.env.DATABASE_URL || 'file:./dev.db';
-  if (url.startsWith('file:')) {
-    const relativePath = url.replace(/^file:/, '');
-    const absolutePath = path.resolve(process.cwd(), relativePath);
-    url = `file:${absolutePath}`;
-  }
-  const adapter = new PrismaBetterSqlite3({ url });
-  return new PrismaClient({ adapter });
-};
-
-const prisma = getPrismaInstance();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 const mockUsers = [
   {
