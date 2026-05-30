@@ -1,6 +1,25 @@
 import crypto from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ufcg-computacao-secret-key-1234567890-ccufcgdle';
+// The signing secret must come from the environment. A hardcoded fallback would
+// let anyone who can read this repository forge tokens (including admin ones).
+function resolveSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (secret && secret.length >= 16) return secret;
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'JWT_SECRET is not defined (or is too short). Set a strong JWT_SECRET before starting in production.'
+    );
+  }
+  // Dev only: deterministic-per-process secret so tokens stay valid while the
+  // server runs, but never a value committed to source control.
+  console.warn(
+    '[auth] JWT_SECRET not set — using an ephemeral development secret. Tokens will be invalidated on restart.'
+  );
+  return crypto.randomBytes(32).toString('hex');
+}
+
+const JWT_SECRET = resolveSecret();
 
 export interface JWTPayload {
   userId: string;
@@ -32,8 +51,13 @@ export function verifyToken(token: string): JWTPayload | null {
     const hmac = crypto.createHmac('sha256', JWT_SECRET);
     hmac.update(`${header}.${payload}`);
     const expectedSignature = hmac.digest().toString('base64url');
-    
-    if (signature !== expectedSignature) return null;
+
+    // Constant-time comparison to avoid leaking the signature via timing.
+    const sigBuf = Buffer.from(signature);
+    const expectedBuf = Buffer.from(expectedSignature);
+    if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+      return null;
+    }
     
     const decodedPayload = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as JWTPayload;
     

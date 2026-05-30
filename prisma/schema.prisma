@@ -31,6 +31,7 @@ model User {
 
   dailyCharacters  DailyCharacter[]
   gameResults      GameResult[]
+  dailyProgress    DailyProgress[]
 }
 
 model DailyCharacter {
@@ -54,4 +55,21 @@ model GameResult {
 
   @@unique([date, playerId])
   @@index([date, attempts, durationMs])
+}
+
+// Server-authoritative tracking of a player's progress for a given day. Attempts
+// and timing are derived here from real guesses (see POST /api/game/guess), so
+// the ranking cannot be fabricated by a crafted POST to /api/game/result.
+model DailyProgress {
+  id           Int       @id @default(autoincrement())
+  date         String    // Format: "YYYY-MM-DD"
+  playerId     String
+  player       User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  attempts     Int       @default(0)
+  firstGuessAt DateTime  @default(now())
+  solved       Boolean   @default(false)
+  solvedAt     DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([date, playerId])
 }

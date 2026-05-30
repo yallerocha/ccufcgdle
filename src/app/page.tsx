@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
 import { HelpCircle, Search, Trophy, Share2, CheckCircle, Info } from 'lucide-react';
@@ -17,7 +16,6 @@ interface CharacterOption {
 
 export default function GamePage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const [characters, setCharacters] = useState<CharacterOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -96,20 +94,6 @@ export default function GamePage() {
     return !alreadyGuessed && c.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  // Handle guess submission
-  const submitResult = async (attempts: number, durationMs: number) => {
-    // Only logged-in players are ranked; ignore failures silently.
-    if (!user) return;
-    try {
-      await apiFetch('/api/game/result', {
-        method: 'POST',
-        body: JSON.stringify({ attempts, durationMs }),
-      });
-    } catch (err) {
-      console.error('Error submitting result:', err);
-    }
-  };
-
   const handleGuess = async (characterId: string) => {
     if (isWon || submitting) return;
     setSubmitting(true);
@@ -136,9 +120,9 @@ export default function GamePage() {
       const newFeedback: GuessFeedback = data.feedback;
       const updatedGuesses = [...guesses, newFeedback];
       
-      let won = newFeedback.correct;
-      let target = data.targetName || '';
-      let photo = data.photoUrl || '';
+      const won = newFeedback.correct;
+      const target = data.targetName || '';
+      const photo = data.photoUrl || '';
 
       setGuesses(updatedGuesses);
       setIsWon(won);
@@ -146,8 +130,8 @@ export default function GamePage() {
         setTargetName(target);
         setTargetPhoto(photo);
         setShowWinModal(true);
-        // Record the result for the daily ranking.
-        submitResult(updatedGuesses.length, Date.now() - effectiveStart);
+        // The daily ranking result is recorded server-side by /api/game/guess
+        // (using the server's own attempt count and timing).
       }
 
       // Save state to local storage

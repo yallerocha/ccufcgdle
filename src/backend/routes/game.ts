@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { getActiveUsers, getOrCreateDailyCharacter, compareCharacters } from '../../server/game';
 import { getLocalDateString } from '../../shared/utils';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -25,7 +25,9 @@ router.get('/active-characters', async (_req, res) => {
 });
 
 // POST /api/game/guess — compares a guessed character with today's target.
-router.post('/guess', async (req, res) => {
+// For authenticated players, attempts and timing are tracked server-side so the
+// daily ranking is recorded from real play, not from client-supplied numbers.
+router.post('/guess', withAuth, async (req, res) => {
   try {
     const { guessId } = req.body ?? {};
 
@@ -47,6 +49,38 @@ router.post('/guess', async (req, res) => {
 
     const feedback = compareCharacters(guessUser, target);
 
+    // Track progress only for logged-in players (only they can be ranked).
+    if (req.auth) {
+      const date = getLocalDateString();
+      const playerId = req.auth.userId;
+
+      // Atomically count this guess; create the row on the first guess.
+      const progress = await prisma.dailyProgress.upsert({
+        where: { date_playerId: { date, playerId } },
+        create: { date, playerId, attempts: 1, firstGuessAt: new Date() },
+        update: { attempts: { increment: 1 } },
+      });
+
+      // On the first correct guess, lock in the ranking result using the
+      // server's own attempt count and elapsed time.
+      if (feedback.correct && !progress.solved) {
+        const solvedAt = new Date();
+        const durationMs = Math.max(0, solvedAt.getTime() - progress.firstGuessAt.getTime());
+
+        await prisma.$transaction([
+          prisma.dailyProgress.update({
+            where: { date_playerId: { date, playerId } },
+            data: { solved: true, solvedAt },
+          }),
+          prisma.gameResult.upsert({
+            where: { date_playerId: { date, playerId } },
+            create: { date, playerId, attempts: progress.attempts, durationMs },
+            update: {},
+          }),
+        ]);
+      }
+    }
+
     return res.json({
       feedback,
       targetName: feedback.correct ? target.name : undefined,
@@ -58,37 +92,19 @@ router.post('/guess', async (req, res) => {
   }
 });
 
-// POST /api/game/result — records the logged-in player's result for today.
-// Only the first submission per day counts (re-submits are ignored).
-router.post('/result', requireAuth, async (req, res) => {
+// GET /api/game/result — returns the logged-in player's server-recorded result
+// for today (if they have solved it). Results are written by /guess, never from
+// client-supplied numbers, so they can't be forged.
+router.get('/result', requireAuth, async (req, res) => {
   try {
-    const attempts = Number(req.body?.attempts);
-    const durationMs = Number(req.body?.durationMs);
-
-    if (!Number.isInteger(attempts) || attempts < 1 || attempts > 1000) {
-      return res.status(400).json({ error: 'Número de tentativas inválido.' });
-    }
-    if (!Number.isFinite(durationMs) || durationMs < 0) {
-      return res.status(400).json({ error: 'Duração inválida.' });
-    }
-
     const date = getLocalDateString();
-
-    const result = await prisma.gameResult.upsert({
+    const result = await prisma.gameResult.findUnique({
       where: { date_playerId: { date, playerId: req.auth!.userId } },
-      create: {
-        date,
-        playerId: req.auth!.userId,
-        attempts,
-        durationMs: Math.round(durationMs),
-      },
-      update: {},
     });
-
-    return res.json({ result });
+    return res.json({ result: result ?? null });
   } catch (error) {
-    console.error('Error saving game result:', error);
-    return res.status(500).json({ error: 'Erro ao salvar resultado.' });
+    console.error('Error loading game result:', error);
+    return res.status(500).json({ error: 'Erro ao carregar resultado.' });
   }
 });
 

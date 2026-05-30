@@ -28,12 +28,26 @@ export function withAuth(req: Request, _res: Response, next: NextFunction) {
   next();
 }
 
-// Requires a valid token; otherwise 401.
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+// Requires a valid token AND that the user still exists and is active.
+// Re-checking the DB means deactivating/deleting a user takes effect
+// immediately, instead of remaining valid until the (long-lived) token expires.
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const decoded = extractAuth(req);
   if (!decoded) {
     return res.status(401).json({ error: 'Não autorizado.' });
   }
+
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.userId },
+    select: { isActive: true },
+  });
+  if (!user) {
+    return res.status(401).json({ error: 'Não autorizado.' });
+  }
+  if (!user.isActive) {
+    return res.status(403).json({ error: 'Conta desativada.' });
+  }
+
   req.auth = decoded;
   next();
 }

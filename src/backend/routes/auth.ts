@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../../server/db';
 import { signToken } from '../../server/auth';
 import { requireAuth } from '../middleware/auth';
+import { validateCharacterFields } from '../../shared/validation';
 
 const router = Router();
 
@@ -78,21 +79,24 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
 
-    if (!Array.isArray(projects) || projects.length === 0) {
-      return res.status(400).json({ error: 'Selecione ao menos um projeto.' });
-    }
-
-    if (name.length < 3 || name.length > 25) {
+    if (typeof name !== 'string' || name.length < 3 || name.length > 25) {
       return res.status(400).json({ error: 'O nome/apelido deve ter entre 3 e 25 caracteres.' });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (typeof email !== 'string' || !emailRegex.test(email)) {
       return res.status(400).json({ error: 'Email inválido.' });
     }
 
-    if (password.length < 6) {
+    if (typeof password !== 'string' || password.length < 6) {
       return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres.' });
+    }
+
+    const fieldError = validateCharacterFields({
+      gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl,
+    });
+    if (fieldError) {
+      return res.status(400).json({ error: fieldError });
     }
 
     const existingUser = await prisma.user.findFirst({
@@ -110,30 +114,34 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
 
-    // If it's the first user, make them admin
-    const totalUsers = await prisma.user.count();
-    const isAdmin = totalUsers === 0;
-
-    const user = await prisma.user.create({
-      data: {
-        email: email.toLowerCase(),
-        passwordHash,
-        name,
-        gender,
-        role,
-        entrySemester,
-        isColab,
-        area,
-        projects,
-        likesCoffee,
-        photoUrl,
-        isAdmin,
-        lastLogin: new Date(),
-        isActive: true,
+    // The first registered user becomes admin. Done in a Serializable
+    // transaction so two simultaneous first registrations can't both win.
+    const user = await prisma.$transaction(
+      async (tx) => {
+        const totalUsers = await tx.user.count();
+        return tx.user.create({
+          data: {
+            email: email.toLowerCase(),
+            passwordHash,
+            name,
+            gender,
+            role,
+            entrySemester,
+            isColab,
+            area,
+            projects,
+            likesCoffee,
+            photoUrl,
+            isAdmin: totalUsers === 0,
+            lastLogin: new Date(),
+            isActive: true,
+          },
+        });
       },
-    });
+      { isolationLevel: 'Serializable' }
+    );
 
     const token = signToken({
       userId: user.id,
@@ -198,12 +206,11 @@ router.put('/me', requireAuth, async (req, res) => {
       photoUrl,
     } = req.body ?? {};
 
-    if (!gender || !role || !entrySemester || !isColab || !area || !likesCoffee) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
-    }
-
-    if (!Array.isArray(projects) || projects.length === 0) {
-      return res.status(400).json({ error: 'Selecione ao menos um projeto.' });
+    const fieldError = validateCharacterFields({
+      gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl,
+    });
+    if (fieldError) {
+      return res.status(400).json({ error: fieldError });
     }
 
     const updatedUser = await prisma.user.update({
