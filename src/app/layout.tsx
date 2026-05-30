@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/client/context/AuthContext";
 import Navbar from "@/client/components/Navbar";
+import I18nProvider from "@/client/i18n/I18nProvider";
+import Footer from "@/client/components/Footer";
 
 export const metadata: Metadata = {
   title: "CCDLE - Jogo do Curso de Computação da UFCG",
@@ -23,25 +25,17 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <AuthProvider>
-          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Navbar />
-            <main className="container fade-in" style={{ flex: 1, paddingBottom: '3rem', display: 'flex', flexDirection: 'column' }}>
-              {children}
-            </main>
-            <footer style={{
-              textAlign: 'center',
-              padding: '2rem 0',
-              color: 'var(--text-dim)',
-              borderTop: '1px solid var(--border-color)',
-              fontSize: '0.9rem',
-              backgroundColor: 'var(--bg-translucent)',
-              marginTop: 'auto'
-            }}>
-              <p>CCDLE © 2026. Feito para o curso de Ciência da Computação - UFCG.</p>
-            </footer>
-          </div>
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              <Navbar />
+              <main className="container fade-in" style={{ flex: 1, paddingBottom: '3rem', display: 'flex', flexDirection: 'column' }}>
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   );

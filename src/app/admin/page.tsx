@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
@@ -23,6 +24,7 @@ interface AdminUser {
 }
 
 export default function AdminPage() {
+  const { t } = useTranslation();
   const { user: currentUser, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function AdminPage() {
       setLoading(true);
       const res = await fetch('/api/admin/users');
       if (res.status === 403) {
-        setErrorMsg('Você não tem permissão para acessar esta página.');
+        setErrorMsg(t('admin.errorPermission'));
         setLoading(false);
         return;
       }
@@ -48,7 +50,7 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error('Error loading admin data:', err);
-      setErrorMsg('Erro ao carregar dados dos usuários.');
+      setErrorMsg(t('admin.errorLoadUsers'));
     } finally {
       setLoading(false);
     }
@@ -77,7 +79,7 @@ export default function AdminPage() {
         setErrorMsg(data.error);
       }
     } catch (err) {
-      setErrorMsg('Erro ao atualizar estado de atividade.');
+      setErrorMsg(t('admin.errorToggleActive'));
     }
   };
 
@@ -98,12 +100,12 @@ export default function AdminPage() {
         setErrorMsg(data.error);
       }
     } catch (err) {
-      setErrorMsg('Erro ao atualizar privilégios de administrador.');
+      setErrorMsg(t('admin.errorToggleAdmin'));
     }
   };
 
   const handleDeleteUser = async (userId: string, username: string) => {
-    if (!window.confirm(`Tem certeza de que deseja deletar o personagem de "${username}" permanentemente?`)) {
+    if (!window.confirm(t('admin.confirmDelete', { name: username }))) {
       return;
     }
     setErrorMsg('');
@@ -120,7 +122,7 @@ export default function AdminPage() {
         setErrorMsg(data.error);
       }
     } catch (err) {
-      setErrorMsg('Erro ao excluir usuário.');
+      setErrorMsg(t('admin.errorDelete'));
     }
   };
 
@@ -140,21 +142,21 @@ export default function AdminPage() {
       setSubmitting(false);
 
       if (res.ok) {
-        setSuccessMsg(`Personagem do dia atualizado! Personagem atual de hoje (${today}): ${data.character.name}`);
+        setSuccessMsg(t('admin.forceSuccess', { date: today, name: data.character.name }));
         setSelectedForceChar('');
       } else {
-        setErrorMsg(data.error || 'Erro ao forçar personagem do dia.');
+        setErrorMsg(data.error || t('admin.errorForce'));
       }
     } catch (err) {
       setSubmitting(false);
-      setErrorMsg('Erro de conexão ao forçar personagem do dia.');
+      setErrorMsg(t('admin.errorForceConn'));
     }
   };
 
   if (authLoading || (currentUser && loading)) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <p style={{ color: 'var(--text-muted)' }}>Carregando dados de administração...</p>
+        <p style={{ color: 'var(--text-muted)' }}>{t('admin.loading')}</p>
       </div>
     );
   }
@@ -164,9 +166,9 @@ export default function AdminPage() {
       <div style={{ maxWidth: '500px', margin: '4rem auto 0 auto', textAlign: 'center' }} className="fade-in">
         <div className="card" style={{ borderColor: '#ef4444' }}>
           <AlertTriangle size={48} style={{ color: '#ef4444', margin: '0 auto 1rem auto' }} />
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>Acesso Negado</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>{t('admin.deniedTitle')}</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-            Apenas administradores do CCDLE têm permissão para acessar o painel de gerenciamento.
+            {t('admin.deniedBody')}
           </p>
         </div>
       </div>
@@ -188,10 +190,10 @@ export default function AdminPage() {
       <div className="admin-section-header">
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShieldAlert style={{ color: 'var(--primary)' }} /> Painel do Administrador
+            <ShieldAlert style={{ color: 'var(--primary)' }} /> {t('admin.title')}
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Gerencie personagens do CCDLE e configure o sorteio diário.
+            {t('admin.subtitle')}
           </p>
         </div>
       </div>
@@ -204,22 +206,21 @@ export default function AdminPage() {
         {/* Force Character of the Day Card */}
         <div className="card">
           <h3 className="card-title">
-            <Shuffle size={20} style={{ color: 'var(--primary)' }} /> Controle do Personagem do Dia
+            <Shuffle size={20} style={{ color: 'var(--primary)' }} /> {t('admin.dailyTitle')}
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            O sistema escolhe um personagem aleatório todos os dias à meia-noite (Horário de Brasília). 
-            Você pode forçar a seleção de um personagem específico ou re-sortear um novo aleatório agora.
+            {t('admin.dailyDesc')}
           </p>
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
             <div className="form-group" style={{ flex: '1 1 250px', marginBottom: 0 }}>
-              <label>Escolher Personagem Ativo</label>
+              <label>{t('admin.chooseLabel')}</label>
               <select 
                 value={selectedForceChar} 
                 onChange={(e) => setSelectedForceChar(e.target.value)}
                 style={{ height: '42px', padding: '0 1rem' }}
               >
-                <option value="">-- Selecione um personagem --</option>
+                <option value="">{t('admin.selectPlaceholder')}</option>
                 {activeUsers.map(u => (
                   <option key={u.id} value={u.id}>{u.name} ({u.role} - {u.entrySemester})</option>
                 ))}
@@ -233,7 +234,7 @@ export default function AdminPage() {
               style={{ height: '42px' }}
             >
               <UserCheck size={18} />
-              Definir Selecionado
+              {t('admin.setSelected')}
             </button>
 
             <button 
@@ -243,34 +244,34 @@ export default function AdminPage() {
               style={{ height: '42px' }}
             >
               <Shuffle size={18} />
-              Sortear Novo Aleatório
+              {t('admin.drawRandom')}
             </button>
           </div>
           <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.75rem' }}>
-            Nota: Ao alterar o personagem, todos os jogadores que já adivinharam hoje precisarão recarregar a página. O progresso deles na data de hoje será apagado caso eles já tenham concluído a rodada.
+            {t('admin.dailyNote')}
           </span>
         </div>
 
         {/* Users Management List */}
         <div className="card" style={{ padding: '1.5rem 2rem' }}>
           <h3 className="card-title" style={{ marginBottom: '1rem' }}>
-            <Shield size={20} style={{ color: 'var(--primary)' }} /> Gerenciamento de Usuários ({users.length})
+            <Shield size={20} style={{ color: 'var(--primary)' }} /> {t('admin.usersTitle')} ({users.length})
           </h3>
-          
+
           {users.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhum usuário cadastrado.</p>
+            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('admin.noUsers')}</p>
           ) : (
             <div className="admin-table-container">
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Personagem / Email</th>
-                    <th>Vínculo</th>
-                    <th>Entrada</th>
-                    <th>Último Login</th>
-                    <th>Status Jogo</th>
-                    <th>Função</th>
-                    <th>Ações</th>
+                    <th>{t('admin.thCharacter')}</th>
+                    <th>{t('admin.thRole')}</th>
+                    <th>{t('admin.thEntry')}</th>
+                    <th>{t('admin.thLastLogin')}</th>
+                    <th>{t('admin.thGameStatus')}</th>
+                    <th>{t('admin.thRoleCol')}</th>
+                    <th>{t('admin.thActions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -291,22 +292,22 @@ export default function AdminPage() {
                         <td>{u.role}</td>
                         <td>{u.entrySemester}</td>
                         <td style={{ fontSize: '0.85rem' }}>
-                          {lastLoginDate.toLocaleDateString('pt-BR')} {lastLoginDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {lastLoginDate.toLocaleDateString()} {lastLoginDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </td>
                         <td>
                           {u.isActive && isSessionActive ? (
-                            <span className="badge badge-active">Ativo</span>
+                            <span className="badge badge-active">{t('admin.statusActive')}</span>
                           ) : !u.isActive ? (
-                            <span className="badge badge-inactive" title="Desativado manualmente por admin">Desativado</span>
+                            <span className="badge badge-inactive" title={t('admin.titleDisabledByAdmin')}>{t('admin.statusDisabled')}</span>
                           ) : (
-                            <span className="badge badge-inactive" title="Inativo por falta de login por 30+ dias">Inativo (Expirado)</span>
+                            <span className="badge badge-inactive" title={t('admin.titleExpired')}>{t('admin.statusExpired')}</span>
                           )}
                         </td>
                         <td>
                           {u.isAdmin ? (
-                            <span className="badge badge-admin">Admin</span>
+                            <span className="badge badge-admin">{t('admin.roleAdmin')}</span>
                           ) : (
-                            <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>Usuário</span>
+                            <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{t('admin.roleUser')}</span>
                           )}
                         </td>
                         <td>
@@ -316,7 +317,7 @@ export default function AdminPage() {
                               disabled={u.id === currentUser.id}
                               className="btn btn-secondary"
                               style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
-                              title={u.isActive ? "Desativar no Jogo" : "Ativar no Jogo"}
+                              title={u.isActive ? t('admin.actionDeactivate') : t('admin.actionActivate')}
                             >
                               <Power size={14} style={{ color: u.isActive ? '#ef4444' : 'var(--color-correct)' }} />
                             </button>
@@ -326,7 +327,7 @@ export default function AdminPage() {
                               disabled={u.id === currentUser.id}
                               className="btn btn-secondary"
                               style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
-                              title={u.isAdmin ? "Remover privilégios Admin" : "Tornar Admin"}
+                              title={u.isAdmin ? t('admin.actionRemoveAdmin') : t('admin.actionMakeAdmin')}
                             >
                               <Shield size={14} style={{ color: u.isAdmin ? '#f59e0b' : 'var(--accent)' }} />
                             </button>
@@ -336,7 +337,7 @@ export default function AdminPage() {
                               disabled={u.id === currentUser.id}
                               className="btn btn-secondary btn-danger"
                               style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', border: 'none' }}
-                              title="Excluir Usuário"
+                              title={t('admin.actionDelete')}
                             >
                               <Trash2 size={14} style={{ color: 'white' }} />
                             </button>

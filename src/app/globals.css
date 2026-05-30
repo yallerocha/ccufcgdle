@@ -237,6 +237,15 @@ body {
   box-shadow: var(--shadow-glow);
 }
 
+.lang-toggle {
+  width: auto;
+  padding: 0 0.6rem;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
 /* Hero Section */
 .hero {
   text-align: center;

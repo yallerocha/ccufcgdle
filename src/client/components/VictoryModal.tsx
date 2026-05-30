@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Trophy, Share2 } from 'lucide-react';
 
 interface VictoryModalProps {
@@ -26,15 +27,16 @@ export function VictoryModal({
   onClose,
   todayStr,
 }: VictoryModalProps) {
+  const { t } = useTranslation();
   if (!show) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
         <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
-        <h2 className="modal-title">Você Venceu!</h2>
+        <h2 className="modal-title">{t('victory.title')}</h2>
         <p className="modal-subtitle">
-          O personagem do dia de hoje é <strong>{targetName}</strong>!
+          {t('victory.subtitlePre')}<strong>{targetName}</strong>!
         </p>
 
         {targetPhoto && (
@@ -57,17 +59,17 @@ export function VictoryModal({
         <div className="stat-grid">
           <div className="stat-card">
             <div className="stat-val">{attempts}</div>
-            <div className="stat-lbl">Tentativas</div>
+            <div className="stat-lbl">{t('victory.attempts')}</div>
           </div>
           <div className="stat-card">
             <div className="stat-val">{todayStr.split('-').reverse().slice(0, 2).join('/')}</div>
-            <div className="stat-lbl">Data do Jogo</div>
+            <div className="stat-lbl">{t('victory.gameDate')}</div>
           </div>
         </div>
 
         <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-            Visualização do seu grid:
+            {t('victory.gridPreview')}
           </p>
           <div className="share-blocks">
             {guesses.map((guess, idx) => {
@@ -86,10 +88,10 @@ export function VictoryModal({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <button onClick={onShare} className="btn" style={{ width: '100%' }}>
             <Share2 size={18} />
-            {shareSuccess ? 'Copiado para o Clipboard!' : 'Compartilhar Resultado'}
+            {shareSuccess ? t('victory.copied') : t('victory.share')}
           </button>
           <button onClick={onClose} className="btn btn-secondary">
-            Voltar ao Quadro
+            {t('victory.back')}
           </button>
         </div>
       </div>

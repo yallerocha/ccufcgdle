@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LogIn, UserPlus } from 'lucide-react';
 
 interface LoginFormProps {
@@ -10,6 +11,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: LoginFormProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -25,10 +27,10 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
       if (res.success) {
         onLoginSuccess();
       } else {
-        setErrorMsg(res.error || 'Erro ao realizar login.');
+        setErrorMsg(res.error || t('login.error'));
       }
     } catch (err) {
-      setErrorMsg('Erro de conexão.');
+      setErrorMsg(t('login.errorConn'));
     } finally {
       setSubmitting(false);
     }
@@ -38,20 +40,20 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
     <div style={{ maxWidth: '450px', margin: '4rem auto 0 auto', width: '100%' }} className="fade-in">
       <div className="card">
         <h2 className="card-title" style={{ justifyContent: 'center' }}>
-          <LogIn size={22} style={{ color: 'var(--primary)' }} /> Entrar
+          <LogIn size={22} style={{ color: 'var(--primary)' }} /> {t('login.title')}
         </h2>
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-          Identifique-se para atualizar os atributos do seu personagem e renovar seu tempo de atividade no jogo.
+          {t('login.subtitle')}
         </p>
 
         {errorMsg && <div className="alert alert-error">{errorMsg}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email institucional ou pessoal</label>
-            <input 
-              type="email" 
-              placeholder="seu.email@exemplo.com"
+            <label>{t('login.emailLabel')}</label>
+            <input
+              type="email"
+              placeholder={t('login.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -59,10 +61,10 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
           </div>
 
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-            <label>Senha</label>
-            <input 
-              type="password" 
-              placeholder="******"
+            <label>{t('login.passwordLabel')}</label>
+            <input
+              type="password"
+              placeholder={t('login.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -70,13 +72,13 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
           </div>
 
           <button type="submit" disabled={submitting} className="btn" style={{ width: '100%' }}>
-            {submitting ? 'Processando...' : 'Fazer Login'}
+            {submitting ? t('login.submitting') : t('login.submit')}
           </button>
         </form>
 
         <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', textAlign: 'center' }}>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Ainda não tem um personagem registrado?
+            {t('login.noAccount')}
           </p>
           <button 
             onClick={onSwitchToRegister} 
@@ -84,7 +86,7 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
             style={{ marginTop: '0.75rem', width: '100%' }}
           >
             <UserPlus size={18} />
-            Quero Participar (Cadastrar)
+            {t('login.toRegister')}
           </button>
         </div>
       </div>

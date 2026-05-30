@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Clock, Camera, Save } from 'lucide-react';
 import { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
@@ -26,6 +27,7 @@ interface ProfileEditFormProps {
 }
 
 export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
+  const { t } = useTranslation();
   const [gender, setGender] = useState(user.gender);
   const [role, setRole] = useState(user.role);
   const [entrySemester, setEntrySemester] = useState(user.entrySemester);
@@ -52,7 +54,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { alert('A imagem é muito grande. Limite de 2MB.'); return; }
+      if (file.size > 2 * 1024 * 1024) { alert(t('photo.tooLarge')); return; }
       const reader = new FileReader();
       reader.onloadend = () => setPhotoUrl(reader.result as string);
       reader.readAsDataURL(file);
@@ -70,9 +72,9 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
       });
       const data = await res.json();
       setSubmitting(false);
-      if (res.ok) { setSuccessMsg('Atributos de personagem atualizados com sucesso!'); refreshUser(); }
-      else { setErrorMsg(data.error || 'Erro ao atualizar perfil.'); }
-    } catch (err) { setSubmitting(false); setErrorMsg('Erro de conexão.'); }
+      if (res.ok) { setSuccessMsg(t('profileEdit.success')); refreshUser(); }
+      else { setErrorMsg(data.error || t('profileEdit.error')); }
+    } catch (err) { setSubmitting(false); setErrorMsg(t('profileEdit.errorConn')); }
   };
 
   const getDaysUntilInactive = () => {
@@ -87,61 +89,61 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     <div style={{ maxWidth: '650px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
       <div className="card" style={{ borderLeft: '4px solid var(--primary)', padding: '1.5rem 2rem' }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.25rem', marginBottom: '0.75rem' }}>
-          <Clock size={20} style={{ color: 'var(--primary)' }} /> Status do seu Personagem
+          <Clock size={20} style={{ color: 'var(--primary)' }} /> {t('profileEdit.statusTitle')}
         </h3>
         <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-          Olá, <strong>{user.name}</strong>! Seu personagem está registrado no jogo. Para evitar que seja removido por inatividade, você deve logar uma vez a cada {INACTIVITY_DAYS} dias.
+          {t('profileEdit.statusBody', { name: user.name, days: INACTIVITY_DAYS })}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
-          <span className="badge badge-active" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}>● Personagem Ativo</span>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Última atividade: <strong>{new Date(user.lastLogin).toLocaleDateString('pt-BR')}</strong></span>
-          <span style={{ fontSize: '0.9rem', color: daysLeft <= 7 ? '#ef4444' : 'var(--color-correct)', fontWeight: 600 }}>({daysLeft} dias restantes)</span>
+          <span className="badge badge-active" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}>{t('profileEdit.activeBadge')}</span>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{t('profileEdit.lastActivity')} <strong>{new Date(user.lastLogin).toLocaleDateString()}</strong></span>
+          <span style={{ fontSize: '0.9rem', color: daysLeft <= 7 ? '#ef4444' : 'var(--color-correct)', fontWeight: 600 }}>{t('profileEdit.daysLeft', { days: daysLeft })}</span>
         </div>
       </div>
 
       <div className="card">
-        <h2 className="card-title">Atributos do Personagem</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Atualize as informações utilizadas pelos outros jogadores para adivinhar seu personagem.</p>
+        <h2 className="card-title">{t('profileEdit.attrTitle')}</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{t('profileEdit.attrSubtitle')}</p>
 
         {successMsg && <div className="alert alert-success">{successMsg}</div>}
         {errorMsg && <div className="alert alert-error">{errorMsg}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Nome / Apelido no Jogo (Não editável)</label>
+            <label>{t('profileEdit.nameLabel')}</label>
             <input type="text" value={user.name} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} />
           </div>
           <div className="form-row">
-            <div className="form-group"><label>Gênero</label><select value={gender} onChange={(e) => setGender(e.target.value)}>{GENDER_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-            <div className="form-group"><label>Vínculo</label><select value={role} onChange={(e) => setRole(e.target.value)}>{ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group"><label>{t('profileEdit.genderLabel')}</label><select value={gender} onChange={(e) => setGender(e.target.value)}>{GENDER_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group"><label>{t('profileEdit.roleLabel')}</label><select value={role} onChange={(e) => setRole(e.target.value)}>{ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
           </div>
           <div className="form-row">
-            <div className="form-group"><label>Período de Entrada</label><select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>{ENTRY_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-            <div className="form-group"><label>Linguagem Favorita</label><select value={favoriteLanguage} onChange={(e) => setFavoriteLanguage(e.target.value)}>{LANGUAGE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group"><label>{t('profileEdit.entryLabel')}</label><select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>{ENTRY_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group"><label>{t('profileEdit.languageLabel')}</label><select value={favoriteLanguage} onChange={(e) => setFavoriteLanguage(e.target.value)}>{LANGUAGE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
           </div>
           <div className="form-row">
-            <div className="form-group"><label>Área de Interesse</label><select value={area} onChange={(e) => setArea(e.target.value)}>{AREA_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-            <div className="form-group"><label>Laboratório</label><select value={lab} onChange={(e) => setLab(e.target.value)}>{LAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group"><label>{t('profileEdit.areaLabel')}</label><select value={area} onChange={(e) => setArea(e.target.value)}>{AREA_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group"><label>{t('profileEdit.labLabel')}</label><select value={lab} onChange={(e) => setLab(e.target.value)}>{LAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
           </div>
-          <div className="form-group"><label>Café?</label><select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+          <div className="form-group"><label>{t('profileEdit.coffeeLabel')}</label><select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
 
           <div className="form-group">
-            <label>Foto do Personagem (Mostrada ao acertar)</label>
+            <label>{t('photo.label')}</label>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
               <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-edit" />
-              <label htmlFor="photo-upload-edit" className="btn btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Camera size={16} /> Selecionar Imagem</label>
+              <label htmlFor="photo-upload-edit" className="btn btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Camera size={16} /> {t('photo.select')}</label>
               {photoUrl ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <img src={photoUrl} alt="Preview" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
-                  <button type="button" onClick={() => setPhotoUrl('')} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto', backgroundColor: '#ef4444', color: 'white', border: 'none' }}>Remover</button>
+                  <button type="button" onClick={() => setPhotoUrl('')} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto', backgroundColor: '#ef4444', color: 'white', border: 'none' }}>{t('photo.remove')}</button>
                 </div>
-              ) : <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Nenhuma foto selecionada</span>}
+              ) : <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{t('photo.none')}</span>}
             </div>
-            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>Recomendado: foto quadrada (300x300px), limite de 2MB.</span>
+            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>{t('photo.hint')}</span>
           </div>
 
           <div style={{ marginTop: '2rem' }}>
-            <button type="submit" disabled={submitting} className="btn" style={{ width: '100%' }}><Save size={18} /> {submitting ? 'Salvando...' : 'Salvar Alterações'}</button>
+            <button type="submit" disabled={submitting} className="btn" style={{ width: '100%' }}><Save size={18} /> {submitting ? t('profileEdit.saving') : t('profileEdit.save')}</button>
           </div>
         </form>
       </div>

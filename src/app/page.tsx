@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
@@ -14,6 +15,7 @@ interface CharacterOption {
 }
 
 export default function GamePage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [characters, setCharacters] = useState<CharacterOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,14 +63,14 @@ export default function GamePage() {
         }
       } catch (err) {
         console.error('Error loading game data:', err);
-        setErrorMsg('Erro ao carregar dados do jogo.');
+        setErrorMsg(t('home.errors.loadGame'));
       } finally {
         setLoading(false);
       }
     }
 
     loadGameData();
-  }, [todayStr]);
+  }, [todayStr, t]);
 
   // Click outside listener for dropdown
   useEffect(() => {
@@ -104,7 +106,7 @@ export default function GamePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.error || 'Erro ao processar palpite.');
+        setErrorMsg(data.error || t('home.errors.guess'));
         setSubmitting(false);
         return;
       }
@@ -137,7 +139,7 @@ export default function GamePage() {
 
     } catch (err) {
       console.error('Error submitting guess:', err);
-      setErrorMsg('Erro de conexão ao enviar palpite.');
+      setErrorMsg(t('home.errors.guessConn'));
     } finally {
       setSubmitting(false);
     }
@@ -177,7 +179,12 @@ export default function GamePage() {
         .join('');
     }).join('\n');
 
-    const textToShare = `Joguei CCDLE de hoje (${todayStr}) e acertei em ${guesses.length} tentativa(s)! 🎓💻\n\n${emojiRows}\n\nJogue também em: ${window.location.origin}`;
+    const textToShare = t('home.shareText', {
+      date: todayStr,
+      count: guesses.length,
+      grid: emojiRows,
+      url: window.location.origin,
+    });
 
     navigator.clipboard.writeText(textToShare).then(() => {
       setShareSuccess(true);
@@ -196,7 +203,7 @@ export default function GamePage() {
           borderRadius: '50%',
           animation: 'pulseGlow 1s infinite alternate, spin 1s linear infinite'
         }}></div>
-        <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)' }}>Carregando jogo...</p>
+        <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)' }}>{t('home.loading')}</p>
         <style dangerouslySetInnerHTML={{__html: `
           @keyframes spin { to { transform: rotate(360deg); } }
         `}} />
@@ -210,7 +217,7 @@ export default function GamePage() {
       {/* Hero Section */}
       <section className="hero">
         <h1>CCDLE</h1>
-        <p>Adivinhe quem é a pessoa do curso de Computação da UFCG hoje!</p>
+        <p>{t('home.tagline')}</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button 
             onClick={() => setShowRules(!showRules)} 
@@ -218,7 +225,7 @@ export default function GamePage() {
             style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
           >
             <HelpCircle size={16} />
-            {showRules ? 'Fechar Regras' : 'Ver Regras'}
+            {showRules ? t('home.hideRules') : t('home.showRules')}
           </button>
         </div>
       </section>
@@ -226,21 +233,21 @@ export default function GamePage() {
       {/* Rules Box */}
       {showRules && (
         <div className="quick-rules fade-in">
-          <h3><Info size={18} style={{ color: 'var(--primary)' }} /> Como Jogar?</h3>
+          <h3><Info size={18} style={{ color: 'var(--primary)' }} /> {t('home.rulesTitle')}</h3>
           <ul>
-            <li>Tente adivinhar a pessoa secreta de hoje a partir dos palpites.</li>
-            <li>A cada palpite, a cor das caixas indicará a correspondência dos atributos:</li>
+            <li>{t('home.rules.l1')}</li>
+            <li>{t('home.rules.l2')}</li>
             <li>
-              <span className="badge badge-active" style={{ backgroundColor: 'var(--color-correct)', color: 'white', border: 'none' }}>Verde (Ex: Estudante)</span> : Atributo bate perfeitamente.
+              <span className="badge badge-active" style={{ backgroundColor: 'var(--color-correct)', color: 'white', border: 'none' }}>{t('home.rules.greenBadge')}</span> : {t('home.rules.green')}
             </li>
             <li>
-              <span className="badge" style={{ backgroundColor: 'var(--color-partial)', color: 'white', border: 'none' }}>Laranja/Seta (Ex: 2020.1 ↑)</span> : Apenas para o <strong>Período de Entrada</strong>. Seta indica se a pessoa secreta entrou mais recentemente (↑) ou há mais tempo (↓).
+              <span className="badge" style={{ backgroundColor: 'var(--color-partial)', color: 'white', border: 'none' }}>{t('home.rules.orangeBadge')}</span> : {t('home.rules.orangePre')}<strong>{t('home.rules.entryField')}</strong>{t('home.rules.orangePost')}
             </li>
             <li>
-              <span className="badge" style={{ backgroundColor: 'var(--color-incorrect)', color: 'var(--text-muted)', border: 'none' }}>Escuro (Ex: Python)</span> : Atributo não corresponde de forma alguma.
+              <span className="badge" style={{ backgroundColor: 'var(--color-incorrect)', color: 'var(--text-muted)', border: 'none' }}>{t('home.rules.darkBadge')}</span> : {t('home.rules.dark')}
             </li>
-            <li>Seus palpites e progresso ficam salvos localmente até a mudança do dia!</li>
-            <li><strong>Importante:</strong> Pessoas inativas por mais de 30 dias (sem efetuar login) são automaticamente removidas do pool de palpites e do sorteio diário.</li>
+            <li>{t('home.rules.saved')}</li>
+            <li><strong>{t('home.rules.importantLabel')}</strong> {t('home.rules.important')}</li>
           </ul>
         </div>
       )}
@@ -249,10 +256,9 @@ export default function GamePage() {
       {characters.length === 0 ? (
         <div className="alert alert-info card" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'center', flexDirection: 'column', gap: '1rem', padding: '3rem' }}>
           <Info size={48} style={{ color: 'var(--accent)', marginBottom: '0.5rem' }} />
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Ninguém cadastrado ainda!</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{t('home.empty.title')}</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-            Não há nenhum personagem ativo no banco de dados para ser adivinhado. 
-            Vá na página <strong>&quot;Meu Personagem&quot;</strong> para se cadastrar e se tornar o primeiro!
+            {t('home.empty.body', { page: t('nav.myCharacter') })}
           </p>
         </div>
       ) : (
@@ -263,7 +269,7 @@ export default function GamePage() {
               <div style={{ position: 'relative', flex: 1 }}>
                 <input
                   type="text"
-                  placeholder={isWon ? "Você já acertou hoje!" : "Digite o nome de alguém do curso..."}
+                  placeholder={isWon ? t('home.search.won') : t('home.search.placeholder')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -311,7 +317,7 @@ export default function GamePage() {
                     </div>
                   ))
                 ) : (
-                  <div className="autocomplete-empty">Nenhum personagem ativo encontrado.</div>
+                  <div className="autocomplete-empty">{t('home.search.noResults')}</div>
                 )}
               </div>
             )}
@@ -325,7 +331,7 @@ export default function GamePage() {
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
               >
                 <Trophy size={16} style={{ color: 'var(--color-partial)' }} />
-                Ver Estatísticas de Vitória
+                {t('home.viewStats')}
               </button>
             </div>
           )}
@@ -335,14 +341,14 @@ export default function GamePage() {
             <div className="game-board fade-in">
               {/* Header Row */}
               <div className="grid-row grid-header">
-                <div>Nome</div>
-                <div>Gênero</div>
-                <div>Vínculo</div>
-                <div>Período</div>
-                <div>Linguagem</div>
-                <div>Área</div>
-                <div>Lab/Proj</div>
-                <div>Café</div>
+                <div>{t('home.headers.name')}</div>
+                <div>{t('home.headers.gender')}</div>
+                <div>{t('home.headers.role')}</div>
+                <div>{t('home.headers.period')}</div>
+                <div>{t('home.headers.language')}</div>
+                <div>{t('home.headers.area')}</div>
+                <div>{t('home.headers.labProj')}</div>
+                <div>{t('home.headers.coffee')}</div>
               </div>
 
               {/* Guess Rows (Reversed so latest is at top) */}
@@ -350,7 +356,7 @@ export default function GamePage() {
                 <div key={guesses.length - 1 - index} className="grid-row">
                   {/* Name (displays feedback) */}
                   <div className={`tile tile-photo ${guess.fields.name.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">Nome</span>
+                    <span className="tile-label">{t('home.tiles.name')}</span>
                     <div className="tile-photo-container">
                       {guess.photoUrl ? (
                         <img 
@@ -369,13 +375,13 @@ export default function GamePage() {
 
                   {/* Gender */}
                   <div className={`tile ${guess.fields.gender.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">Gênero</span>
+                    <span className="tile-label">{t('home.tiles.gender')}</span>
                     <span className="tile-value">{guess.fields.gender.value}</span>
                   </div>
 
                   {/* Role */}
                   <div className={`tile ${guess.fields.role.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">Vínculo</span>
+                    <span className="tile-label">{t('home.tiles.role')}</span>
                     <span className="tile-value">{guess.fields.role.value}</span>
                   </div>
 
@@ -387,7 +393,7 @@ export default function GamePage() {
                       ? 'higher' 
                       : 'incorrect'
                   }`}>
-                    <span className="tile-label">Entrada</span>
+                    <span className="tile-label">{t('home.tiles.entry')}</span>
                     <span className="tile-value">{guess.fields.entrySemester.value}</span>
                     {guess.fields.entrySemester.result === 'higher' && <span className="tile-arrow">↑</span>}
                     {guess.fields.entrySemester.result === 'lower' && <span className="tile-arrow">↓</span>}
@@ -395,25 +401,25 @@ export default function GamePage() {
 
                   {/* Favorite Language */}
                   <div className={`tile ${guess.fields.favoriteLanguage.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">Linguagem</span>
+                    <span className="tile-label">{t('home.tiles.language')}</span>
                     <span className="tile-value">{guess.fields.favoriteLanguage.value}</span>
                   </div>
 
                   {/* Area */}
                   <div className={`tile ${guess.fields.area.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">Área</span>
+                    <span className="tile-label">{t('home.tiles.area')}</span>
                     <span className="tile-value">{guess.fields.area.value}</span>
                   </div>
 
                   {/* Lab */}
                   <div className={`tile ${guess.fields.lab.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">Lab</span>
+                    <span className="tile-label">{t('home.tiles.lab')}</span>
                     <span className="tile-value">{guess.fields.lab.value}</span>
                   </div>
 
                   {/* Likes Coffee */}
                   <div className={`tile ${guess.fields.likesCoffee.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">Café</span>
+                    <span className="tile-label">{t('home.tiles.coffee')}</span>
                     <span className="tile-value">{guess.fields.likesCoffee.value}</span>
                   </div>
                 </div>
