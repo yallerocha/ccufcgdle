@@ -4,7 +4,7 @@
 // be the URL reachable from the browser (e.g. http://localhost:3001).
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 
-const TOKEN_KEY = 'ccdle_token';
+const TOKEN_KEY = 'lsdle_token';
 
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;

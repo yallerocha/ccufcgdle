@@ -7,109 +7,111 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+// Personagens ficticios tematicos do LSD (Laboratorio de Sistemas Distribuidos).
+// O campo `lab` agora representa o subgrupo / linha de pesquisa dentro do LSD.
 const mockUsers = [
   {
-    email: 'yalle.silva@ufcg.edu.br',
+    email: 'yalle.silva@lsd.ufcg.edu.br',
     name: 'Yalle.Silva',
     gender: 'Masculino',
     role: 'Estudante',
     entrySemester: '2021.2',
     favoriteLanguage: 'JavaScript',
-    area: 'Engenharia de Software',
-    lab: 'LSD',
+    area: 'Sistemas Distribuídos / Redes',
+    lab: 'Computação em Nuvem',
     likesCoffee: 'Só energético',
     photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Yalle',
     isAdmin: true,
   },
   {
-    email: 'dalton@computacao.ufcg.edu.br',
-    name: 'Prof.Dalton',
+    email: 'brasileiro@lsd.ufcg.edu.br',
+    name: 'Prof.Brasileiro',
     gender: 'Masculino',
     role: 'Professor',
     entrySemester: 'Antes de 2018',
     favoriteLanguage: 'Java',
-    area: 'Engenharia de Software',
-    lab: 'SPLab',
+    area: 'Sistemas Distribuídos / Redes',
+    lab: 'Computação em Nuvem',
     likesCoffee: 'Sim',
-    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Dalton',
+    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Brasileiro',
     isAdmin: false,
   },
   {
-    email: 'clara.campolina@estudante.ufcg.edu.br',
-    name: 'Clara.Camp',
+    email: 'carla.edge@lsd.ufcg.edu.br',
+    name: 'Carla.Edge',
     gender: 'Feminino',
     role: 'Estudante',
     entrySemester: '2022.1',
-    favoriteLanguage: 'Haskell',
-    area: 'Teoria da Computação',
-    lab: 'PET',
-    likesCoffee: 'Não',
-    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Clara',
-    isAdmin: false,
-  },
-  {
-    email: 'franklin@computacao.ufcg.edu.br',
-    name: 'Prof.Franklin',
-    gender: 'Masculino',
-    role: 'Professor',
-    entrySemester: 'Antes de 2018',
-    favoriteLanguage: 'C',
-    area: 'Teoria da Computação',
-    lab: 'Nenhum',
-    likesCoffee: 'Sim',
-    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Franklin',
-    isAdmin: false,
-  },
-  {
-    email: 'matheus.ex@aluno.ufcg.edu.br',
-    name: 'Matheus.Ex',
-    gender: 'Masculino',
-    role: 'Ex-aluno',
-    entrySemester: '2019.1',
-    favoriteLanguage: 'Rust',
-    area: 'Segurança da Informação',
-    lab: 'Nenhum',
-    likesCoffee: 'Sim',
-    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Matheus',
-    isAdmin: false,
-  },
-  {
-    email: 'eliane.tae@computacao.ufcg.edu.br',
-    name: 'Eliane.Tae',
-    gender: 'Feminino',
-    role: 'Técnico',
-    entrySemester: '2018.2',
-    favoriteLanguage: 'Python',
+    favoriteLanguage: 'Go',
     area: 'Sistemas Distribuídos / Redes',
-    lab: 'LCC',
+    lab: 'Computação na Borda',
     likesCoffee: 'Sim',
-    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Eliane',
+    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Carla',
     isAdmin: false,
   },
   {
-    email: 'andre.virtus@ufcg.edu.br',
-    name: 'Andre.Virtus',
+    email: 'rafael.chain@lsd.ufcg.edu.br',
+    name: 'Rafael.Chain',
     gender: 'Masculino',
     role: 'Estudante',
     entrySemester: '2023.1',
-    favoriteLanguage: 'C++',
-    area: 'Hardware / Embarcados',
-    lab: 'VIRTUS',
-    likesCoffee: 'Só energético',
-    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Andre',
+    favoriteLanguage: 'Rust',
+    area: 'Segurança da Informação',
+    lab: 'Blockchain',
+    likesCoffee: 'Não',
+    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Rafael',
     isAdmin: false,
   },
   {
-    email: 'patricia.ai@ufcg.edu.br',
-    name: 'Patricia.AI',
+    email: 'marina.data@lsd.ufcg.edu.br',
+    name: 'Marina.Data',
     gender: 'Feminino',
     role: 'Estudante',
     entrySemester: '2020.1',
     favoriteLanguage: 'Python',
     area: 'Ciência de Dados / IA',
-    lab: 'UFCG.AI',
+    lab: 'Big Data',
     likesCoffee: 'Sim',
-    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Patricia',
+    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Marina',
+    isAdmin: false,
+  },
+  {
+    email: 'joao.hpc@lsd.ufcg.edu.br',
+    name: 'Joao.HPC',
+    gender: 'Masculino',
+    role: 'Ex-aluno',
+    entrySemester: '2019.1',
+    favoriteLanguage: 'C++',
+    area: 'Hardware / Embarcados',
+    lab: 'HPC',
+    likesCoffee: 'Só energético',
+    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Joao',
+    isAdmin: false,
+  },
+  {
+    email: 'beatriz.obs@lsd.ufcg.edu.br',
+    name: 'Beatriz.Obs',
+    gender: 'Feminino',
+    role: 'Estudante',
+    entrySemester: '2024.1',
+    favoriteLanguage: 'Python',
+    area: 'Engenharia de Software',
+    lab: 'Observabilidade',
+    likesCoffee: 'Sim',
+    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Beatriz',
+    isAdmin: false,
+  },
+  {
+    email: 'diego.iot@lsd.ufcg.edu.br',
+    name: 'Diego.IoT',
+    gender: 'Masculino',
+    role: 'Técnico',
+    entrySemester: '2018.2',
+    favoriteLanguage: 'C',
+    area: 'Hardware / Embarcados',
+    lab: 'IoT',
+    likesCoffee: 'Não',
+    photoUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Diego',
     isAdmin: false,
   }
 ];
@@ -138,7 +140,7 @@ async function main() {
 
   // Set the first user as character of the day for testing
   const firstUser = await prisma.user.findFirst({
-    where: { name: 'Prof.Dalton' }
+    where: { name: 'Prof.Brasileiro' }
   });
 
   if (firstUser) {
@@ -157,7 +159,7 @@ async function main() {
         characterId: firstUser.id
       }
     });
-    console.log(`Set Prof.Dalton as daily character for date ${todayStr}`);
+    console.log(`Set Prof.Brasileiro as daily character for date ${todayStr}`);
   }
 
   console.log('Seeding completed successfully!');

@@ -6,8 +6,8 @@ import I18nProvider from "@/client/i18n/I18nProvider";
 import Footer from "@/client/components/Footer";
 
 export const metadata: Metadata = {
-  title: "CCDLE - Jogo do Curso de Computação da UFCG",
-  description: "Adivinhe o personagem do dia do curso de Computação da UFCG baseado em suas informações de curso e preferências! Registre-se para ser um dos personagens.",
+  title: "LSDLE - Jogo do LSD da UFCG",
+  description: "Adivinhe a pessoa do dia do Laboratório de Sistemas Distribuídos (LSD) da UFCG baseado em suas informações e preferências! Registre-se para ser um dos personagens.",
 };
 
 export default function RootLayout({

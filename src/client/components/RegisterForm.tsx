@@ -29,7 +29,8 @@ const AREA_OPTIONS = [
   'Segurança da Informação',
   'Outra'
 ];
-const LAB_OPTIONS = ['LSD', 'SPLab', 'UFCG.AI', 'VIRTUS', 'LCC', 'PET', 'CACo', 'Nenhum', 'Outro'];
+// Subgrupos / linhas de pesquisa dentro do LSD
+const LAB_OPTIONS = ['Computação em Nuvem', 'Computação na Borda', 'Blockchain', 'Big Data', 'HPC', 'Observabilidade', 'IoT', 'Computação Verde', 'Outro'];
 const COFFEE_OPTIONS = ['Sim', 'Não', 'Só energético'];
 
 interface RegisterFormProps {

@@ -52,7 +52,7 @@ export default function GamePage() {
         }
 
         // 2. Restore game state from localStorage
-        const savedStateStr = localStorage.getItem(`ufcgdle-game-state-${todayStr}`);
+        const savedStateStr = localStorage.getItem(`lsdle-game-state-${todayStr}`);
         if (savedStateStr) {
           const savedState = JSON.parse(savedStateStr);
           setGuesses(savedState.guesses || []);
@@ -149,7 +149,7 @@ export default function GamePage() {
 
       // Save state to local storage
       localStorage.setItem(
-        `ufcgdle-game-state-${todayStr}`,
+        `lsdle-game-state-${todayStr}`,
         JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo, startTime: effectiveStart })
       );
 
@@ -237,7 +237,7 @@ export default function GamePage() {
       
       {/* Hero Section */}
       <section className="hero">
-        <h1>CCDLE</h1>
+        <h1>LSDLE</h1>
         <p>{t('home.tagline')}</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button 

@@ -17,8 +17,8 @@ export default function Navbar() {
       <div className="navbar-content container">
         <Link href="/" className="nav-logo">
           <Terminal size={24} style={{ color: 'var(--primary)' }} />
-          <span>CCDLE</span>
-          <span className="nav-logo-sub">Comp-UFCG</span>
+          <span>LSDLE</span>
+          <span className="nav-logo-sub">LSD-UFCG</span>
         </Link>
 
         <div className="nav-links">
