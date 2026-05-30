@@ -1,0 +1,414 @@
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/client/context/AuthContext';
+import { getLocalDateString } from '@/shared/utils';
+import type { GuessFeedback } from '@/server/game';
+import { HelpCircle, Search, Trophy, Share2, CheckCircle, Info } from 'lucide-react';
+import { VictoryModal } from '@/client/components/VictoryModal';
+
+interface CharacterOption {
+  id: string;
+  name: string;
+}
+
+export default function GamePage() {
+  const { user } = useAuth();
+  const [characters, setCharacters] = useState<CharacterOption[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [dropdownIndex, setDropdownIndex] = useState(-1);
+  const [guesses, setGuesses] = useState<GuessFeedback[]>([]);
+  const [isWon, setIsWon] = useState(false);
+  const [showWinModal, setShowWinModal] = useState(false);
+  const [targetName, setTargetName] = useState('');
+  const [targetPhoto, setTargetPhoto] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [showRules, setShowRules] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const todayStr = getLocalDateString();
+
+  // Load characters list and restored saved guesses from local storage
+  useEffect(() => {
+    async function loadGameData() {
+      try {
+        setLoading(true);
+        // 1. Fetch autocomplete characters list
+        const res = await fetch('/api/game/active-characters');
+        const data = await res.json();
+        if (data.characters) {
+          setCharacters(data.characters);
+        } else {
+          setCharacters([]);
+        }
+
+        // 2. Restore game state from localStorage
+        const savedStateStr = localStorage.getItem(`ufcgdle-game-state-${todayStr}`);
+        if (savedStateStr) {
+          const savedState = JSON.parse(savedStateStr);
+          setGuesses(savedState.guesses || []);
+          setIsWon(savedState.isWon || false);
+          setTargetName(savedState.targetName || '');
+          setTargetPhoto(savedState.targetPhoto || '');
+          if (savedState.isWon) {
+            setShowWinModal(true);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading game data:', err);
+        setErrorMsg('Erro ao carregar dados do jogo.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadGameData();
+  }, [todayStr]);
+
+  // Click outside listener for dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filtered dropdown options
+  const filteredOptions = characters.filter(c => {
+    // Cannot guess characters already guessed
+    const alreadyGuessed = guesses.some(g => g.fields.name.value.toLowerCase() === c.name.toLowerCase());
+    return !alreadyGuessed && c.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  // Handle guess submission
+  const handleGuess = async (characterId: string) => {
+    if (isWon || submitting) return;
+    setSubmitting(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/game/guess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guessId: characterId })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.error || 'Erro ao processar palpite.');
+        setSubmitting(false);
+        return;
+      }
+
+      const newFeedback: GuessFeedback = data.feedback;
+      const updatedGuesses = [...guesses, newFeedback];
+      
+      let won = newFeedback.correct;
+      let target = data.targetName || '';
+      let photo = data.photoUrl || '';
+
+      setGuesses(updatedGuesses);
+      setIsWon(won);
+      if (won) {
+        setTargetName(target);
+        setTargetPhoto(photo);
+        setShowWinModal(true);
+      }
+
+      // Save state to local storage
+      localStorage.setItem(
+        `ufcgdle-game-state-${todayStr}`,
+        JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo })
+      );
+
+      // Reset search inputs
+      setSearchQuery('');
+      setShowDropdown(false);
+      setDropdownIndex(-1);
+
+    } catch (err) {
+      console.error('Error submitting guess:', err);
+      setErrorMsg('Erro de conexão ao enviar palpite.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showDropdown || filteredOptions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setDropdownIndex(prev => (prev + 1) % filteredOptions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setDropdownIndex(prev => (prev - 1 + filteredOptions.length) % filteredOptions.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (dropdownIndex >= 0 && dropdownIndex < filteredOptions.length) {
+        handleGuess(filteredOptions[dropdownIndex].id);
+      } else if (filteredOptions.length > 0) {
+        handleGuess(filteredOptions[0].id);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    // Generate emoji grid: Green (🟩), Orange (🟧), Slate (⬛)
+    const emojiRows = guesses.map(guess => {
+      return Object.entries(guess.fields)
+        .filter(([key]) => key !== 'name') // Don't show emoji for name field, but show for remaining 7
+        .map(([_, field]) => {
+          if (field.result === 'correct') return '🟩';
+          if (field.result === 'higher' || field.result === 'lower') return '🟧';
+          return '⬛';
+        })
+        .join('');
+    }).join('\n');
+
+    const textToShare = `Joguei UFCGdle de hoje (${todayStr}) e acertei em ${guesses.length} tentativa(s)! 🎓💻\n\n${emojiRows}\n\nJogue também em: ${window.location.origin}`;
+
+    navigator.clipboard.writeText(textToShare).then(() => {
+      setShareSuccess(true);
+      setTimeout(() => setShareSuccess(false), 3000);
+    });
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{
+          width: '50px',
+          height: '50px',
+          border: '5px solid var(--border-color)',
+          borderTopColor: 'var(--primary)',
+          borderRadius: '50%',
+          animation: 'pulseGlow 1s infinite alternate, spin 1s linear infinite'
+        }}></div>
+        <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)' }}>Carregando jogo...</p>
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes spin { to { transform: rotate(360deg); } }
+        `}} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Hero Section */}
+      <section className="hero">
+        <h1>UFCGdle</h1>
+        <p>Adivinhe quem é a pessoa do curso de Computação da UFCG hoje!</p>
+        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+          <button 
+            onClick={() => setShowRules(!showRules)} 
+            className="btn btn-secondary" 
+            style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
+          >
+            <HelpCircle size={16} />
+            {showRules ? 'Fechar Regras' : 'Ver Regras'}
+          </button>
+        </div>
+      </section>
+
+      {/* Rules Box */}
+      {showRules && (
+        <div className="quick-rules fade-in">
+          <h3><Info size={18} style={{ color: 'var(--primary)' }} /> Como Jogar?</h3>
+          <ul>
+            <li>Tente adivinhar a pessoa secreta de hoje a partir dos palpites.</li>
+            <li>A cada palpite, a cor das caixas indicará a correspondência dos atributos:</li>
+            <li>
+              <span className="badge badge-active" style={{ backgroundColor: 'var(--color-correct)', color: 'white', border: 'none' }}>Verde (Ex: Estudante)</span> : Atributo bate perfeitamente.
+            </li>
+            <li>
+              <span className="badge" style={{ backgroundColor: 'var(--color-partial)', color: 'white', border: 'none' }}>Laranja/Seta (Ex: 2020.1 ↑)</span> : Apenas para o <strong>Período de Entrada</strong>. Seta indica se a pessoa secreta entrou mais recentemente (↑) ou há mais tempo (↓).
+            </li>
+            <li>
+              <span className="badge" style={{ backgroundColor: 'var(--color-incorrect)', color: 'var(--text-muted)', border: 'none' }}>Escuro (Ex: Python)</span> : Atributo não corresponde de forma alguma.
+            </li>
+            <li>Seus palpites e progresso ficam salvos localmente até a mudança do dia!</li>
+            <li><strong>Importante:</strong> Pessoas inativas por mais de 30 dias (sem efetuar login) são automaticamente removidas do pool de palpites e do sorteio diário.</li>
+          </ul>
+        </div>
+      )}
+
+      {/* Main Game Interface */}
+      {characters.length === 0 ? (
+        <div className="alert alert-info card" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'center', flexDirection: 'column', gap: '1rem', padding: '3rem' }}>
+          <Info size={48} style={{ color: 'var(--accent)', marginBottom: '0.5rem' }} />
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Ninguém cadastrado ainda!</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+            Não há nenhum personagem ativo no banco de dados para ser adivinhado. 
+            Vá na página <strong>&quot;Meu Personagem&quot;</strong> para se cadastrar e se tornar o primeiro!
+          </p>
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {/* Autocomplete Input Container */}
+          <div className="search-container" ref={dropdownRef}>
+            <div className="search-input-wrapper">
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input
+                  type="text"
+                  placeholder={isWon ? "Você já acertou hoje!" : "Digite o nome de alguém do curso..."}
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowDropdown(true);
+                    setDropdownIndex(-1);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isWon || submitting}
+                  style={{ paddingLeft: '2.5rem' }}
+                />
+                <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div className="alert alert-error" style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+                {errorMsg}
+              </div>
+            )}
+
+            {/* Dropdown Options */}
+            {showDropdown && searchQuery && (
+              <div className="autocomplete-dropdown">
+                {filteredOptions.length > 0 ? (
+                  filteredOptions.map((c, i) => (
+                    <div
+                      key={c.id}
+                      className={`autocomplete-item ${i === dropdownIndex ? 'selected' : ''}`}
+                      onClick={() => handleGuess(c.id)}
+                    >
+                      {c.name}
+                    </div>
+                  ))
+                ) : (
+                  <div className="autocomplete-empty">Nenhum personagem ativo encontrado.</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {isWon && (
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
+              <button 
+                onClick={() => setShowWinModal(true)} 
+                className="btn"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+              >
+                <Trophy size={16} style={{ color: 'var(--color-partial)' }} />
+                Ver Estatísticas de Vitória
+              </button>
+            </div>
+          )}
+
+          {/* Guesses Board */}
+          {guesses.length > 0 && (
+            <div className="game-board fade-in">
+              {/* Header Row */}
+              <div className="grid-row grid-header">
+                <div>Nome</div>
+                <div>Gênero</div>
+                <div>Vínculo</div>
+                <div>Período</div>
+                <div>Linguagem</div>
+                <div>Área</div>
+                <div>Lab/Proj</div>
+                <div>Café</div>
+              </div>
+
+              {/* Guess Rows (Reversed so latest is at top) */}
+              {[...guesses].reverse().map((guess, index) => (
+                <div key={guesses.length - 1 - index} className="grid-row">
+                  {/* Name (displays feedback) */}
+                  <div className={`tile ${guess.fields.name.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">Nome</span>
+                    <span className="tile-value">{guess.fields.name.value}</span>
+                  </div>
+
+                  {/* Gender */}
+                  <div className={`tile ${guess.fields.gender.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">Gênero</span>
+                    <span className="tile-value">{guess.fields.gender.value}</span>
+                  </div>
+
+                  {/* Role */}
+                  <div className={`tile ${guess.fields.role.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">Vínculo</span>
+                    <span className="tile-value">{guess.fields.role.value}</span>
+                  </div>
+
+                  {/* Entry Semester (higher / lower arrow feedback) */}
+                  <div className={`tile ${
+                    guess.fields.entrySemester.result === 'correct' 
+                      ? 'correct' 
+                      : guess.fields.entrySemester.result === 'higher' || guess.fields.entrySemester.result === 'lower'
+                      ? 'higher' 
+                      : 'incorrect'
+                  }`}>
+                    <span className="tile-label">Entrada</span>
+                    <span className="tile-value">{guess.fields.entrySemester.value}</span>
+                    {guess.fields.entrySemester.result === 'higher' && <span className="tile-arrow">↑</span>}
+                    {guess.fields.entrySemester.result === 'lower' && <span className="tile-arrow">↓</span>}
+                  </div>
+
+                  {/* Favorite Language */}
+                  <div className={`tile ${guess.fields.favoriteLanguage.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">Linguagem</span>
+                    <span className="tile-value">{guess.fields.favoriteLanguage.value}</span>
+                  </div>
+
+                  {/* Area */}
+                  <div className={`tile ${guess.fields.area.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">Área</span>
+                    <span className="tile-value">{guess.fields.area.value}</span>
+                  </div>
+
+                  {/* Lab */}
+                  <div className={`tile ${guess.fields.lab.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">Lab</span>
+                    <span className="tile-value">{guess.fields.lab.value}</span>
+                  </div>
+
+                  {/* Likes Coffee */}
+                  <div className={`tile ${guess.fields.likesCoffee.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">Café</span>
+                    <span className="tile-value">{guess.fields.likesCoffee.value}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Win Modal overlay */}
+          <VictoryModal
+            show={showWinModal}
+            targetName={targetName}
+            targetPhoto={targetPhoto}
+            attempts={guesses.length}
+            guesses={guesses}
+            shareSuccess={shareSuccess}
+            onShare={copyToClipboard}
+            onClose={() => setShowWinModal(false)}
+            todayStr={todayStr}
+          />
+        </div>
+      )}
+    </div>
+  );
+}

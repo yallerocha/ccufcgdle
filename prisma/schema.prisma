@@ -1,0 +1,41 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  passwordHash     String
+  name             String           @unique // This is the character's name/nickname in the game
+  
+  // Game attributes
+  gender           String           // "Masculino", "Feminino", "Outro"
+  role             String           // "Estudante", "Professor", "Ex-aluno", "Técnico"
+  entrySemester    String           // e.g. "2020.1", "2023.2", "Antes de 2018"
+  favoriteLanguage String           // "C", "Java", "Python", "Haskell", "JavaScript", "Rust", "C++", "Go", "Prolog", "Outra"
+  area             String           // "Engenharia de Software", "Sistemas", "Ciência de Dados / IA", "Teoria", "Hardware", "Segurança", "Outra"
+  lab              String           // "LSD", "SPLab", "UFCG.AI", "VIRTUS", "LCC", "PET", "CACo", "Nenhum", "Outro"
+  likesCoffee      String           // "Sim", "Não", "Só energético"
+  photoUrl         String?          // Base64 data URL or photo URL
+  
+  // Metadata & Activity Tracking
+  lastLogin        DateTime         @default(now())
+  isActive         Boolean          @default(true)
+  isAdmin          Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  dailyCharacters  DailyCharacter[]
+}
+
+model DailyCharacter {
+  id          Int      @id @default(autoincrement())
+  date        String   @unique // Format: "YYYY-MM-DD"
+  characterId String
+  character   User     @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
