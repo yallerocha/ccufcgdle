@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/client/context/AuthContext';
 import { Terminal, Gamepad2, User, ShieldCheck, LogOut } from 'lucide-react';
+import ThemeToggle from '@/client/components/ThemeToggle';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -41,6 +42,8 @@ export default function Navbar() {
               <User size={18} /> Participar / Entrar
             </Link>
           )}
+
+          <ThemeToggle />
         </div>
       </div>
     </nav>

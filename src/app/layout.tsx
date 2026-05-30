@@ -14,7 +14,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='light'||t==='dark')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();`,
+          }}
+        />
+      </head>
       <body>
         <AuthProvider>
           <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -28,7 +35,7 @@ export default function RootLayout({
               color: 'var(--text-dim)',
               borderTop: '1px solid var(--border-color)',
               fontSize: '0.9rem',
-              backgroundColor: 'rgba(11, 13, 25, 0.4)',
+              backgroundColor: 'var(--bg-translucent)',
               marginTop: 'auto'
             }}>
               <p>CCDLE © 2026. Feito para o curso de Ciência da Computação - UFCG.</p>
