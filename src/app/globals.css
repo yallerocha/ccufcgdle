@@ -867,7 +867,7 @@ input:focus, select:focus, textarea:focus {
 
 .alert-info {
   background-color: rgba(59, 130, 246, 0.1);
-  color: var(--accent);
+  color: var(--primary);
   border: 1px solid rgba(59, 130, 246, 0.2);
 }
 

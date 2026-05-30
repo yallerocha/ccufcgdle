@@ -6,7 +6,9 @@ import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
 
-// GET /api/game/active-characters — autocomplete list for guessing.
+// GET /api/game/active-characters — autocomplete list for guessing, plus a
+// non-identifying "daily key" the client uses to detect when an admin resets the
+// round (the key changes, but never reveals who the person of the day is).
 router.get('/active-characters', async (_req, res) => {
   try {
     const activeUsers = await getActiveUsers();
@@ -17,10 +19,17 @@ router.get('/active-characters', async (_req, res) => {
       photoUrl: u.photoUrl,
     }));
 
-    return res.json({ characters: list });
+    // Ensure today's pick exists, then expose only the DailyCharacter row id.
+    await getOrCreateDailyCharacter();
+    const daily = await prisma.dailyCharacter.findUnique({
+      where: { date: getLocalDateString() },
+      select: { id: true },
+    });
+
+    return res.json({ characters: list, dailyKey: daily?.id ?? null });
   } catch (error) {
     console.error('Error in active-characters API:', error);
-    return res.status(500).json({ error: 'Erro interno ao obter personagens ativos.' });
+    return res.status(500).json({ error: 'Erro interno ao obter pessoas ativas.' });
   }
 });
 
@@ -38,13 +47,13 @@ router.post('/guess', withAuth, async (req, res) => {
     const target = await getOrCreateDailyCharacter();
     if (!target) {
       return res.status(404).json({
-        error: 'Não há personagens disponíveis no jogo. Cadastre-se para ser o primeiro!',
+        error: 'Não há pessoas disponíveis no jogo. Cadastre-se para ser a primeira!',
       });
     }
 
     const guessUser = await prisma.user.findUnique({ where: { id: guessId } });
     if (!guessUser) {
-      return res.status(404).json({ error: 'Personagem não encontrado.' });
+      return res.status(404).json({ error: 'Pessoa não encontrada.' });
     }
 
     const feedback = compareCharacters(guessUser, target);

@@ -7,7 +7,7 @@ import Footer from "@/client/components/Footer";
 
 export const metadata: Metadata = {
   title: "LSDLE - Jogo do LSD da UFCG",
-  description: "Adivinhe a pessoa do dia do Laboratório de Sistemas Distribuídos (LSD) da UFCG baseado em suas informações e preferências! Registre-se para ser um dos personagens.",
+  description: "Adivinhe a pessoa do dia do Laboratório de Sistemas Distribuídos (LSD) da UFCG baseado em suas informações e preferências! Cadastre-se para participar.",
 };
 
 export default function RootLayout({

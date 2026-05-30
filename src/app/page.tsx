@@ -7,6 +7,7 @@ import type { GuessFeedback } from '@/server/game';
 import { HelpCircle, Search, Trophy, Share2, CheckCircle, Info } from 'lucide-react';
 import { VictoryModal } from '@/client/components/VictoryModal';
 import { apiFetch } from '@/client/lib/api';
+import { shareStoryImage, type CellResult } from '@/client/lib/storyImage';
 
 interface CharacterOption {
   id: string;
@@ -26,11 +27,14 @@ export default function GamePage() {
   const [targetName, setTargetName] = useState('');
   const [targetPhoto, setTargetPhoto] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [dailyKey, setDailyKey] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showRules, setShowRules] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [imageSharing, setImageSharing] = useState(false);
+  const [imageNote, setImageNote] = useState('');
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const todayStr = getLocalDateString();
@@ -40,7 +44,7 @@ export default function GamePage() {
     async function loadGameData() {
       try {
         setLoading(true);
-        // 1. Fetch autocomplete characters list
+        // 1. Fetch autocomplete characters list + today's daily key
         const res = await apiFetch('/api/game/active-characters');
         const data = await res.json();
         if (data.characters) {
@@ -48,18 +52,31 @@ export default function GamePage() {
         } else {
           setCharacters([]);
         }
+        const currentDailyKey: number | null = data.dailyKey ?? null;
+        setDailyKey(currentDailyKey);
 
-        // 2. Restore game state from localStorage
+        // 2. Restore game state from localStorage — unless an admin reset the
+        // round today (the daily key changed), in which case discard the stale
+        // local board and start fresh.
         const savedStateStr = localStorage.getItem(`lsdle-game-state-${todayStr}`);
         if (savedStateStr) {
           const savedState = JSON.parse(savedStateStr);
-          setGuesses(savedState.guesses || []);
-          setIsWon(savedState.isWon || false);
-          setTargetName(savedState.targetName || '');
-          setTargetPhoto(savedState.targetPhoto || '');
-          setStartTime(savedState.startTime ?? null);
-          if (savedState.isWon) {
-            setShowWinModal(true);
+          const roundWasReset =
+            savedState.dailyKey != null &&
+            currentDailyKey != null &&
+            savedState.dailyKey !== currentDailyKey;
+
+          if (roundWasReset) {
+            localStorage.removeItem(`lsdle-game-state-${todayStr}`);
+          } else {
+            setGuesses(savedState.guesses || []);
+            setIsWon(savedState.isWon || false);
+            setTargetName(savedState.targetName || '');
+            setTargetPhoto(savedState.targetPhoto || '');
+            setStartTime(savedState.startTime ?? null);
+            if (savedState.isWon) {
+              setShowWinModal(true);
+            }
           }
         }
       } catch (err) {
@@ -134,10 +151,11 @@ export default function GamePage() {
         // (using the server's own attempt count and timing).
       }
 
-      // Save state to local storage
+      // Save state to local storage (with the daily key so a later admin reset
+      // of today's round can be detected on reload).
       localStorage.setItem(
         `lsdle-game-state-${todayStr}`,
-        JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo, startTime: effectiveStart })
+        JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo, startTime: effectiveStart, dailyKey })
       );
 
       // Reset search inputs
@@ -198,6 +216,59 @@ export default function GamePage() {
       setShareSuccess(true);
       setTimeout(() => setShareSuccess(false), 3000);
     });
+  };
+
+  // Build a 1080x1920 image from the result and share it (mobile: Web Share
+  // sheet → Instagram → Stories; desktop: downloads the PNG).
+  const shareStoryCard = async () => {
+    if (imageSharing) return;
+    setImageSharing(true);
+    setImageNote('');
+
+    const grid: CellResult[][] = guesses.map((guess) =>
+      Object.entries(guess.fields)
+        .filter(([key]) => key !== 'name')
+        .map(([, field]): CellResult => {
+          const r = (field as { result: string }).result;
+          if (r === 'correct') return 'correct';
+          if (r === 'higher' || r === 'lower' || r === 'partial') return 'partial';
+          return 'incorrect';
+        })
+    );
+
+    const count = guesses.length;
+    const url = window.location.origin;
+
+    try {
+      const outcome = await shareStoryImage(
+        {
+          attempts: count,
+          dateLabel: todayStr.split('-').reverse().join('/'),
+          grid,
+          targetName,
+          targetPhoto,
+          url,
+          labels: {
+            resultTitle: t('victory.imageResultTitle'),
+            attemptsWord: count === 1 ? t('victory.attemptLabel') : t('victory.attemptsLabel'),
+            answerWas: t('victory.imageAnswer'),
+            playAt: t('victory.imagePlayAt'),
+          },
+        },
+        t('victory.shareImageText', { date: todayStr, count, url })
+      );
+
+      if (outcome === 'downloaded') {
+        setImageNote(t('victory.imageDownloaded'));
+        setTimeout(() => setImageNote(''), 5000);
+      }
+    } catch (err) {
+      console.error('Error sharing story image:', err);
+      setImageNote(t('victory.imageError'));
+      setTimeout(() => setImageNote(''), 5000);
+    } finally {
+      setImageSharing(false);
+    }
   };
 
   if (loading) {
@@ -269,7 +340,7 @@ export default function GamePage() {
       {/* Main Game Interface */}
       {characters.length === 0 ? (
         <div className="alert alert-info card" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'center', flexDirection: 'column', gap: '1rem', padding: '3rem' }}>
-          <Info size={48} style={{ color: 'var(--accent)', marginBottom: '0.5rem' }} />
+          <Info size={48} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{t('home.empty.title')}</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
             {t('home.empty.body', { page: t('nav.myCharacter') })}
@@ -456,6 +527,9 @@ export default function GamePage() {
             guesses={guesses}
             shareSuccess={shareSuccess}
             onShare={copyToClipboard}
+            onShareImage={shareStoryCard}
+            imageSharing={imageSharing}
+            imageNote={imageNote}
             onClose={() => setShowWinModal(false)}
             todayStr={todayStr}
           />

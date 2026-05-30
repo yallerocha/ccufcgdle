@@ -102,14 +102,21 @@ router.delete('/users', async (req, res) => {
   }
 });
 
-// POST /api/admin/force-daily — set today's character (specific or random).
+// POST /api/admin/force-daily — set today's person (specific or random) and
+// reset today's round (progress + ranking).
 router.post('/force-daily', async (req, res) => {
   try {
     const { characterId } = req.body ?? {};
     const today = getLocalDateString();
 
-    // 1. Delete today's daily character if it exists
-    await prisma.dailyCharacter.deleteMany({ where: { date: today } });
+    // 1. Reset today's round: remove the current pick AND everyone's progress and
+    // ranking results for today, so the new person of the day starts from a clean
+    // slate (otherwise the ranking would mix results from different targets).
+    await prisma.$transaction([
+      prisma.dailyCharacter.deleteMany({ where: { date: today } }),
+      prisma.dailyProgress.deleteMany({ where: { date: today } }),
+      prisma.gameResult.deleteMany({ where: { date: today } }),
+    ]);
 
     let selectedCharacter;
 
@@ -130,12 +137,12 @@ router.post('/force-daily', async (req, res) => {
 
     if (!selectedCharacter) {
       return res.status(400).json({
-        error: 'Não foi possível selecionar um personagem. Verifique se há usuários cadastrados.',
+        error: 'Não foi possível selecionar uma pessoa. Verifique se há usuários cadastrados.',
       });
     }
 
     return res.json({
-      message: 'Personagem do dia atualizado!',
+      message: 'Pessoa do dia atualizada!',
       character: {
         id: selectedCharacter.id,
         name: selectedCharacter.name,
@@ -143,7 +150,7 @@ router.post('/force-daily', async (req, res) => {
     });
   } catch (error) {
     console.error('Error forcing daily character:', error);
-    return res.status(500).json({ error: 'Erro ao atualizar personagem do dia.' });
+    return res.status(500).json({ error: 'Erro ao atualizar a pessoa do dia.' });
   }
 });
 

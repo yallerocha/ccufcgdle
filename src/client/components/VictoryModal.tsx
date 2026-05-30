@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Share2, Clock } from 'lucide-react';
+import { Trophy, Share2, Clock, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/client/lib/api';
 
@@ -32,6 +32,9 @@ interface VictoryModalProps {
   guesses: any[];
   shareSuccess: boolean;
   onShare: () => void;
+  onShareImage: () => void;
+  imageSharing: boolean;
+  imageNote: string;
   onClose: () => void;
   todayStr: string;
 }
@@ -44,6 +47,9 @@ export function VictoryModal({
   guesses,
   shareSuccess,
   onShare,
+  onShareImage,
+  imageSharing,
+  imageNote,
   onClose,
   todayStr,
 }: VictoryModalProps) {
@@ -236,7 +242,16 @@ export function VictoryModal({
       </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <button onClick={onShare} className="btn" style={{ width: '100%' }}>
+          <button onClick={onShareImage} disabled={imageSharing} className="btn" style={{ width: '100%' }}>
+            <ImageIcon size={18} />
+            {imageSharing ? t('victory.sharingImage') : t('victory.shareImage')}
+          </button>
+          {imageNote && (
+            <div className="alert alert-info" style={{ padding: '0.5rem 0.75rem', fontSize: '0.82rem', textAlign: 'center' }}>
+              {imageNote}
+            </div>
+          )}
+          <button onClick={onShare} className="btn btn-secondary" style={{ width: '100%' }}>
             <Share2 size={18} />
             {shareSuccess ? t('victory.copied') : t('victory.share')}
           </button>

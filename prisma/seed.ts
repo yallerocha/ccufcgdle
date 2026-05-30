@@ -7,8 +7,8 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// Personagens ficticios tematicos do LSD (Laboratorio de Sistemas Distribuidos).
-// O campo `lab` agora representa o subgrupo / linha de pesquisa dentro do LSD.
+// Pessoas ficticias tematicas do LSD (Laboratorio de Sistemas Distribuidos),
+// usadas apenas para popular o banco em desenvolvimento.
 const mockUsers = [
   {
     email: 'yalle.silva@lsd.ufcg.edu.br',
@@ -122,7 +122,7 @@ async function main() {
   // Hash a default password: "senha123"
   const passwordHash = await bcrypt.hash('senha123', 10);
 
-  // Clear existing characters (for a clean seed)
+  // Clear existing data (for a clean seed)
   await prisma.dailyCharacter.deleteMany({});
   await prisma.user.deleteMany({});
 
@@ -138,29 +138,9 @@ async function main() {
     console.log(`Created user: ${createdUser.name} (${createdUser.email})`);
   }
 
-  // Set the first user as character of the day for testing
-  const firstUser = await prisma.user.findFirst({
-    where: { name: 'Prof.Brasileiro' }
-  });
-
-  if (firstUser) {
-    const today = new Date();
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Recife',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-    const todayStr = formatter.format(today);
-
-    await prisma.dailyCharacter.create({
-      data: {
-        date: todayStr,
-        characterId: firstUser.id
-      }
-    });
-    console.log(`Set Prof.Brasileiro as daily character for date ${todayStr}`);
-  }
+  // Intentionally NOT pinning a "person of the day": the app picks one at
+  // random on the first guess of each day and persists it (see
+  // getOrCreateDailyCharacter), so everyone gets the same random person.
 
   console.log('Seeding completed successfully!');
 }

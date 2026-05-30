@@ -173,7 +173,7 @@ export default function AdminPage() {
     );
   }
 
-  // List of active characters for the manual force select dropdown
+  // List of active people for the manual force-select dropdown
   const activeUsers = users.filter(u => {
     // Active check (isActive + logged in within 30 days)
     const lastLoginDate = new Date(u.lastLogin);
@@ -201,7 +201,7 @@ export default function AdminPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
         
-        {/* Force Character of the Day Card */}
+        {/* Force Person of the Day card */}
         <div className="card">
           <h3 className="card-title">
             <Shuffle size={20} style={{ color: 'var(--primary)' }} /> {t('admin.dailyTitle')}
@@ -327,7 +327,7 @@ export default function AdminPage() {
                               style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
                               title={u.isAdmin ? t('admin.actionRemoveAdmin') : t('admin.actionMakeAdmin')}
                             >
-                              <Shield size={14} style={{ color: u.isAdmin ? '#f59e0b' : 'var(--accent)' }} />
+                              <Shield size={14} style={{ color: u.isAdmin ? '#f59e0b' : 'var(--text-muted)' }} />
                             </button>
 
                             <button
