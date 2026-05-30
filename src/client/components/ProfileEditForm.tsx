@@ -17,7 +17,7 @@ const ENTRY_OPTIONS = [
   '2024.1', '2024.2', '2025.1', '2025.2',
   '2026.1'
 ];
-const LANGUAGE_OPTIONS = ['C', 'Java', 'Python', 'Haskell', 'JavaScript', 'Rust', 'C++', 'Go', 'Prolog', 'Outra'];
+const COLAB_OPTIONS = ['Sim', 'Não'];
 const AREA_OPTIONS = ['Engenharia de Software', 'Sistemas Distribuídos / Redes', 'Ciência de Dados / IA', 'Teoria da Computação', 'Hardware / Embarcados', 'Segurança da Informação', 'Outra'];
 // Projetos / linhas de pesquisa dentro do LSD (multivalor)
 const PROJECT_OPTIONS = ['Computação em Nuvem', 'Computação na Borda', 'Blockchain', 'Big Data', 'HPC', 'Observabilidade', 'IoT', 'Computação Verde', 'Outro'];
@@ -33,7 +33,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [gender, setGender] = useState(user.gender);
   const [role, setRole] = useState(user.role);
   const [entrySemester, setEntrySemester] = useState(user.entrySemester);
-  const [favoriteLanguage, setFavoriteLanguage] = useState(user.favoriteLanguage);
+  const [isColab, setIsColab] = useState(user.isColab);
   const [area, setArea] = useState(user.area);
   const [projects, setProjects] = useState<string[]>(user.projects ?? []);
 
@@ -50,7 +50,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     setGender(user.gender);
     setRole(user.role);
     setEntrySemester(user.entrySemester);
-    setFavoriteLanguage(user.favoriteLanguage);
+    setIsColab(user.isColab);
     setArea(user.area);
     setProjects(user.projects ?? []);
     setLikesCoffee(user.likesCoffee);
@@ -73,7 +73,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     try {
       const res = await apiFetch('/api/auth/me', {
         method: 'PUT',
-        body: JSON.stringify({ gender, role, entrySemester, favoriteLanguage, area, projects, likesCoffee, photoUrl })
+        body: JSON.stringify({ gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl })
       });
       const data = await res.json();
       setSubmitting(false);
@@ -124,7 +124,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
           </div>
           <div className="form-row">
             <div className="form-group"><label>{t('profileEdit.entryLabel')}</label><select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>{ENTRY_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-            <div className="form-group"><label>{t('profileEdit.languageLabel')}</label><select value={favoriteLanguage} onChange={(e) => setFavoriteLanguage(e.target.value)}>{LANGUAGE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group"><label>{t('profileEdit.colabsLabel')}</label><select value={isColab} onChange={(e) => setIsColab(e.target.value)}>{COLAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
           </div>
           <div className="form-group"><label>{t('profileEdit.areaLabel')}</label><select value={area} onChange={(e) => setArea(e.target.value)}>{AREA_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
           <div className="form-group">

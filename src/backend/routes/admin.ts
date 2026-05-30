@@ -21,7 +21,7 @@ router.get('/users', async (_req, res) => {
         gender: true,
         role: true,
         entrySemester: true,
-        favoriteLanguage: true,
+        isColab: true,
         area: true,
         projects: true,
         likesCoffee: true,

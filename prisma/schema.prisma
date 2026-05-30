@@ -16,7 +16,7 @@ model User {
   gender           String           // "Masculino", "Feminino", "Outro"
   role             String           // "Estudante", "Professor", "Ex-aluno", "Técnico"
   entrySemester    String           // e.g. "2020.1", "2023.2", "Antes de 2018"
-  favoriteLanguage String           // "C", "Java", "Python", "Haskell", "JavaScript", "Rust", "C++", "Go", "Prolog", "Outra"
+  isColab          String           // "Sim", "Não" — se a pessoa é do Colabs
   area             String           // "Engenharia de Software", "Sistemas", "Ciência de Dados / IA", "Teoria", "Hardware", "Segurança", "Outra"
   projects         String[]         // Projetos/linhas no LSD (uma pessoa pode estar em vários)
   likesCoffee      String           // "Sim", "Não", "Só energético"

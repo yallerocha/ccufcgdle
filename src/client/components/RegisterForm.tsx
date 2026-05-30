@@ -19,7 +19,7 @@ const ENTRY_OPTIONS = [
   '2025.1', '2025.2',
   '2026.1'
 ];
-const LANGUAGE_OPTIONS = ['C', 'Java', 'Python', 'Haskell', 'JavaScript', 'Rust', 'C++', 'Go', 'Prolog', 'Outra'];
+const COLAB_OPTIONS = ['Sim', 'Não'];
 const AREA_OPTIONS = [
   'Engenharia de Software',
   'Sistemas Distribuídos / Redes',
@@ -46,7 +46,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const [gender, setGender] = useState(GENDER_OPTIONS[0]);
   const [role, setRole] = useState(ROLE_OPTIONS[0]);
   const [entrySemester, setEntrySemester] = useState(ENTRY_OPTIONS[0]);
-  const [favoriteLanguage, setFavoriteLanguage] = useState(LANGUAGE_OPTIONS[0]);
+  const [isColab, setIsColab] = useState(COLAB_OPTIONS[0]);
   const [area, setArea] = useState(AREA_OPTIONS[0]);
   const [projects, setProjects] = useState<string[]>([]);
 
@@ -79,7 +79,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
     try {
       const res = await apiFetch('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name, gender, role, entrySemester, favoriteLanguage, area, projects, likesCoffee, photoUrl })
+        body: JSON.stringify({ email, password, name, gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl })
       });
       const data = await res.json();
       setSubmitting(false);
@@ -150,9 +150,9 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
               </select>
             </div>
             <div className="form-group">
-              <label>{t('register.languageLabel')}</label>
-              <select value={favoriteLanguage} onChange={(e) => setFavoriteLanguage(e.target.value)}>
-                {LANGUAGE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              <label>{t('register.colabsLabel')}</label>
+              <select value={isColab} onChange={(e) => setIsColab(e.target.value)}>
+                {COLAB_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
             </div>
           </div>

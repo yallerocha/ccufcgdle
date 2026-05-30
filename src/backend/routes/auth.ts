@@ -67,14 +67,14 @@ router.post('/register', async (req, res) => {
       gender,
       role,
       entrySemester,
-      favoriteLanguage,
+      isColab,
       area,
       projects,
       likesCoffee,
       photoUrl,
     } = req.body ?? {};
 
-    if (!email || !password || !name || !gender || !role || !entrySemester || !favoriteLanguage || !area || !likesCoffee) {
+    if (!email || !password || !name || !gender || !role || !entrySemester || !isColab || !area || !likesCoffee) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
 
@@ -124,7 +124,7 @@ router.post('/register', async (req, res) => {
         gender,
         role,
         entrySemester,
-        favoriteLanguage,
+        isColab,
         area,
         projects,
         likesCoffee,
@@ -191,14 +191,14 @@ router.put('/me', requireAuth, async (req, res) => {
       gender,
       role,
       entrySemester,
-      favoriteLanguage,
+      isColab,
       area,
       projects,
       likesCoffee,
       photoUrl,
     } = req.body ?? {};
 
-    if (!gender || !role || !entrySemester || !favoriteLanguage || !area || !likesCoffee) {
+    if (!gender || !role || !entrySemester || !isColab || !area || !likesCoffee) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
 
@@ -212,7 +212,7 @@ router.put('/me', requireAuth, async (req, res) => {
         gender,
         role,
         entrySemester,
-        favoriteLanguage,
+        isColab,
         area,
         projects,
         likesCoffee,

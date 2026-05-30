@@ -369,7 +369,7 @@ export default function GamePage() {
                 <div>{t('home.headers.gender')}</div>
                 <div>{t('home.headers.role')}</div>
                 <div>{t('home.headers.period')}</div>
-                <div>{t('home.headers.language')}</div>
+                <div>{t('home.headers.colabs')}</div>
                 <div>{t('home.headers.area')}</div>
                 <div>{t('home.headers.labProj')}</div>
                 <div>{t('home.headers.coffee')}</div>
@@ -423,10 +423,10 @@ export default function GamePage() {
                     {guess.fields?.entrySemester?.result === 'lower' && <span className="tile-arrow">↓</span>}
                   </div>
 
-                  {/* Favorite Language */}
-                  <div className={`tile ${guess.fields?.favoriteLanguage?.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">{t('home.tiles.language')}</span>
-                    <span className="tile-value">{guess.fields?.favoriteLanguage?.value}</span>
+                  {/* Colabs */}
+                  <div className={`tile ${guess.fields?.isColab?.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">{t('home.tiles.colabs')}</span>
+                    <span className="tile-value">{guess.fields?.isColab?.value}</span>
                   </div>
 
                   {/* Area */}

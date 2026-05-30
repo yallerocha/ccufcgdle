@@ -101,7 +101,7 @@ export interface GuessFeedback {
       value: string; 
       result: 'correct' | 'higher' | 'lower' | 'incorrect' 
     };
-    favoriteLanguage: { value: string; result: 'correct' | 'incorrect' };
+    isColab: { value: string; result: 'correct' | 'incorrect' };
     area: { value: string; result: 'correct' | 'incorrect' };
     // Multivalor: 'correct' = mesmo conjunto, 'partial' = ao menos 1 em comum,
     // 'incorrect' = nenhum projeto em comum.
@@ -170,9 +170,9 @@ export function compareCharacters(guess: User, target: User): GuessFeedback {
         value: guess.entrySemester,
         result: entrySemResult
       },
-      favoriteLanguage: {
-        value: guess.favoriteLanguage,
-        result: guess.favoriteLanguage === target.favoriteLanguage ? 'correct' : 'incorrect'
+      isColab: {
+        value: guess.isColab,
+        result: guess.isColab === target.isColab ? 'correct' : 'incorrect'
       },
       area: {
         value: guess.area,

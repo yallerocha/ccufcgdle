@@ -10,7 +10,7 @@ export interface User {
   gender: string;
   role: string;
   entrySemester: string;
-  favoriteLanguage: string;
+  isColab: string;
   area: string;
   projects: string[];
   likesCoffee: string;
