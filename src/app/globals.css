@@ -535,6 +535,52 @@ input:focus, select:focus, textarea:focus {
   color: white;
 }
 
+/* Projetos: correspondência parcial (ao menos um projeto em comum) */
+.tile.partial {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+/* Multi-seleção de projetos (chips com checkbox) */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.checkbox-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-input);
+  cursor: pointer;
+  font-size: 0.85rem;
+  user-select: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.checkbox-chip:hover {
+  border-color: var(--primary);
+}
+
+.checkbox-chip.selected {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.checkbox-chip input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
 /* Success Modal */
 .modal-overlay {
   position: fixed;

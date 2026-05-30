@@ -23,7 +23,7 @@ router.get('/users', async (_req, res) => {
         entrySemester: true,
         favoriteLanguage: true,
         area: true,
-        lab: true,
+        projects: true,
         likesCoffee: true,
         lastLogin: true,
         isActive: true,

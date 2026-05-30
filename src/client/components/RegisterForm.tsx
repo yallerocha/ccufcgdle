@@ -29,9 +29,9 @@ const AREA_OPTIONS = [
   'Segurança da Informação',
   'Outra'
 ];
-// Subgrupos / linhas de pesquisa dentro do LSD
-const LAB_OPTIONS = ['Computação em Nuvem', 'Computação na Borda', 'Blockchain', 'Big Data', 'HPC', 'Observabilidade', 'IoT', 'Computação Verde', 'Outro'];
-const COFFEE_OPTIONS = ['Sim', 'Não', 'Só energético'];
+// Projetos / linhas de pesquisa dentro do LSD (multivalor)
+const PROJECT_OPTIONS = ['Computação em Nuvem', 'Computação na Borda', 'Blockchain', 'Big Data', 'HPC', 'Observabilidade', 'IoT', 'Computação Verde', 'Outro'];
+const COFFEE_OPTIONS = ['Sim', 'Não'];
 
 interface RegisterFormProps {
   onRegisterSuccess: () => void;
@@ -48,7 +48,11 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const [entrySemester, setEntrySemester] = useState(ENTRY_OPTIONS[0]);
   const [favoriteLanguage, setFavoriteLanguage] = useState(LANGUAGE_OPTIONS[0]);
   const [area, setArea] = useState(AREA_OPTIONS[0]);
-  const [lab, setLab] = useState(LAB_OPTIONS[0]);
+  const [projects, setProjects] = useState<string[]>([]);
+
+  const toggleProject = (proj: string) => {
+    setProjects((prev) => prev.includes(proj) ? prev.filter((p) => p !== proj) : [...prev, proj]);
+  };
   const [likesCoffee, setLikesCoffee] = useState(COFFEE_OPTIONS[0]);
   const [photoUrl, setPhotoUrl] = useState('');
 
@@ -75,7 +79,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
     try {
       const res = await apiFetch('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name, gender, role, entrySemester, favoriteLanguage, area, lab, likesCoffee, photoUrl })
+        body: JSON.stringify({ email, password, name, gender, role, entrySemester, favoriteLanguage, area, projects, likesCoffee, photoUrl })
       });
       const data = await res.json();
       setSubmitting(false);
@@ -153,19 +157,24 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>{t('register.areaLabel')}</label>
-              <select value={area} onChange={(e) => setArea(e.target.value)}>
-                {AREA_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
+          <div className="form-group">
+            <label>{t('register.areaLabel')}</label>
+            <select value={area} onChange={(e) => setArea(e.target.value)}>
+              {AREA_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>{t('register.labLabel')}</label>
+            <div className="checkbox-group">
+              {PROJECT_OPTIONS.map(opt => (
+                <label key={opt} className={`checkbox-chip ${projects.includes(opt) ? 'selected' : ''}`}>
+                  <input type="checkbox" checked={projects.includes(opt)} onChange={() => toggleProject(opt)} />
+                  {opt}
+                </label>
+              ))}
             </div>
-            <div className="form-group">
-              <label>{t('register.labLabel')}</label>
-              <select value={lab} onChange={(e) => setLab(e.target.value)}>
-                {LAB_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
-            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{t('register.projectsHint')}</span>
           </div>
 
           <div className="form-group">

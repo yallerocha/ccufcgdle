@@ -103,7 +103,9 @@ export interface GuessFeedback {
     };
     favoriteLanguage: { value: string; result: 'correct' | 'incorrect' };
     area: { value: string; result: 'correct' | 'incorrect' };
-    lab: { value: string; result: 'correct' | 'incorrect' };
+    // Multivalor: 'correct' = mesmo conjunto, 'partial' = ao menos 1 em comum,
+    // 'incorrect' = nenhum projeto em comum.
+    projects: { value: string; result: 'correct' | 'partial' | 'incorrect' };
     likesCoffee: { value: string; result: 'correct' | 'incorrect' };
   };
 }
@@ -125,6 +127,19 @@ export function compareCharacters(guess: User, target: User): GuessFeedback {
 
   const guessSemVal = parseSemester(guess.entrySemester);
   const targetSemVal = parseSemester(target.entrySemester);
+
+  // Compara conjuntos de projetos (uma pessoa pode ter vários).
+  const guessProjects = [...new Set(guess.projects)];
+  const targetSet = new Set(target.projects);
+  const shared = guessProjects.filter((p) => targetSet.has(p));
+  let projectsResult: 'correct' | 'partial' | 'incorrect';
+  if (shared.length === guessProjects.length && shared.length === targetSet.size) {
+    projectsResult = 'correct'; // mesmo conjunto exato
+  } else if (shared.length > 0) {
+    projectsResult = 'partial'; // pelo menos um projeto em comum
+  } else {
+    projectsResult = 'incorrect';
+  }
 
   let entrySemResult: 'correct' | 'higher' | 'lower' | 'incorrect' = 'incorrect';
   if (guess.entrySemester === target.entrySemester) {
@@ -163,9 +178,9 @@ export function compareCharacters(guess: User, target: User): GuessFeedback {
         value: guess.area,
         result: guess.area === target.area ? 'correct' : 'incorrect'
       },
-      lab: {
-        value: guess.lab,
-        result: guess.lab === target.lab ? 'correct' : 'incorrect'
+      projects: {
+        value: guess.projects.join(', '),
+        result: projectsResult
       },
       likesCoffee: {
         value: guess.likesCoffee,

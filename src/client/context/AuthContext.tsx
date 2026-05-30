@@ -12,7 +12,7 @@ export interface User {
   entrySemester: string;
   favoriteLanguage: string;
   area: string;
-  lab: string;
+  projects: string[];
   likesCoffee: string;
   lastLogin: string;
   isActive: boolean;

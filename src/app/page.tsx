@@ -73,7 +73,10 @@ export default function GamePage() {
     }
 
     loadGameData();
-  }, [todayStr, t]);
+    // Intentionally excludes `t`: game state must not reload (and reopen the
+    // victory modal) just because the language changed. Only reload per day.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayStr]);
 
   // Click outside listener for dropdown
   useEffect(() => {
@@ -194,7 +197,7 @@ export default function GamePage() {
         .filter(([key]) => key !== 'name') // Don't show emoji for name field, but show for remaining 7
         .map(([_, field]) => {
           if (field.result === 'correct') return '🟩';
-          if (field.result === 'higher' || field.result === 'lower') return '🟧';
+          if (field.result === 'higher' || field.result === 'lower' || field.result === 'partial') return '🟧';
           return '⬛';
         })
         .join('');
@@ -432,10 +435,16 @@ export default function GamePage() {
                     <span className="tile-value">{guess.fields.area.value}</span>
                   </div>
 
-                  {/* Lab */}
-                  <div className={`tile ${guess.fields.lab.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                  {/* Projetos (multivalor: parcial = laranja quando há projeto em comum) */}
+                  <div className={`tile ${
+                    guess.fields.projects.result === 'correct'
+                      ? 'correct'
+                      : guess.fields.projects.result === 'partial'
+                      ? 'partial'
+                      : 'incorrect'
+                  }`}>
                     <span className="tile-label">{t('home.tiles.lab')}</span>
-                    <span className="tile-value">{guess.fields.lab.value}</span>
+                    <span className="tile-value">{guess.fields.projects.value}</span>
                   </div>
 
                   {/* Likes Coffee */}

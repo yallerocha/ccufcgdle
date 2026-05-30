@@ -69,13 +69,17 @@ router.post('/register', async (req, res) => {
       entrySemester,
       favoriteLanguage,
       area,
-      lab,
+      projects,
       likesCoffee,
       photoUrl,
     } = req.body ?? {};
 
-    if (!email || !password || !name || !gender || !role || !entrySemester || !favoriteLanguage || !area || !lab || !likesCoffee) {
+    if (!email || !password || !name || !gender || !role || !entrySemester || !favoriteLanguage || !area || !likesCoffee) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    if (!Array.isArray(projects) || projects.length === 0) {
+      return res.status(400).json({ error: 'Selecione ao menos um projeto.' });
     }
 
     if (name.length < 3 || name.length > 25) {
@@ -122,7 +126,7 @@ router.post('/register', async (req, res) => {
         entrySemester,
         favoriteLanguage,
         area,
-        lab,
+        projects,
         likesCoffee,
         photoUrl,
         isAdmin,
@@ -189,13 +193,17 @@ router.put('/me', requireAuth, async (req, res) => {
       entrySemester,
       favoriteLanguage,
       area,
-      lab,
+      projects,
       likesCoffee,
       photoUrl,
     } = req.body ?? {};
 
-    if (!gender || !role || !entrySemester || !favoriteLanguage || !area || !lab || !likesCoffee) {
+    if (!gender || !role || !entrySemester || !favoriteLanguage || !area || !likesCoffee) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    if (!Array.isArray(projects) || projects.length === 0) {
+      return res.status(400).json({ error: 'Selecione ao menos um projeto.' });
     }
 
     const updatedUser = await prisma.user.update({
@@ -206,7 +214,7 @@ router.put('/me', requireAuth, async (req, res) => {
         entrySemester,
         favoriteLanguage,
         area,
-        lab,
+        projects,
         likesCoffee,
         photoUrl,
         lastLogin: new Date(),

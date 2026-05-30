@@ -18,7 +18,7 @@ model User {
   entrySemester    String           // e.g. "2020.1", "2023.2", "Antes de 2018"
   favoriteLanguage String           // "C", "Java", "Python", "Haskell", "JavaScript", "Rust", "C++", "Go", "Prolog", "Outra"
   area             String           // "Engenharia de Software", "Sistemas", "Ciência de Dados / IA", "Teoria", "Hardware", "Segurança", "Outra"
-  lab              String           // "LSD", "SPLab", "UFCG.AI", "VIRTUS", "LCC", "PET", "CACo", "Nenhum", "Outro"
+  projects         String[]         // Projetos/linhas no LSD (uma pessoa pode estar em vários)
   likesCoffee      String           // "Sim", "Não", "Só energético"
   photoUrl         String?          // Base64 data URL or photo URL
   

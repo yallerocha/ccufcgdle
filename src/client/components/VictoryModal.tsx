@@ -143,7 +143,7 @@ export function VictoryModal({
                   .filter(([key]) => key !== 'name')
                   .map(([_, f]: any) => {
                     if (f.result === 'correct') return '🟩';
-                    if (f.result === 'higher' || f.result === 'lower') return '🟧';
+                    if (f.result === 'higher' || f.result === 'lower' || f.result === 'partial') return '🟧';
                     return '⬛';
                   })
                   .join('');

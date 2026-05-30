@@ -19,9 +19,9 @@ const ENTRY_OPTIONS = [
 ];
 const LANGUAGE_OPTIONS = ['C', 'Java', 'Python', 'Haskell', 'JavaScript', 'Rust', 'C++', 'Go', 'Prolog', 'Outra'];
 const AREA_OPTIONS = ['Engenharia de Software', 'Sistemas Distribuídos / Redes', 'Ciência de Dados / IA', 'Teoria da Computação', 'Hardware / Embarcados', 'Segurança da Informação', 'Outra'];
-// Subgrupos / linhas de pesquisa dentro do LSD
-const LAB_OPTIONS = ['Computação em Nuvem', 'Computação na Borda', 'Blockchain', 'Big Data', 'HPC', 'Observabilidade', 'IoT', 'Computação Verde', 'Outro'];
-const COFFEE_OPTIONS = ['Sim', 'Não', 'Só energético'];
+// Projetos / linhas de pesquisa dentro do LSD (multivalor)
+const PROJECT_OPTIONS = ['Computação em Nuvem', 'Computação na Borda', 'Blockchain', 'Big Data', 'HPC', 'Observabilidade', 'IoT', 'Computação Verde', 'Outro'];
+const COFFEE_OPTIONS = ['Sim', 'Não'];
 
 interface ProfileEditFormProps {
   user: User;
@@ -35,7 +35,11 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [entrySemester, setEntrySemester] = useState(user.entrySemester);
   const [favoriteLanguage, setFavoriteLanguage] = useState(user.favoriteLanguage);
   const [area, setArea] = useState(user.area);
-  const [lab, setLab] = useState(user.lab);
+  const [projects, setProjects] = useState<string[]>(user.projects ?? []);
+
+  const toggleProject = (proj: string) => {
+    setProjects((prev) => prev.includes(proj) ? prev.filter((p) => p !== proj) : [...prev, proj]);
+  };
   const [likesCoffee, setLikesCoffee] = useState(user.likesCoffee);
   const [photoUrl, setPhotoUrl] = useState(user.photoUrl || '');
   const [errorMsg, setErrorMsg] = useState('');
@@ -48,7 +52,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     setEntrySemester(user.entrySemester);
     setFavoriteLanguage(user.favoriteLanguage);
     setArea(user.area);
-    setLab(user.lab);
+    setProjects(user.projects ?? []);
     setLikesCoffee(user.likesCoffee);
     setPhotoUrl(user.photoUrl || '');
   }, [user]);
@@ -69,7 +73,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     try {
       const res = await apiFetch('/api/auth/me', {
         method: 'PUT',
-        body: JSON.stringify({ gender, role, entrySemester, favoriteLanguage, area, lab, likesCoffee, photoUrl })
+        body: JSON.stringify({ gender, role, entrySemester, favoriteLanguage, area, projects, likesCoffee, photoUrl })
       });
       const data = await res.json();
       setSubmitting(false);
@@ -122,9 +126,17 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             <div className="form-group"><label>{t('profileEdit.entryLabel')}</label><select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>{ENTRY_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
             <div className="form-group"><label>{t('profileEdit.languageLabel')}</label><select value={favoriteLanguage} onChange={(e) => setFavoriteLanguage(e.target.value)}>{LANGUAGE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
           </div>
-          <div className="form-row">
-            <div className="form-group"><label>{t('profileEdit.areaLabel')}</label><select value={area} onChange={(e) => setArea(e.target.value)}>{AREA_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-            <div className="form-group"><label>{t('profileEdit.labLabel')}</label><select value={lab} onChange={(e) => setLab(e.target.value)}>{LAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+          <div className="form-group"><label>{t('profileEdit.areaLabel')}</label><select value={area} onChange={(e) => setArea(e.target.value)}>{AREA_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+          <div className="form-group">
+            <label>{t('profileEdit.labLabel')}</label>
+            <div className="checkbox-group">
+              {PROJECT_OPTIONS.map(opt => (
+                <label key={opt} className={`checkbox-chip ${projects.includes(opt) ? 'selected' : ''}`}>
+                  <input type="checkbox" checked={projects.includes(opt)} onChange={() => toggleProject(opt)} />
+                  {opt}
+                </label>
+              ))}
+            </div>
           </div>
           <div className="form-group"><label>{t('profileEdit.coffeeLabel')}</label><select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
 
