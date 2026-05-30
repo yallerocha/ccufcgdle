@@ -537,6 +537,7 @@ input:focus, select:focus, textarea:focus {
   border-radius: 9999px;
   white-space: nowrap;
   flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .badge-active {
@@ -629,15 +630,18 @@ input:focus, select:focus, textarea:focus {
 .quick-rules li {
   font-size: 0.9rem;
   color: var(--text-muted);
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+  position: relative;
+  padding-left: 1.25rem;
+  line-height: 1.6;
 }
 
 .quick-rules li::before {
   content: "•";
   color: var(--primary);
   font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 
 /* Alert notices */
