@@ -26,6 +26,7 @@ export default function GamePage() {
   const [showWinModal, setShowWinModal] = useState(false);
   const [targetName, setTargetName] = useState('');
   const [targetPhoto, setTargetPhoto] = useState('');
+  const [startTime, setStartTime] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -57,6 +58,7 @@ export default function GamePage() {
           setIsWon(savedState.isWon || false);
           setTargetName(savedState.targetName || '');
           setTargetPhoto(savedState.targetPhoto || '');
+          setStartTime(savedState.startTime ?? null);
           if (savedState.isWon) {
             setShowWinModal(true);
           }
@@ -91,10 +93,28 @@ export default function GamePage() {
   });
 
   // Handle guess submission
+  const submitResult = async (attempts: number, durationMs: number) => {
+    // Only logged-in players are ranked; ignore failures silently.
+    if (!user) return;
+    try {
+      await fetch('/api/game/result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attempts, durationMs }),
+      });
+    } catch (err) {
+      console.error('Error submitting result:', err);
+    }
+  };
+
   const handleGuess = async (characterId: string) => {
     if (isWon || submitting) return;
     setSubmitting(true);
     setErrorMsg('');
+
+    // Start the clock on the first guess (persisted so reloads keep the timer).
+    const effectiveStart = startTime ?? Date.now();
+    if (startTime === null) setStartTime(effectiveStart);
 
     try {
       const res = await fetch('/api/game/guess', {
@@ -124,12 +144,14 @@ export default function GamePage() {
         setTargetName(target);
         setTargetPhoto(photo);
         setShowWinModal(true);
+        // Record the result for the daily ranking.
+        submitResult(updatedGuesses.length, Date.now() - effectiveStart);
       }
 
       // Save state to local storage
       localStorage.setItem(
         `ufcgdle-game-state-${todayStr}`,
-        JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo })
+        JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo, startTime: effectiveStart })
       );
 
       // Reset search inputs

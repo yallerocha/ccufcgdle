@@ -6,11 +6,26 @@ import type { Dictionary } from './pt';
 export const en: Dictionary = {
   nav: {
     play: 'Play',
+    ranking: 'Ranking',
     myCharacter: 'My Character',
     admin: 'Admin',
     logout: 'Log out',
     joinLogin: 'Join / Sign in',
     sub: 'Comp-UFCG',
+  },
+  ranking: {
+    title: "Today's Ranking",
+    subtitle: "Who guessed today's character in the fewest attempts. On a tie, the fastest player wins.",
+    loading: 'Loading ranking...',
+    empty: 'No one is on today\'s ranking yet. Be the first to get it!',
+    loginHint: 'Sign in to appear on the ranking when you win.',
+    error: 'Failed to load the ranking.',
+    thRank: '#',
+    thPlayer: 'Player',
+    thAttempts: 'Attempts',
+    thTime: 'Time',
+    attempts_one: '{{count}} attempt',
+    attempts_other: '{{count}} attempts',
   },
   footer: {
     text: 'CCDLE © 2026. Made for the Computer Science program - UFCG.',

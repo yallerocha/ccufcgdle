@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/client/context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Terminal, Gamepad2, User, ShieldCheck, LogOut } from 'lucide-react';
+import { Terminal, Gamepad2, Trophy, User, ShieldCheck, LogOut } from 'lucide-react';
 import ThemeToggle from '@/client/components/ThemeToggle';
 import LanguageToggle from '@/client/components/LanguageToggle';
 
@@ -24,6 +24,10 @@ export default function Navbar() {
         <div className="nav-links">
           <Link href="/" className="nav-link">
             <Gamepad2 size={18} /> {t('nav.play')}
+          </Link>
+
+          <Link href="/ranking" className="nav-link">
+            <Trophy size={18} /> {t('nav.ranking')}
           </Link>
 
           {user ? (

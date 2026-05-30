@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Trophy, Share2 } from 'lucide-react';
 
@@ -28,9 +29,14 @@ export function VictoryModal({
   todayStr,
 }: VictoryModalProps) {
   const { t } = useTranslation();
-  if (!show) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  return (
+  if (!show || !mounted) return null;
+
+  // Render through a portal on <body> so the fixed overlay isn't trapped by the
+  // transformed `main.fade-in` ancestor and can span the full viewport.
+  return createPortal(
     <div className="modal-overlay">
       <div className="modal-content">
         <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
@@ -95,6 +101,7 @@ export function VictoryModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

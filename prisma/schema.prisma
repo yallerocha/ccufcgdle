@@ -30,6 +30,7 @@ model User {
   updatedAt        DateTime         @updatedAt
 
   dailyCharacters  DailyCharacter[]
+  gameResults      GameResult[]
 }
 
 model DailyCharacter {
@@ -38,4 +39,19 @@ model DailyCharacter {
   characterId String
   character   User     @relation(fields: [characterId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+}
+
+// One result per logged-in player per day. Ranking: fewer attempts ranks
+// higher; ties broken by shorter durationMs (time from 1st guess to win).
+model GameResult {
+  id         Int      @id @default(autoincrement())
+  date       String   // Format: "YYYY-MM-DD"
+  playerId   String
+  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  attempts   Int
+  durationMs Int
+  createdAt  DateTime @default(now())
+
+  @@unique([date, playerId])
+  @@index([date, attempts, durationMs])
 }

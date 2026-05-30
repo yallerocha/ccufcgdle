@@ -2,11 +2,26 @@
 export const pt = {
   nav: {
     play: 'Jogar',
+    ranking: 'Ranking',
     myCharacter: 'Meu Personagem',
     admin: 'Admin',
     logout: 'Sair',
     joinLogin: 'Participar / Entrar',
     sub: 'Comp-UFCG',
+  },
+  ranking: {
+    title: 'Ranking de Hoje',
+    subtitle: 'Quem acertou o personagem de hoje com menos tentativas. Em caso de empate, vence quem foi mais rápido.',
+    loading: 'Carregando ranking...',
+    empty: 'Ninguém entrou no ranking hoje ainda. Seja o primeiro a acertar!',
+    loginHint: 'Faça login para aparecer no ranking quando vencer.',
+    error: 'Erro ao carregar o ranking.',
+    thRank: '#',
+    thPlayer: 'Jogador',
+    thAttempts: 'Tentativas',
+    thTime: 'Tempo',
+    attempts_one: '{{count}} tentativa',
+    attempts_other: '{{count}} tentativas',
   },
   footer: {
     text: 'CCDLE © 2026. Feito para o curso de Ciência da Computação - UFCG.',

@@ -338,7 +338,7 @@ input:focus, select:focus, textarea:focus {
 
 .btn {
   background-color: var(--primary);
-  color: var(--text-primary);
+  color: #ffffff;
   border: none;
   font-family: var(--font-sans);
   font-size: 1rem;
