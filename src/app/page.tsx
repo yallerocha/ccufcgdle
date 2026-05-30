@@ -375,9 +375,9 @@ export default function GamePage() {
                 <div>{t('home.headers.gender')}</div>
                 <div>{t('home.headers.role')}</div>
                 <div>{t('home.headers.period')}</div>
-                <div>{t('home.headers.colabs')}</div>
                 <div>{t('home.headers.area')}</div>
                 <div>{t('home.headers.labProj')}</div>
+                <div>{t('home.headers.colabs')}</div>
                 <div>{t('home.headers.coffee')}</div>
               </div>
 
@@ -429,12 +429,6 @@ export default function GamePage() {
                     {guess.fields?.entrySemester?.result === 'lower' && <span className="tile-arrow">↓</span>}
                   </div>
 
-                  {/* Colabs */}
-                  <div className={`tile ${guess.fields?.isColab?.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">{t('home.tiles.colabs')}</span>
-                    <span className="tile-value">{guess.fields?.isColab?.value}</span>
-                  </div>
-
                   {/* Area */}
                   <div className={`tile ${guess.fields?.area?.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">{t('home.tiles.area')}</span>
@@ -451,6 +445,12 @@ export default function GamePage() {
                   }`}>
                     <span className="tile-label">{t('home.tiles.lab')}</span>
                     <span className="tile-value tile-value-projects" title={guess.fields?.projects?.value}>{guess.fields?.projects?.value}</span>
+                  </div>
+
+                  {/* Colabs */}
+                  <div className={`tile ${guess.fields?.isColab?.result === 'correct' ? 'correct' : 'incorrect'}`}>
+                    <span className="tile-label">{t('home.tiles.colabs')}</span>
+                    <span className="tile-value">{guess.fields?.isColab?.value}</span>
                   </div>
 
                   {/* Likes Coffee */}
