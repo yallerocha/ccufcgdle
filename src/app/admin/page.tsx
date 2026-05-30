@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
+import { apiFetch } from '@/client/lib/api';
 
 interface AdminUser {
   id: string;
@@ -38,7 +39,7 @@ export default function AdminPage() {
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/users');
+      const res = await apiFetch('/api/admin/users');
       if (res.status === 403) {
         setErrorMsg(t('admin.errorPermission'));
         setLoading(false);
@@ -66,9 +67,8 @@ export default function AdminPage() {
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      const res = await fetch('/api/admin/users', {
+      const res = await apiFetch('/api/admin/users', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, isActive: !currentActive })
       });
       const data = await res.json();
@@ -87,9 +87,8 @@ export default function AdminPage() {
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      const res = await fetch('/api/admin/users', {
+      const res = await apiFetch('/api/admin/users', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, isAdmin: !currentAdmin })
       });
       const data = await res.json();
@@ -111,7 +110,7 @@ export default function AdminPage() {
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      const res = await fetch(`/api/admin/users?userId=${userId}`, {
+      const res = await apiFetch(`/api/admin/users?userId=${userId}`, {
         method: 'DELETE'
       });
       const data = await res.json();
@@ -132,9 +131,8 @@ export default function AdminPage() {
     setSubmitting(true);
     
     try {
-      const res = await fetch('/api/admin/force-daily', {
+      const res = await apiFetch('/api/admin/force-daily', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ characterId: forceRandom ? undefined : selectedForceChar })
       });
       

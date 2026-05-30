@@ -93,6 +93,9 @@ export const pt = {
     copied: 'Copiado para o Clipboard!',
     share: 'Compartilhar Resultado',
     back: 'Voltar ao Quadro',
+    rankingPreviewTitle: 'Líderes de Hoje',
+    attemptLabel: 'tentativa',
+    attemptsLabel: 'tentativas',
   },
   login: {
     title: 'Entrar',

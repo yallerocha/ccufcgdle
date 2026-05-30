@@ -3,7 +3,26 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Share2 } from 'lucide-react';
+import { Trophy, Share2, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { apiFetch } from '@/client/lib/api';
+
+interface RankingEntry {
+  rank: number;
+  name: string;
+  photoUrl?: string | null;
+  attempts: number;
+  durationMs: number;
+}
+
+function formatDuration(ms: number): string {
+  const totalSec = Math.round(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m > 0 ? `${m}m ${s.toString().padStart(2, '0')}s` : `${s}s`;
+}
+
+const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 interface VictoryModalProps {
   show: boolean;
@@ -30,7 +49,30 @@ export function VictoryModal({
 }: VictoryModalProps) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [rankingPreview, setRankingPreview] = useState<RankingEntry[]>([]);
+  const [loadingRanking, setLoadingRanking] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (show && todayStr) {
+      setLoadingRanking(true);
+      apiFetch(`/api/game/ranking?date=${todayStr}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.ranking) {
+            setRankingPreview(data.ranking.slice(0, 3));
+          }
+          setLoadingRanking(false);
+        })
+        .catch((err) => {
+          console.error('Error loading ranking preview:', err);
+          setLoadingRanking(false);
+        });
+    }
+  }, [show, todayStr]);
 
   if (!show || !mounted) return null;
 
@@ -73,23 +115,110 @@ export function VictoryModal({
           </div>
         </div>
 
-        <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+      <div style={{
+        display: 'flex',
+        gap: '0.75rem',
+        marginBottom: '1.5rem',
+        alignItems: 'stretch',
+        flexWrap: 'wrap',
+        textAlign: 'left'
+      }}>
+        {/* Left Side: Grid Preview */}
+        <div style={{
+          flex: '1 1 120px',
+          padding: '0.75rem',
+          borderRadius: 'var(--border-radius)',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600 }}>
             {t('victory.gridPreview')}
           </p>
-          <div className="share-blocks">
-            {guesses.map((guess, idx) => {
-              return Object.entries(guess.fields)
-                .filter(([key]) => key !== 'name')
-                .map(([_, f]: any) => {
-                  if (f.result === 'correct') return '🟩';
-                  if (f.result === 'higher' || f.result === 'lower') return '🟧';
-                  return '⬛';
-                })
-                .join('');
-            }).join('\n')}
+          <div className="share-blocks" style={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ whiteSpace: 'pre', fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.4' }}>
+              {guesses.map((guess, idx) => {
+                return Object.entries(guess.fields)
+                  .filter(([key]) => key !== 'name')
+                  .map(([_, f]: any) => {
+                    if (f.result === 'correct') return '🟩';
+                    if (f.result === 'higher' || f.result === 'lower') return '🟧';
+                    return '⬛';
+                  })
+                  .join('');
+              }).join('\n')}
+            </div>
           </div>
         </div>
+
+        {/* Right Side: Ranking Preview */}
+        {rankingPreview.length > 0 && (
+          <Link href="/ranking" className="ranking-preview-card" style={{
+            flex: '1.2 1 160px',
+            padding: '0.75rem',
+            borderRadius: 'var(--border-radius)',
+            backgroundColor: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid var(--border-color)',
+            textDecoration: 'none',
+            color: 'inherit',
+            display: 'block'
+          }}>
+            <h3 style={{
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              marginBottom: '0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: 'var(--text-primary)'
+            }}>
+              <Trophy size={14} style={{ color: 'var(--color-partial)' }} />
+              {t('victory.rankingPreviewTitle')}
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {rankingPreview.map((entry) => (
+                <div key={entry.rank} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '0.85rem',
+                  padding: '0.25rem 0'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontWeight: 700, minWidth: '1.25rem', textAlign: 'center' }}>
+                      {MEDALS[entry.rank] || `${entry.rank}.`}
+                    </span>
+                    {entry.photoUrl ? (
+                      <img src={entry.photoUrl} alt={entry.name} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700 }}>
+                        {entry.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <span style={{ 
+                      fontWeight: 600, 
+                      color: 'var(--text-primary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '90px'
+                    }}>
+                      {entry.name}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                    <span>{entry.attempts}x</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>
+                      <Clock size={10} /> {formatDuration(entry.durationMs)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Link>
+        )}
+      </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <button onClick={onShare} className="btn" style={{ width: '100%' }}>

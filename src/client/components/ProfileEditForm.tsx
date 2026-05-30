@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Clock, Camera, Save } from 'lucide-react';
 import { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
+import { apiFetch } from '@/client/lib/api';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
 const ROLE_OPTIONS = ['Estudante', 'Professor', 'Ex-aluno', 'Técnico'];
@@ -65,9 +66,8 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     e.preventDefault();
     setErrorMsg(''); setSuccessMsg(''); setSubmitting(true);
     try {
-      const res = await fetch('/api/auth/me', {
+      const res = await apiFetch('/api/auth/me', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gender, role, entrySemester, favoriteLanguage, area, lab, likesCoffee, photoUrl })
       });
       const data = await res.json();

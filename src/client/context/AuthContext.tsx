@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiFetch, setToken, clearToken } from '@/client/lib/api';
 
 export interface User {
   id: string;
@@ -36,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const response = await fetch('/api/auth/me');
+      const response = await apiFetch('/api/auth/me');
       const data = await response.json();
       if (data.user) {
         setUser(data.user);
@@ -57,14 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await apiFetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      
+
       const data = await response.json();
       if (response.ok) {
+        if (data.token) setToken(data.token);
         setUser(data.user);
         return { success: true };
       } else {
@@ -76,12 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    // Stateless bearer auth: just drop the token client-side.
+    clearToken();
+    setUser(null);
   };
 
   return (

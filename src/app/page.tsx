@@ -7,6 +7,7 @@ import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
 import { HelpCircle, Search, Trophy, Share2, CheckCircle, Info } from 'lucide-react';
 import { VictoryModal } from '@/client/components/VictoryModal';
+import { apiFetch } from '@/client/lib/api';
 
 interface CharacterOption {
   id: string;
@@ -42,7 +43,7 @@ export default function GamePage() {
       try {
         setLoading(true);
         // 1. Fetch autocomplete characters list
-        const res = await fetch('/api/game/active-characters');
+        const res = await apiFetch('/api/game/active-characters');
         const data = await res.json();
         if (data.characters) {
           setCharacters(data.characters);
@@ -97,9 +98,8 @@ export default function GamePage() {
     // Only logged-in players are ranked; ignore failures silently.
     if (!user) return;
     try {
-      await fetch('/api/game/result', {
+      await apiFetch('/api/game/result', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ attempts, durationMs }),
       });
     } catch (err) {
@@ -117,9 +117,8 @@ export default function GamePage() {
     if (startTime === null) setStartTime(effectiveStart);
 
     try {
-      const res = await fetch('/api/game/guess', {
+      const res = await apiFetch('/api/game/guess', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ guessId: characterId })
       });
 

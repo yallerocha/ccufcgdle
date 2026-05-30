@@ -1,0 +1,23 @@
+# Dockerfile for the standalone Express backend (API only).
+FROM node:20-alpine AS base
+# libc6-compat for Prisma; python3/make/g++ to compile native deps (pg/bcrypt)
+RUN apk add --no-cache libc6-compat python3 make g++
+WORKDIR /app
+
+# Install all dependencies (the backend runs via tsx, so source is kept as-is)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+# Generate Prisma Client against the schema
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ccdle?schema=public"
+RUN npx prisma generate
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+EXPOSE 3001
+
+# Apply schema + seed, then start the API. db push/seed is idempotent.
+CMD ["sh", "-c", "npx prisma db push && npx prisma db seed && npm run start:api"]

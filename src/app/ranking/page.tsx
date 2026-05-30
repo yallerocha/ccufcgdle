@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { Trophy, Clock, Info } from 'lucide-react';
+import { apiFetch } from '@/client/lib/api';
 
 interface RankingEntry {
   rank: number;
@@ -33,7 +34,7 @@ export default function RankingPage() {
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch('/api/game/ranking');
+        const res = await apiFetch('/api/game/ranking');
         const data = await res.json();
         if (res.ok) {
           setRanking(data.ranking || []);

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Camera } from 'lucide-react';
+import { apiFetch, setToken } from '@/client/lib/api';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
 const ROLE_OPTIONS = ['Estudante', 'Professor', 'Ex-aluno', 'Técnico'];
@@ -71,14 +72,14 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
     setErrorMsg('');
     setSubmitting(true);
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await apiFetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name, gender, role, entrySemester, favoriteLanguage, area, lab, likesCoffee, photoUrl })
       });
       const data = await res.json();
       setSubmitting(false);
       if (res.ok) {
+        if (data.token) setToken(data.token);
         onRegisterSuccess();
       } else {
         setErrorMsg(data.error || t('register.error'));

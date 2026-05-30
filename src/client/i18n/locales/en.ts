@@ -97,6 +97,9 @@ export const en: Dictionary = {
     copied: 'Copied to clipboard!',
     share: 'Share result',
     back: 'Back to board',
+    rankingPreviewTitle: "Today's Leaders",
+    attemptLabel: 'attempt',
+    attemptsLabel: 'attempts',
   },
   login: {
     title: 'Sign in',

@@ -825,3 +825,14 @@ input:focus, select:focus, textarea:focus {
   transform: translate(-50%, -55%) scale(1);
   pointer-events: auto;
 }
+
+.ranking-preview-card {
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.ranking-preview-card:hover {
+  border-color: var(--primary) !important;
+  background-color: rgba(139, 92, 246, 0.06) !important;
+  transform: translateY(-2px);
+}
+
