@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Lock } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
@@ -34,16 +34,19 @@ export default function AdminPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [selectedForceChar, setSelectedForceChar] = useState('');
+  const [activeTab, setActiveTab] = useState<'lsdle' | 'users' | 'comingSoon'>('lsdle');
 
   const today = getLocalDateString();
 
-  const loadAdminData = async () => {
+  // When `silent` is true we refresh the data in the background without flipping
+  // the page-level `loading` flag, which would otherwise replace the whole panel
+  // with the loading screen (causing the "reload"/glitch on every toggle).
+  const loadAdminData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await apiFetch('/api/admin/users');
       if (res.status === 403) {
         setErrorMsg(t('admin.errorPermission'));
-        setLoading(false);
         return;
       }
       const data = await res.json();
@@ -54,7 +57,7 @@ export default function AdminPage() {
       console.error('Error loading admin data:', err);
       setErrorMsg(t('admin.errorLoadUsers'));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -75,7 +78,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.ok) {
         setSuccessMsg(data.message);
-        loadAdminData();
+        loadAdminData(true);
       } else {
         setErrorMsg(data.error);
       }
@@ -95,7 +98,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.ok) {
         setSuccessMsg(data.message);
-        loadAdminData();
+        loadAdminData(true);
       } else {
         setErrorMsg(data.error);
       }
@@ -117,7 +120,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.ok) {
         setSuccessMsg(data.message);
-        loadAdminData();
+        loadAdminData(true);
       } else {
         setErrorMsg(data.error);
       }
@@ -203,9 +206,36 @@ export default function AdminPage() {
         onClose={() => { setErrorMsg(''); setSuccessMsg(''); }}
       />
 
+      {/* Per-game / global config tabs */}
+      <div className="admin-tabs">
+        <button
+          type="button"
+          className={`admin-tab ${activeTab === 'lsdle' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('lsdle')}
+        >
+          <Gamepad2 size={18} /> LSDLE
+        </button>
+        <button
+          type="button"
+          className={`admin-tab ${activeTab === 'users' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('users')}
+        >
+          <Shield size={18} /> {t('admin.tabUsers')}
+        </button>
+        <button
+          type="button"
+          className="admin-tab"
+          disabled
+          title={t('admin.comingSoonTitle')}
+        >
+          <Lock size={18} /> {t('admin.tabComingSoon')}
+        </button>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
-        
-        {/* Force Person of the Day card */}
+
+        {/* LSDLE: Force Person of the Day card */}
+        {activeTab === 'lsdle' && (
         <div className="card">
           <h3 className="card-title">
             <Shuffle size={20} style={{ color: 'var(--primary)' }} /> {t('admin.dailyTitle')}
@@ -253,8 +283,10 @@ export default function AdminPage() {
             {t('admin.dailyNote')}
           </span>
         </div>
+        )}
 
         {/* Users Management List */}
+        {activeTab === 'users' && (
         <div className="card" style={{ padding: '1.5rem 2rem' }}>
           <h3 className="card-title" style={{ marginBottom: '1rem' }}>
             <Shield size={20} style={{ color: 'var(--primary)' }} /> {t('admin.usersTitle')} ({users.length})
@@ -328,10 +360,17 @@ export default function AdminPage() {
                               onClick={() => handleToggleAdmin(u.id, u.isAdmin)}
                               disabled={u.id === currentUser.id}
                               className="btn btn-secondary"
-                              style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
+                              style={{
+                                padding: '0.35rem 0.6rem',
+                                fontSize: '0.8rem',
+                                ...(u.isAdmin && {
+                                  backgroundColor: 'var(--primary)',
+                                  borderColor: 'var(--primary)',
+                                }),
+                              }}
                               title={u.isAdmin ? t('admin.actionRemoveAdmin') : t('admin.actionMakeAdmin')}
                             >
-                              <Shield size={14} style={{ color: u.isAdmin ? '#f59e0b' : 'var(--text-muted)' }} />
+                              <Shield size={14} style={{ color: u.isAdmin ? 'white' : 'var(--text-muted)' }} />
                             </button>
 
                             <button
@@ -353,6 +392,8 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+        )}
+
       </div>
     </div>
   );

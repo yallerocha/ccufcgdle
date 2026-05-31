@@ -18,7 +18,10 @@
   --bg-card: #121215;
   --bg-card-hover: #18181d;
   --bg-input: #1a1a20;
-  
+
+  --footer-bg: #18181d;
+  --footer-text: #94a3b8;
+
   --primary: var(--lsd-blue);
   --primary-glow: rgba(69, 98, 193, 0.4);
   --primary-hover: #3d56a6;
@@ -61,6 +64,9 @@
   --bg-card: #ffffff;
   --bg-card-hover: #f4f4f5;
   --bg-input: #f4f4f5;
+
+  --footer-bg: #71717a;
+  --footer-text: #e4e4e7;
 
   --primary: var(--lsd-blue);
   --primary-glow: rgba(69, 98, 193, 0.25);
@@ -824,6 +830,45 @@ input:focus, select:focus, textarea:focus {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+}
+
+/* Admin game-config tabs */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 2rem;
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-tab:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.admin-tab.is-active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.admin-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .quick-rules {

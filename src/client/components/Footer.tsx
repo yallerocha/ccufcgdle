@@ -9,8 +9,8 @@ export default function Footer() {
     <footer
       style={{
         textAlign: 'center',
-        color: 'var(--text-dim)',
-        backgroundColor: 'var(--bg-translucent)',
+        color: 'var(--footer-text)',
+        backgroundColor: 'var(--footer-bg)',
         marginTop: 'auto',
         position: 'relative'
       }}
@@ -25,7 +25,7 @@ export default function Footer() {
         <div style={{ flex: 1, backgroundColor: 'var(--lsd-orange)' }}></div>
       </div>
       
-      <div style={{ padding: '2rem 0', borderTop: '1px solid var(--border-color)', fontSize: '0.9rem' }}>
+      <div style={{ padding: '2rem 0', fontSize: '0.9rem' }}>
         <p>{t('footer.text')}</p>
       </div>
     </footer>

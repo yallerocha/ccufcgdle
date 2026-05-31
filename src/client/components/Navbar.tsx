@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/client/context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Terminal, Gamepad2, Trophy, User, ShieldCheck, LogOut, ArrowLeft } from 'lucide-react';
+import { Terminal, Gamepad2, User, ShieldCheck, LogOut, ArrowLeft } from 'lucide-react';
 import ThemeToggle from '@/client/components/ThemeToggle';
 import LanguageToggle from '@/client/components/LanguageToggle';
 
@@ -31,7 +31,6 @@ export default function Navbar() {
             <span style={{ color: 'var(--lsd-purple)' }}>D</span>
             <span style={{ color: 'var(--text-muted)', margin: '0 3px', fontWeight: 400 }}> </span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>GAME</span>
-            <span style={{ color: 'var(--text-muted)', margin: '0 3px', fontWeight: 400 }}> </span>
             <span style={{ color: 'var(--lsd-magenta)' }}>H</span>
             <span style={{ color: 'var(--lsd-red)' }}>U</span>
             <span style={{ color: 'var(--lsd-orange)' }}>B</span>
@@ -42,10 +41,6 @@ export default function Navbar() {
         <div className="nav-links">
           <Link href="/lsdle" className="nav-link">
             <Gamepad2 size={18} /> {t('nav.play')}
-          </Link>
-
-          <Link href="/ranking" className="nav-link">
-            <Trophy size={18} /> {t('nav.ranking')}
           </Link>
 
           {user ? (

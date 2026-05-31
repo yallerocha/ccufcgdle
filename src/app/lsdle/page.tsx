@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
@@ -304,14 +305,23 @@ export default function GamePage() {
         <h1 className="lsd-gradient-text" style={{ paddingBottom: '0.2rem', display: 'none' }}>LSDLE</h1>
         <p>{t('home.tagline')}</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-          <button 
-            onClick={() => setShowRules(!showRules)} 
-            className="btn btn-secondary" 
+          <button
+            onClick={() => setShowRules(!showRules)}
+            className="btn btn-secondary"
             style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
           >
             <HelpCircle size={16} />
             {showRules ? t('home.hideRules') : t('home.showRules')}
           </button>
+
+          <Link
+            href="/lsdle/ranking"
+            className="btn btn-secondary"
+            style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
+          >
+            <Trophy size={16} style={{ color: 'var(--color-partial)' }} />
+            {t('nav.ranking')}
+          </Link>
         </div>
       </section>
 

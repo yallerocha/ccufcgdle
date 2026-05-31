@@ -318,7 +318,7 @@ export function VictoryModal({
   );
 
   const rankingCard = (
-    <Link href="/ranking" className="ranking-preview-card" style={{
+    <Link href="/lsdle/ranking" className="ranking-preview-card" style={{
       width: '100%',
       padding: '0.75rem',
       borderRadius: 'var(--border-radius)',

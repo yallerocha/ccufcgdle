@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { Trophy, Clock, Info } from 'lucide-react';
+import { Trophy, Clock, Info, ArrowLeft } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
 
@@ -54,6 +55,16 @@ export default function RankingPage() {
 
   return (
     <div style={{ margin: '2rem 0' }} className="fade-in">
+      <div style={{ marginBottom: '0.5rem' }}>
+        <Link
+          href="/lsdle"
+          className="btn btn-secondary"
+          style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
+        >
+          <ArrowLeft size={16} /> {t('ranking.backToGame')}
+        </Link>
+      </div>
+
       <div className="hero" style={{ padding: '1rem 0 2rem 0' }}>
         <h1 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontSize: '2.2rem', fontWeight: 800 }}>
           <Trophy size={30} style={{ color: 'var(--color-partial)' }} /> {t('ranking.title')}
