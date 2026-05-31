@@ -82,14 +82,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     } catch (err) { setSubmitting(false); setErrorMsg(t('profileEdit.errorConn')); }
   };
 
-  const getDaysUntilInactive = () => {
-    const lastLoginDate = new Date(user.lastLogin);
-    const diffDays = Math.floor((Date.now() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
-    const daysLeft = INACTIVITY_DAYS - diffDays;
-    return daysLeft > 0 ? daysLeft : 0;
-  };
-  const daysLeft = getDaysUntilInactive();
-
   return (
     <div style={{ maxWidth: '650px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
       <div className="card" style={{ borderLeft: '4px solid var(--primary)', padding: '1.5rem 2rem' }}>
@@ -101,8 +93,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
           <span className="badge badge-active" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}>{t('profileEdit.activeBadge')}</span>
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{t('profileEdit.lastActivity')} <strong>{new Date(user.lastLogin).toLocaleDateString()}</strong></span>
-          <span style={{ fontSize: '0.9rem', color: daysLeft <= 7 ? '#ef4444' : 'var(--color-correct)', fontWeight: 600 }}>{t('profileEdit.daysLeft', { days: daysLeft })}</span>
         </div>
       </div>
 

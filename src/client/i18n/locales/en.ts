@@ -172,8 +172,6 @@ export const en: Dictionary = {
     statusTitle: 'Your Profile Status',
     statusBody: 'Hello, {{name}}! You are registered in the game. To avoid being removed for inactivity, you must log in once every {{days}} days.',
     activeBadge: '● Active Profile',
-    lastActivity: 'Last activity:',
-    daysLeft: '({{days}} days remaining)',
     attrTitle: 'Your Attributes',
     attrSubtitle: 'Update the information other players use to guess who you are.',
     nameLabel: 'Name / Nickname in the game (Not editable)',

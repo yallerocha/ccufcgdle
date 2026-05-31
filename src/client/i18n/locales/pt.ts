@@ -168,8 +168,6 @@ export const pt = {
     statusTitle: 'Status do seu Perfil',
     statusBody: 'Olá, {{name}}! Você está cadastrado no jogo. Para evitar ser removido por inatividade, você deve logar uma vez a cada {{days}} dias.',
     activeBadge: '● Perfil Ativo',
-    lastActivity: 'Última atividade:',
-    daysLeft: '({{days}} dias restantes)',
     attrTitle: 'Seus Atributos',
     attrSubtitle: 'Atualize as informações utilizadas pelos outros jogadores para adivinhar quem é você.',
     nameLabel: 'Nome / Apelido no Jogo (Não editável)',
