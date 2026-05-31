@@ -109,6 +109,18 @@ export const en: Dictionary = {
     imageAnswer: 'The person was',
     imagePlayAt: 'Play at',
     shareImageText: "I played today's LSDLE ({{date}}) and got it in {{count}} attempt(s)! 🧪💻 Play at {{url}}",
+    dailyMsg: {
+      editTitle: "You're today's person! Leave a note for those who guess you",
+      placeholder: 'Write a phrase (optional)...',
+      addImage: 'Add image',
+      changeImage: 'Change image',
+      removeImage: 'Remove image',
+      save: 'Save note',
+      saving: 'Saving...',
+      saved: 'Note saved! 🎉',
+      error: 'Could not save the note.',
+      fromTitle: 'Note from {{name}}',
+    },
   },
   login: {
     title: 'Sign in',

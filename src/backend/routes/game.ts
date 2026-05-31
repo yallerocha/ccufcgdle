@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { getActiveUsers, getOrCreateDailyCharacter, compareCharacters } from '../../server/game';
 import { getLocalDateString } from '../../shared/utils';
+import { validateDailyMessage } from '../../shared/validation';
 import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
@@ -123,6 +124,94 @@ router.get('/result', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error loading game result:', error);
     return res.status(500).json({ error: 'Erro ao carregar resultado.' });
+  }
+});
+
+// GET /api/game/daily-message — the message the person of the day left for the
+// players who guess them. Only revealed to players who already solved today's
+// round (or to the author), so it never leaks a hint about who the target is.
+// `canEdit` tells the client whether the caller IS today's person.
+router.get('/daily-message', requireAuth, async (req, res) => {
+  try {
+    const date = getLocalDateString();
+    const playerId = req.auth!.userId;
+
+    const target = await getOrCreateDailyCharacter();
+    if (!target) {
+      return res.json({ canEdit: false, message: null, mediaUrl: null });
+    }
+
+    const canEdit = target.id === playerId;
+
+    if (!canEdit) {
+      const progress = await prisma.dailyProgress.findUnique({
+        where: { date_playerId: { date, playerId } },
+        select: { solved: true },
+      });
+      if (!progress?.solved) {
+        return res.status(403).json({ error: 'Resolva o jogo de hoje primeiro.' });
+      }
+    }
+
+    const daily = await prisma.dailyCharacter.findUnique({
+      where: { date },
+      select: { message: true, mediaUrl: true },
+    });
+
+    return res.json({
+      canEdit,
+      message: daily?.message ?? null,
+      mediaUrl: daily?.mediaUrl ?? null,
+    });
+  } catch (error) {
+    console.error('Error loading daily message:', error);
+    return res.status(500).json({ error: 'Erro ao carregar a mensagem do dia.' });
+  }
+});
+
+// POST /api/game/daily-message — lets the person of the day set (or clear) the
+// message + image shown to players who guess them. Only the current target may
+// write it; sending empty values clears the message.
+router.post('/daily-message', requireAuth, async (req, res) => {
+  try {
+    const date = getLocalDateString();
+    const playerId = req.auth!.userId;
+
+    const target = await getOrCreateDailyCharacter();
+    if (!target || target.id !== playerId) {
+      return res.status(403).json({ error: 'Apenas a pessoa do dia pode deixar uma mensagem.' });
+    }
+
+    // The note can only be left once per round: if anything is already saved,
+    // refuse to overwrite it.
+    const existing = await prisma.dailyCharacter.findUnique({
+      where: { date },
+      select: { message: true, mediaUrl: true },
+    });
+    if (existing?.message || existing?.mediaUrl) {
+      return res.status(409).json({ error: 'Você já deixou seu recado de hoje.' });
+    }
+
+    const { message, mediaUrl } = req.body ?? {};
+    const validationError = validateDailyMessage(message, mediaUrl);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+
+    const normMessage =
+      typeof message === 'string' && message.trim() !== '' ? message.trim() : null;
+    const normMedia = typeof mediaUrl === 'string' && mediaUrl !== '' ? mediaUrl : null;
+
+    const updated = await prisma.dailyCharacter.update({
+      where: { date },
+      data: { message: normMessage, mediaUrl: normMedia },
+      select: { message: true, mediaUrl: true },
+    });
+
+    return res.json({ message: updated.message, mediaUrl: updated.mediaUrl });
+  } catch (error) {
+    console.error('Error saving daily message:', error);
+    return res.status(500).json({ error: 'Erro ao salvar a mensagem do dia.' });
   }
 });
 

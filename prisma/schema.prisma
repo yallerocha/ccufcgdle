@@ -39,6 +39,11 @@ model DailyCharacter {
   date        String   @unique // Format: "YYYY-MM-DD"
   characterId String
   character   User     @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  // Optional message the person of the day can leave for the players who guess
+  // them: a short text and/or an image (base64 data URL). Shown in the victory
+  // modal to players who have already solved today's round.
+  message     String?
+  mediaUrl    String?
   createdAt   DateTime @default(now())
 }
 

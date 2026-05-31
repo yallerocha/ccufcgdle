@@ -105,6 +105,18 @@ export const pt = {
     imageAnswer: 'A pessoa era',
     imagePlayAt: 'Jogue em',
     shareImageText: 'Joguei o LSDLE de hoje ({{date}}) e acertei em {{count}} tentativa(s)! 🧪💻 Jogue em {{url}}',
+    dailyMsg: {
+      editTitle: 'Você é a pessoa de hoje! Deixe um recado para quem te acertar',
+      placeholder: 'Escreva uma frase (opcional)...',
+      addImage: 'Adicionar imagem',
+      changeImage: 'Trocar imagem',
+      removeImage: 'Remover imagem',
+      save: 'Salvar recado',
+      saving: 'Salvando...',
+      saved: 'Recado salvo! 🎉',
+      error: 'Não foi possível salvar o recado.',
+      fromTitle: 'Recado de {{name}}',
+    },
   },
   login: {
     title: 'Entrar',

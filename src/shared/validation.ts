@@ -119,6 +119,24 @@ export function validateCharacterFields(input: CharacterFields): string | null {
   return null;
 }
 
+// Max length of the message the person of the day may leave for the players who
+// guess them.
+export const MAX_DAILY_MESSAGE_LENGTH = 120;
+
+// Validates the optional message + image the person of the day leaves behind.
+// `message` must fit the length limit; `mediaUrl` reuses the photo rules (a
+// base64 image data URL within the size limit). Both may be empty — that simply
+// clears the message.
+export function validateDailyMessage(message?: string | null, mediaUrl?: string | null): string | null {
+  if (message !== undefined && message !== null) {
+    if (typeof message !== 'string') return 'Mensagem inválida.';
+    if (message.length > MAX_DAILY_MESSAGE_LENGTH) {
+      return `A mensagem é muito longa (máx. ${MAX_DAILY_MESSAGE_LENGTH} caracteres).`;
+    }
+  }
+  return validatePhoto(mediaUrl);
+}
+
 // Validates an optional profile photo: must be empty/absent or a base64-encoded
 // image data URL within the size limit.
 export function validatePhoto(photoUrl?: string | null): string | null {
