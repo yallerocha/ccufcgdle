@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle, Info, AlertCircle } from 'lucide-react';
 
@@ -9,6 +9,10 @@ type ToastType = 'info' | 'success' | 'error';
 interface ToastProps {
   message: string;
   type?: ToastType;
+  // Called when the toast auto-dismisses, so the parent can clear its message.
+  onClose?: () => void;
+  // Auto-dismiss delay in ms.
+  duration?: number;
 }
 
 const ICONS: Record<ToastType, React.ReactNode> = {
@@ -18,13 +22,24 @@ const ICONS: Record<ToastType, React.ReactNode> = {
 };
 
 // Fixed pop-up notification anchored to the top of the screen. Rendered through
-// a portal on <body> so it floats above the victory modal overlay.
-export function Toast({ message, type = 'info' }: ToastProps) {
+// a portal on <body> so it floats above the victory modal overlay. When given an
+// `onClose`, it auto-dismisses after `duration`.
+export function Toast({ message, type = 'info', onClose, duration = 4000 }: ToastProps) {
   const [mounted, setMounted] = useState(false);
+
+  // Keep the latest onClose without resetting the dismiss timer on every render.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!message) return;
+    const id = setTimeout(() => closeRef.current?.(), duration);
+    return () => clearTimeout(id);
+  }, [message, duration]);
 
   if (!mounted || !message) return null;
 

@@ -6,6 +6,7 @@ import { UserPlus, Camera } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
 import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
 import { PasswordInput } from '@/client/components/PasswordInput';
+import { Toast } from '@/client/components/Toast';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
 const ROLE_OPTIONS = ['Professor', 'Graduando', 'Mestrando', 'Doutorando', 'Pesquisador', 'Funcionário'];
@@ -122,7 +123,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
           {t('register.subtitle')}
         </p>
 
-        {errorMsg && <div className="alert alert-error">{errorMsg}</div>}
+        <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">

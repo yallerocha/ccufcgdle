@@ -370,12 +370,6 @@ export default function GamePage() {
               </div>
             </div>
 
-            {errorMsg && (
-              <div className="alert alert-error" style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                {errorMsg}
-              </div>
-            )}
-
             {/* Dropdown Options */}
             {showDropdown && searchQuery && (
               <div className="autocomplete-dropdown">
@@ -531,8 +525,12 @@ export default function GamePage() {
             todayStr={todayStr}
           />
 
-          {/* Top-of-screen notification (e.g. image downloaded / share error) */}
-          <Toast message={imageNote} type={imageNoteType} />
+          {/* Top-of-screen notification (guess error / image download / share) */}
+          <Toast
+            message={errorMsg || imageNote}
+            type={errorMsg ? 'error' : imageNoteType}
+            onClose={() => { setErrorMsg(''); setImageNote(''); }}
+          />
         </div>
       )}
     </div>

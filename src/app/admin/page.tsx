@@ -6,6 +6,7 @@ import { useAuth } from '@/client/context/AuthContext';
 import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
+import { Toast } from '@/client/components/Toast';
 
 interface AdminUser {
   id: string;
@@ -196,8 +197,11 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {successMsg && <div className="alert alert-success">{successMsg}</div>}
-      {errorMsg && <div className="alert alert-error">{errorMsg}</div>}
+      <Toast
+        message={errorMsg || successMsg}
+        type={errorMsg ? 'error' : 'success'}
+        onClose={() => { setErrorMsg(''); setSuccessMsg(''); }}
+      />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
         

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogIn, UserPlus } from 'lucide-react';
 import { PasswordInput } from '@/client/components/PasswordInput';
+import { Toast } from '@/client/components/Toast';
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -47,7 +48,7 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
           {t('login.subtitle')}
         </p>
 
-        {errorMsg && <div className="alert alert-error">{errorMsg}</div>}
+        <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { Trophy, Clock, Info } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { Toast } from '@/client/components/Toast';
 
 interface RankingEntry {
   rank: number;
@@ -66,7 +67,7 @@ export default function RankingPage() {
         </div>
       )}
 
-      {errorMsg && <div className="alert alert-error" style={{ maxWidth: '600px', margin: '0 auto 1.5rem auto' }}>{errorMsg}</div>}
+      <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
 
       <div className="card" style={{ maxWidth: '700px', margin: '0 auto', padding: '1.5rem 2rem' }}>
         {loading ? (

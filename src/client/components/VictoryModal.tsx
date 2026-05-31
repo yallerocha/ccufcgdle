@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Trophy, Clock, Image as ImageIcon, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/client/lib/api';
+import { Toast } from '@/client/components/Toast';
 import { MAX_DAILY_MESSAGE_LENGTH } from '@/shared/validation';
 
 interface RankingEntry {
@@ -62,6 +63,13 @@ export function VictoryModal({
   const [draftMedia, setDraftMedia] = useState<string | null>(null);
   const [savingMessage, setSavingMessage] = useState(false);
   const [messageNote, setMessageNote] = useState('');
+  const [messageNoteType, setMessageNoteType] = useState<'success' | 'error'>('error');
+
+  // Shows a top-of-screen toast for the daily-note editor feedback.
+  const notify = (msg: string, type: 'success' | 'error' = 'error') => {
+    setMessageNoteType(type);
+    setMessageNote(msg);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -105,7 +113,7 @@ export function VictoryModal({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      setMessageNote(t('photo.tooLarge'));
+      notify(t('photo.tooLarge'), 'error');
       return;
     }
     const reader = new FileReader();
@@ -127,16 +135,15 @@ export function VictoryModal({
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessageNote(data.error || t('victory.dailyMsg.error'));
+        notify(data.error || t('victory.dailyMsg.error'), 'error');
         return;
       }
       setSavedMessage(data.message ?? null);
       setSavedMedia(data.mediaUrl ?? null);
-      setMessageNote(t('victory.dailyMsg.saved'));
-      setTimeout(() => setMessageNote(''), 4000);
+      notify(t('victory.dailyMsg.saved'), 'success');
     } catch (err) {
       console.error('Error saving daily message:', err);
-      setMessageNote(t('victory.dailyMsg.error'));
+      notify(t('victory.dailyMsg.error'), 'error');
     } finally {
       setSavingMessage(false);
     }
@@ -239,11 +246,6 @@ export function VictoryModal({
           {savingMessage ? t('victory.dailyMsg.saving') : t('victory.dailyMsg.save')}
         </button>
       </div>
-      {messageNote && (
-        <div style={{ fontSize: '0.8rem', textAlign: 'center', marginTop: '0.5rem', color: 'var(--text-muted)' }}>
-          {messageNote}
-        </div>
-      )}
     </div>
   ) : (savedMessage || savedMedia) ? (
     <div style={{
@@ -464,6 +466,12 @@ export function VictoryModal({
 
         {buttonsBlock}
       </div>
+
+      <Toast
+        message={messageNote}
+        type={messageNoteType}
+        onClose={() => setMessageNote('')}
+      />
     </div>,
     document.body
   );

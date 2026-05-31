@@ -6,6 +6,7 @@ import { Clock, Camera, Save } from 'lucide-react';
 import { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
+import { Toast } from '@/client/components/Toast';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
 const ROLE_OPTIONS = ['Professor', 'Graduando', 'Mestrando', 'Doutorando', 'Pesquisador', 'Funcionário'];
@@ -100,14 +101,39 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         <h2 className="card-title">{t('profileEdit.attrTitle')}</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{t('profileEdit.attrSubtitle')}</p>
 
-        {successMsg && <div className="alert alert-success">{successMsg}</div>}
-        {errorMsg && <div className="alert alert-error">{errorMsg}</div>}
+        <Toast
+          message={errorMsg || successMsg}
+          type={errorMsg ? 'error' : 'success'}
+          onClose={() => { setErrorMsg(''); setSuccessMsg(''); }}
+        />
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>{t('profileEdit.nameLabel')}</label>
             <input type="text" value={user.name} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} />
           </div>
+
+          <div className="form-group">
+            <label>{t('photo.label')}</label>
+            <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', marginTop: '0.5rem' }}>
+              {photoUrl ? (
+                <img src={photoUrl} alt="Preview" style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} />
+              ) : (
+                <div style={{ width: '96px', height: '96px', borderRadius: '50%', border: '2px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', flexShrink: 0 }}>
+                  <Camera size={28} />
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-edit" />
+                <label htmlFor="photo-upload-edit" className="btn btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Camera size={16} /> {t('photo.select')}</label>
+                {photoUrl
+                  ? <button type="button" onClick={() => setPhotoUrl('')} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto', backgroundColor: '#ef4444', color: 'white', border: 'none' }}>{t('photo.remove')}</button>
+                  : <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{t('photo.none')}</span>}
+              </div>
+            </div>
+            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>{t('photo.hint')}</span>
+          </div>
+
           <div className="form-row">
             <div className="form-group"><label>{t('profileEdit.genderLabel')}</label><select value={gender} onChange={(e) => setGender(e.target.value)}>{GENDER_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
             <div className="form-group"><label>{t('profileEdit.roleLabel')}</label><select value={role} onChange={(e) => setRole(e.target.value)}>{ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
@@ -129,21 +155,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             </div>
           </div>
           <div className="form-group"><label>{t('profileEdit.coffeeLabel')}</label><select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-
-          <div className="form-group">
-            <label>{t('photo.label')}</label>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
-              <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-edit" />
-              <label htmlFor="photo-upload-edit" className="btn btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Camera size={16} /> {t('photo.select')}</label>
-              {photoUrl ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <img src={photoUrl} alt="Preview" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
-                  <button type="button" onClick={() => setPhotoUrl('')} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto', backgroundColor: '#ef4444', color: 'white', border: 'none' }}>{t('photo.remove')}</button>
-                </div>
-              ) : <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{t('photo.none')}</span>}
-            </div>
-            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>{t('photo.hint')}</span>
-          </div>
 
           <div style={{ marginTop: '2rem' }}>
             <button type="submit" disabled={submitting} className="btn" style={{ width: '100%' }}><Save size={18} /> {submitting ? t('profileEdit.saving') : t('profileEdit.save')}</button>
