@@ -32,6 +32,8 @@ model User {
   dailyCharacters  DailyCharacter[]
   gameResults      GameResult[]
   dailyProgress    DailyProgress[]
+  termoResults     TermoResult[]
+  termoProgress    TermoProgress[]
 }
 
 model DailyCharacter {
@@ -77,4 +79,48 @@ model DailyProgress {
   updatedAt    DateTime  @updatedAt
 
   @@unique([date, playerId])
+}
+
+// ── TERMO (Wordle-style) game ────────────────────────────────────────────────
+// Termo is fully self-contained (its own daily word, progress and ranking) so it
+// never collides with the LSDLE tables above.
+
+// The solution word for a given day. Stored normalized (uppercase, no accents);
+// `display` keeps the accented form revealed when the round ends.
+model TermoDaily {
+  id        Int      @id @default(autoincrement())
+  date      String   @unique // Format: "YYYY-MM-DD"
+  word      String   // normalized solution, e.g. "TERMO"
+  display   String   // accented form to reveal, e.g. "TÉRMO"
+  createdAt DateTime @default(now())
+}
+
+// Server-authoritative play state for the Termo round, mirroring DailyProgress.
+model TermoProgress {
+  id           Int       @id @default(autoincrement())
+  date         String    // Format: "YYYY-MM-DD"
+  playerId     String
+  player       User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  attempts     Int       @default(0)
+  firstGuessAt DateTime  @default(now())
+  solved       Boolean   @default(false)
+  solvedAt     DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([date, playerId])
+}
+
+// One Termo result per logged-in player per day. Ranking: fewer attempts ranks
+// higher; ties broken by shorter durationMs (time from 1st guess to win).
+model TermoResult {
+  id         Int      @id @default(autoincrement())
+  date       String   // Format: "YYYY-MM-DD"
+  playerId   String
+  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  attempts   Int
+  durationMs Int
+  createdAt  DateTime @default(now())
+
+  @@unique([date, playerId])
+  @@index([date, attempts, durationMs])
 }

@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
-import { HelpCircle, Search, Trophy, CheckCircle, Info } from 'lucide-react';
+import { HelpCircle, Search, Trophy, CheckCircle, Info, ArrowLeft } from 'lucide-react';
 import { VictoryModal } from '@/client/components/VictoryModal';
 import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
@@ -293,7 +293,17 @@ export default function GamePage() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      
+
+      <div style={{ margin: '2rem 0 0.5rem 0' }}>
+        <Link
+          href="/"
+          className="btn btn-secondary"
+          style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
+        >
+          <ArrowLeft size={16} /> {t('nav.backToHub')}
+        </Link>
+      </div>
+
       {/* Hero Section */}
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {/* Substitua "logo.png" pelo nome real do arquivo se você o colocar na pasta public/ */}

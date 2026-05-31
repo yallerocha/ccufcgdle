@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Lock } from 'lucide-react';
+import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Lock, Type, ArrowLeft } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
@@ -34,7 +35,8 @@ export default function AdminPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [selectedForceChar, setSelectedForceChar] = useState('');
-  const [activeTab, setActiveTab] = useState<'lsdle' | 'users' | 'comingSoon'>('lsdle');
+  const [activeTab, setActiveTab] = useState<'lsdle' | 'termo' | 'users' | 'comingSoon'>('lsdle');
+  const [termoWord, setTermoWord] = useState('');
 
   const today = getLocalDateString();
 
@@ -155,6 +157,32 @@ export default function AdminPage() {
     }
   };
 
+  const handleForceTermo = async (forceRandom: boolean) => {
+    setErrorMsg('');
+    setSuccessMsg('');
+    setSubmitting(true);
+
+    try {
+      const res = await apiFetch('/api/admin/termo-force-daily', {
+        method: 'POST',
+        body: JSON.stringify({ word: forceRandom ? undefined : termoWord })
+      });
+
+      const data = await res.json();
+      setSubmitting(false);
+
+      if (res.ok) {
+        setSuccessMsg(t('admin.termoForceSuccess', { date: today, word: data.word }));
+        setTermoWord('');
+      } else {
+        setErrorMsg(data.error || t('admin.termoErrorForce'));
+      }
+    } catch (err) {
+      setSubmitting(false);
+      setErrorMsg(t('admin.errorForceConn'));
+    }
+  };
+
   if (authLoading || (currentUser && loading)) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -189,6 +217,15 @@ export default function AdminPage() {
 
   return (
     <div style={{ margin: '2rem 0' }} className="fade-in">
+      <div style={{ marginBottom: '0.5rem' }}>
+        <Link
+          href="/"
+          className="btn btn-secondary"
+          style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
+        >
+          <ArrowLeft size={16} /> {t('nav.backToHub')}
+        </Link>
+      </div>
       <div className="admin-section-header">
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -214,6 +251,13 @@ export default function AdminPage() {
           onClick={() => setActiveTab('lsdle')}
         >
           <Gamepad2 size={18} /> LSDLE
+        </button>
+        <button
+          type="button"
+          className={`admin-tab ${activeTab === 'termo' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('termo')}
+        >
+          <Type size={18} /> TERMO
         </button>
         <button
           type="button"
@@ -281,6 +325,55 @@ export default function AdminPage() {
           </div>
           <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.75rem' }}>
             {t('admin.dailyNote')}
+          </span>
+        </div>
+        )}
+
+        {/* TERMO: Word of the Day card */}
+        {activeTab === 'termo' && (
+        <div className="card">
+          <h3 className="card-title">
+            <Type size={20} style={{ color: 'var(--primary)' }} /> {t('admin.termoTitle')}
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            {t('admin.termoDesc')}
+          </p>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
+            <div className="form-group" style={{ flex: '1 1 250px', marginBottom: 0 }}>
+              <label>{t('admin.termoWordLabel')}</label>
+              <input
+                type="text"
+                value={termoWord}
+                onChange={(e) => setTermoWord(e.target.value)}
+                placeholder={t('admin.termoWordPlaceholder')}
+                maxLength={5}
+                style={{ height: '42px', padding: '0 1rem', textTransform: 'uppercase' }}
+              />
+            </div>
+
+            <button
+              onClick={() => handleForceTermo(false)}
+              disabled={submitting || termoWord.trim().length < 5}
+              className="btn"
+              style={{ height: '42px' }}
+            >
+              <UserCheck size={18} />
+              {t('admin.termoSet')}
+            </button>
+
+            <button
+              onClick={() => handleForceTermo(true)}
+              disabled={submitting}
+              className="btn btn-secondary"
+              style={{ height: '42px' }}
+            >
+              <Shuffle size={18} />
+              {t('admin.termoDraw')}
+            </button>
+          </div>
+          <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.75rem' }}>
+            {t('admin.termoNote')}
           </span>
         </div>
         )}

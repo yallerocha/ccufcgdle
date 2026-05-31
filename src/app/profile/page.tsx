@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { LoginForm } from '@/client/components/LoginForm';
 import { RegisterForm } from '@/client/components/RegisterForm';
@@ -20,24 +22,38 @@ export default function ProfilePage() {
     );
   }
 
+  let content;
   if (user) {
-    return <ProfileEditForm user={user} refreshUser={refreshUser} />;
-  }
-
-  if (!isRegistering) {
-    return (
-      <LoginForm 
+    content = <ProfileEditForm user={user} refreshUser={refreshUser} />;
+  } else if (!isRegistering) {
+    content = (
+      <LoginForm
         loginFn={login}
         onLoginSuccess={() => refreshUser()}
         onSwitchToRegister={() => setIsRegistering(true)}
       />
     );
+  } else {
+    content = (
+      <RegisterForm
+        onRegisterSuccess={() => refreshUser()}
+        onSwitchToLogin={() => setIsRegistering(false)}
+      />
+    );
   }
 
   return (
-    <RegisterForm 
-      onRegisterSuccess={() => refreshUser()}
-      onSwitchToLogin={() => setIsRegistering(false)}
-    />
+    <>
+      <div style={{ margin: '2rem 0 0.5rem 0' }}>
+        <Link
+          href="/"
+          className="btn btn-secondary"
+          style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
+        >
+          <ArrowLeft size={16} /> {t('nav.backToHub')}
+        </Link>
+      </div>
+      {content}
+    </>
   );
 }

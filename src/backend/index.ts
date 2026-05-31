@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import authRouter from './routes/auth';
 import gameRouter from './routes/game';
+import termoRouter from './routes/termo';
 import adminRouter from './routes/admin';
 
 const app = express();
@@ -59,6 +60,7 @@ app.use('/api/auth/register', authLimiter);
 
 app.use('/api/auth', authRouter);
 app.use('/api/game', gameRouter);
+app.use('/api/termo', termoRouter);
 app.use('/api/admin', adminRouter);
 
 app.listen(PORT, () => {

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { getLocalDateString } from '../../shared/utils';
 import { getOrCreateDailyCharacter } from '../../server/game';
+import { normalize, isValidGuess, displayFor, getOrCreateDailyWord, WORD_LENGTH } from '../../server/termo';
 import { requireAdmin } from '../middleware/auth';
 
 const router = Router();
@@ -151,6 +152,47 @@ router.post('/force-daily', async (req, res) => {
   } catch (error) {
     console.error('Error forcing daily character:', error);
     return res.status(500).json({ error: 'Erro ao atualizar a pessoa do dia.' });
+  }
+});
+
+// POST /api/admin/termo-force-daily — set today's Termo word (a specific word or
+// a fresh random one) and reset today's round (progress + ranking), mirroring
+// the LSDLE force-daily so a changed answer never mixes results.
+router.post('/termo-force-daily', async (req, res) => {
+  try {
+    const { word } = req.body ?? {};
+    const today = getLocalDateString();
+
+    // Reset today's round: drop the current word + everyone's progress/results.
+    await prisma.$transaction([
+      prisma.termoDaily.deleteMany({ where: { date: today } }),
+      prisma.termoProgress.deleteMany({ where: { date: today } }),
+      prisma.termoResult.deleteMany({ where: { date: today } }),
+    ]);
+
+    let daily;
+
+    if (typeof word === 'string' && word.trim() !== '') {
+      const norm = normalize(word);
+      if (norm.length !== WORD_LENGTH) {
+        return res.status(400).json({ error: `A palavra deve ter ${WORD_LENGTH} letras.` });
+      }
+      if (!isValidGuess(norm)) {
+        return res.status(422).json({ error: 'Palavra não está na lista do jogo.' });
+      }
+      const created = await prisma.termoDaily.create({
+        data: { date: today, word: norm, display: displayFor(norm) },
+      });
+      daily = { word: created.word, display: created.display };
+    } else {
+      // No word given → let the deterministic picker choose a fresh one.
+      daily = await getOrCreateDailyWord(today);
+    }
+
+    return res.json({ message: 'Palavra do dia atualizada!', word: daily.display });
+  } catch (error) {
+    console.error('Error forcing termo word:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar a palavra do dia.' });
   }
 });
 

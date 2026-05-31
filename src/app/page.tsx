@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Gamepad2, Lock } from 'lucide-react';
+import { Gamepad2, Lock, Type } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function HubPage() {
@@ -34,7 +34,18 @@ export default function HubPage() {
           </div>
         </Link>
 
-        {/* Jogo 2 (Em Breve) */}
+        {/* Jogo: TERMO */}
+        <Link href="/termo" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="card ranking-preview-card" style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '2rem' }}>
+            <Type size={48} style={{ color: 'var(--lsd-teal)', marginBottom: '1rem' }} />
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 700 }}>TERMO</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              {t('hub.termoDesc', 'Descubra a palavra de 5 letras do dia em 6 tentativas. No estilo Wordle, em português.')}
+            </p>
+          </div>
+        </Link>
+
+        {/* Jogo 3 (Em Breve) */}
         <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '2rem', opacity: 0.6, cursor: 'not-allowed' }}>
           <Lock size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
           <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 700, color: 'var(--text-muted)' }}>Em Breve</h2>

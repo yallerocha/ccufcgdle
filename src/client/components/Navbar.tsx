@@ -2,26 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useAuth } from '@/client/context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Terminal, Gamepad2, User, ShieldCheck, LogOut, ArrowLeft } from 'lucide-react';
+import { Terminal, User, ShieldCheck, LogOut } from 'lucide-react';
 import ThemeToggle from '@/client/components/ThemeToggle';
 import LanguageToggle from '@/client/components/LanguageToggle';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
-  const pathname = usePathname();
-  const isInsideGame = pathname !== '/';
 
   return (
     <nav className="navbar" style={{ position: 'relative' }}>
-      {isInsideGame && (
-        <Link href="/" className="nav-link" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', padding: '0.25rem', zIndex: 10 }} title="Voltar ao Hub">
-          <ArrowLeft size={22} />
-        </Link>
-      )}
       <div className="navbar-content container">
         <Link href="/" className="nav-logo">
           <img src="/logo_icone.png" alt="LSD Logo Icon" style={{ height: '32px', width: 'auto' }} />
@@ -39,10 +31,6 @@ export default function Navbar() {
         </Link>
 
         <div className="nav-links">
-          <Link href="/lsdle" className="nav-link">
-            <Gamepad2 size={18} /> {t('nav.play')}
-          </Link>
-
           {user ? (
             <>
               <Link href="/profile" className="nav-link">
