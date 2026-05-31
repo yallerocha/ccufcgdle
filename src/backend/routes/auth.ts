@@ -7,6 +7,11 @@ import { validateCharacterFields, isAllowedEmailDomain, isStrongPassword } from 
 
 const router = Router();
 
+// A valid bcrypt hash used as a decoy when the email isn't found, so login always
+// performs one bcrypt comparison. This keeps the response time constant whether
+// or not the account exists, preventing email enumeration via timing.
+const DUMMY_PASSWORD_HASH = '$2b$12$Q1lo.kalr7biqRwg.KHaN.UdNf15sfLrxvHYPjuFBZkC/h3isj40e';
+
 // POST /api/auth/login — validates credentials and returns { token, user }.
 router.post('/login', async (req, res) => {
   try {
@@ -20,12 +25,10 @@ router.post('/login', async (req, res) => {
       where: { email: email.toLowerCase() },
     });
 
-    if (!user) {
-      return res.status(401).json({ error: 'Credenciais inválidas.' });
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatch) {
+    // Always run a bcrypt comparison (against a decoy hash when the user is
+    // absent) so the timing doesn't reveal whether the email is registered.
+    const passwordMatch = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user || !passwordMatch) {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 

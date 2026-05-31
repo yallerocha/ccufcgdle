@@ -202,6 +202,11 @@ router.post('/daily-message', requireAuth, async (req, res) => {
       typeof message === 'string' && message.trim() !== '' ? message.trim() : null;
     const normMedia = typeof mediaUrl === 'string' && mediaUrl !== '' ? mediaUrl : null;
 
+    // Nothing to save: reject an empty note instead of recording a blank one.
+    if (!normMessage && !normMedia) {
+      return res.status(400).json({ error: 'Escreva uma frase ou adicione uma imagem.' });
+    }
+
     const updated = await prisma.dailyCharacter.update({
       where: { date },
       data: { message: normMessage, mediaUrl: normMedia },

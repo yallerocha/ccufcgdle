@@ -113,8 +113,11 @@ export function VictoryModal({
     reader.readAsDataURL(file);
   };
 
+  // There is something to save only when the text or the image is filled in.
+  const hasDraftContent = draftMessage.trim() !== '' || !!draftMedia;
+
   const saveMessage = async () => {
-    if (savingMessage) return;
+    if (savingMessage || !hasDraftContent) return;
     setSavingMessage(true);
     setMessageNote('');
     try {
@@ -232,7 +235,7 @@ export function VictoryModal({
             {t('victory.dailyMsg.removeImage')}
           </button>
         )}
-        <button onClick={saveMessage} disabled={savingMessage} className="btn" style={{ whiteSpace: 'nowrap' }}>
+        <button onClick={saveMessage} disabled={savingMessage || !hasDraftContent} className="btn" style={{ whiteSpace: 'nowrap' }}>
           {savingMessage ? t('victory.dailyMsg.saving') : t('victory.dailyMsg.save')}
         </button>
       </div>

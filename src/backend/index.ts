@@ -9,10 +9,18 @@ import adminRouter from './routes/admin';
 const app = express();
 
 const PORT = Number(process.env.PORT) || 3001;
-// Comma-separated list of allowed origins; "*" allows any (dev only).
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+// Comma-separated list of allowed origins; "*" allows any (dev only). In
+// production an explicit origin is required so we never silently allow any site.
+const CORS_ORIGIN = process.env.CORS_ORIGIN;
+if (!CORS_ORIGIN && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'CORS_ORIGIN is not defined. Set the allowed front-end origin(s) before starting in production.'
+  );
+}
 const allowedOrigins =
-  CORS_ORIGIN === '*' ? true : CORS_ORIGIN.split(',').map((o) => o.trim());
+  !CORS_ORIGIN || CORS_ORIGIN === '*'
+    ? true
+    : CORS_ORIGIN.split(',').map((o) => o.trim());
 
 // Trust the first proxy hop so rate limiting keys on the real client IP when
 // running behind a reverse proxy / container orchestrator.
@@ -54,5 +62,5 @@ app.use('/api/game', gameRouter);
 app.use('/api/admin', adminRouter);
 
 app.listen(PORT, () => {
-  console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN})`);
+  console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN || '*'})`);
 });
