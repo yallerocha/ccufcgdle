@@ -1,8 +1,19 @@
 import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { getLocalDateString } from '../../shared/utils';
-import { getOrCreateDailyCharacter } from '../../server/game';
-import { normalize, isValidGuess, displayFor, getOrCreateDailyWord, WORD_LENGTH } from '../../server/termo';
+import { getOrCreateDailyCharacter, getActiveUsers } from '../../server/game';
+import {
+  normalize,
+  isValidGuess,
+  displayFor,
+  randomWord as termoRandomWord,
+  WORD_LENGTH,
+} from '../../server/termo';
+import {
+  randomWord as forcaRandomWord,
+  displayFor as forcaDisplayFor,
+  isPoolWord as isForcaPoolWord,
+} from '../../server/forca';
 import { requireAdmin } from '../middleware/auth';
 
 const router = Router();
@@ -185,13 +196,81 @@ router.post('/termo-force-daily', async (req, res) => {
       });
       daily = { word: created.word, display: created.display };
     } else {
-      // No word given → let the deterministic picker choose a fresh one.
-      daily = await getOrCreateDailyWord(today);
+      // No word given → draw a genuinely random word (not the deterministic one).
+      const rw = termoRandomWord();
+      const created = await prisma.termoDaily.create({
+        data: { date: today, word: rw.word, display: rw.display },
+      });
+      daily = { word: created.word, display: created.display };
     }
 
     return res.json({ message: 'Palavra do dia atualizada!', word: daily.display });
   } catch (error) {
     console.error('Error forcing termo word:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar a palavra do dia.' });
+  }
+});
+
+// POST /api/admin/forca-force-daily — set today's Forca word (specific or random)
+// and reset today's round (progress + ranking).
+router.post('/forca-force-daily', async (req, res) => {
+  try {
+    const { word } = req.body ?? {};
+    const today = getLocalDateString();
+
+    await prisma.$transaction([
+      prisma.forcaDaily.deleteMany({ where: { date: today } }),
+      prisma.forcaProgress.deleteMany({ where: { date: today } }),
+      prisma.forcaResult.deleteMany({ where: { date: today } }),
+    ]);
+
+    let daily;
+
+    if (typeof word === 'string' && word.trim() !== '') {
+      const norm = normalize(word);
+      if (norm.length < 4) {
+        return res.status(400).json({ error: 'A palavra deve ter ao menos 4 letras.' });
+      }
+      if (!isForcaPoolWord(norm)) {
+        return res.status(422).json({ error: 'Palavra não está na lista do jogo.' });
+      }
+      // Also pick a random active person to "save" for this forced round.
+      const activeUsers = await getActiveUsers().catch(() => []);
+      const person = activeUsers.length
+        ? activeUsers[Math.floor(Math.random() * activeUsers.length)]
+        : null;
+      const created = await prisma.forcaDaily.create({
+        data: {
+          date: today,
+          word: norm,
+          display: forcaDisplayFor(norm),
+          personName: person?.name ?? null,
+          personPhoto: person?.photoUrl ?? null,
+        },
+      });
+      daily = { word: created.word, display: created.display };
+    } else {
+      // Draw a genuinely random word + random person (not the deterministic pick).
+      const rw = forcaRandomWord();
+      const activeUsers = await getActiveUsers().catch(() => []);
+      const person = activeUsers.length
+        ? activeUsers[Math.floor(Math.random() * activeUsers.length)]
+        : null;
+      const created = await prisma.forcaDaily.create({
+        data: {
+          date: today,
+          word: rw.word,
+          display: rw.display,
+          personName: person?.name ?? null,
+          personPhoto: person?.photoUrl ?? null,
+        },
+      });
+      daily = { word: created.word, display: created.display };
+    }
+
+    return res.json({ message: 'Palavra do dia atualizada!', word: daily.display });
+  } catch (error) {
+    console.error('Error forcing forca word:', error);
     return res.status(500).json({ error: 'Erro ao atualizar a palavra do dia.' });
   }
 });

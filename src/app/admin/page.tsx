@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Lock, Type, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Lock, Type, Ban, ArrowLeft } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
@@ -35,8 +35,9 @@ export default function AdminPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [selectedForceChar, setSelectedForceChar] = useState('');
-  const [activeTab, setActiveTab] = useState<'lsdle' | 'termo' | 'users' | 'comingSoon'>('lsdle');
+  const [activeTab, setActiveTab] = useState<'lsdle' | 'termo' | 'forca' | 'users' | 'comingSoon'>('lsdle');
   const [termoWord, setTermoWord] = useState('');
+  const [forcaWord, setForcaWord] = useState('');
 
   const today = getLocalDateString();
 
@@ -183,6 +184,32 @@ export default function AdminPage() {
     }
   };
 
+  const handleForceForca = async (forceRandom: boolean) => {
+    setErrorMsg('');
+    setSuccessMsg('');
+    setSubmitting(true);
+
+    try {
+      const res = await apiFetch('/api/admin/forca-force-daily', {
+        method: 'POST',
+        body: JSON.stringify({ word: forceRandom ? undefined : forcaWord })
+      });
+
+      const data = await res.json();
+      setSubmitting(false);
+
+      if (res.ok) {
+        setSuccessMsg(t('admin.forcaForceSuccess', { date: today, word: data.word }));
+        setForcaWord('');
+      } else {
+        setErrorMsg(data.error || t('admin.forcaErrorForce'));
+      }
+    } catch (err) {
+      setSubmitting(false);
+      setErrorMsg(t('admin.errorForceConn'));
+    }
+  };
+
   if (authLoading || (currentUser && loading)) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -258,6 +285,13 @@ export default function AdminPage() {
           onClick={() => setActiveTab('termo')}
         >
           <Type size={18} /> TERMO
+        </button>
+        <button
+          type="button"
+          className={`admin-tab ${activeTab === 'forca' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('forca')}
+        >
+          <Ban size={18} /> FORCA
         </button>
         <button
           type="button"
@@ -374,6 +408,55 @@ export default function AdminPage() {
           </div>
           <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.75rem' }}>
             {t('admin.termoNote')}
+          </span>
+        </div>
+        )}
+
+        {/* FORCA: Word of the Day card */}
+        {activeTab === 'forca' && (
+        <div className="card">
+          <h3 className="card-title">
+            <Ban size={20} style={{ color: 'var(--primary)' }} /> {t('admin.forcaTitle')}
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            {t('admin.forcaDesc')}
+          </p>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
+            <div className="form-group" style={{ flex: '1 1 250px', marginBottom: 0 }}>
+              <label>{t('admin.forcaWordLabel')}</label>
+              <input
+                type="text"
+                value={forcaWord}
+                onChange={(e) => setForcaWord(e.target.value)}
+                placeholder={t('admin.forcaWordPlaceholder')}
+                maxLength={20}
+                style={{ height: '42px', padding: '0 1rem', textTransform: 'uppercase' }}
+              />
+            </div>
+
+            <button
+              onClick={() => handleForceForca(false)}
+              disabled={submitting || forcaWord.trim().length < 4}
+              className="btn"
+              style={{ height: '42px' }}
+            >
+              <UserCheck size={18} />
+              {t('admin.forcaSet')}
+            </button>
+
+            <button
+              onClick={() => handleForceForca(true)}
+              disabled={submitting}
+              className="btn btn-secondary"
+              style={{ height: '42px' }}
+            >
+              <Shuffle size={18} />
+              {t('admin.forcaDraw')}
+            </button>
+          </div>
+          <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.75rem' }}>
+            {t('admin.forcaNote')}
           </span>
         </div>
         )}

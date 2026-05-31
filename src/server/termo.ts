@@ -84,6 +84,13 @@ export interface DailyWord {
   display: string; // accented form for the reveal
 }
 
+// A truly random answer word from the pool (used by the admin "draw new", which
+// must differ from the deterministic daily pick).
+export function randomWord(): DailyWord {
+  const display = WORDS[Math.floor(Math.random() * WORDS.length)];
+  return { word: normalize(display), display };
+}
+
 // Returns today's (or the given date's) solution, creating + persisting it on
 // first access so admin resets and ranking stay consistent for the round.
 export async function getOrCreateDailyWord(dateStr?: string): Promise<DailyWord> {

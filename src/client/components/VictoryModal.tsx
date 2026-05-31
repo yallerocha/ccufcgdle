@@ -436,7 +436,7 @@ export function VictoryModal({
           <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
         </div>
         <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
-        <h2 className="modal-title">{t('victory.title')}</h2>
+        <h2 className="modal-title">{t('victory.title')} <span className="modal-emoji">🎉</span></h2>
         <p className="modal-subtitle">
           {t('victory.subtitlePre')}<strong>{targetName}</strong>!
         </p>

@@ -34,6 +34,8 @@ model User {
   dailyProgress    DailyProgress[]
   termoResults     TermoResult[]
   termoProgress    TermoProgress[]
+  forcaResults     ForcaResult[]
+  forcaProgress    ForcaProgress[]
 }
 
 model DailyCharacter {
@@ -118,6 +120,52 @@ model TermoResult {
   playerId   String
   player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
   attempts   Int
+  durationMs Int
+  createdAt  DateTime @default(now())
+
+  @@unique([date, playerId])
+  @@index([date, attempts, durationMs])
+}
+
+// ── FORCA (Hangman) game ─────────────────────────────────────────────────────
+// Self-contained, like Termo: own daily word, progress and ranking.
+
+model ForcaDaily {
+  id          Int      @id @default(autoincrement())
+  date        String   @unique // Format: "YYYY-MM-DD"
+  word        String   // normalized solution
+  display     String   // accented form to reveal
+  // The registered person you're "saving" by guessing the word (flavor only —
+  // unrelated to the answer). Snapshot of name + photo at selection time.
+  personName  String?
+  personPhoto String?
+  createdAt   DateTime @default(now())
+}
+
+// Server-authoritative play state. `guessed` holds the letters tried so far
+// (normalized, no separator); wrong-count and the solved check derive from it.
+model ForcaProgress {
+  id           Int       @id @default(autoincrement())
+  date         String    // Format: "YYYY-MM-DD"
+  playerId     String
+  player       User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  guessed      String    @default("")
+  firstGuessAt DateTime  @default(now())
+  solved       Boolean   @default(false)
+  solvedAt     DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([date, playerId])
+}
+
+// One Forca result per logged-in player per day. Ranking: fewer wrong guesses
+// (stored in `attempts`) ranks higher; ties broken by shorter durationMs.
+model ForcaResult {
+  id         Int      @id @default(autoincrement())
+  date       String   // Format: "YYYY-MM-DD"
+  playerId   String
+  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  attempts   Int      // number of wrong guesses
   durationMs Int
   createdAt  DateTime @default(now())
 

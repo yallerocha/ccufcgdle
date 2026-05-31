@@ -89,9 +89,12 @@ export function TermoResultModal({
           <Frown size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 1rem auto' }} />
         )}
 
-        <h2 className="modal-title">{won ? t('termo.modal.winTitle') : t('termo.modal.lossTitle')}</h2>
+        <h2 className="modal-title">
+          {won ? t('termo.modal.winTitle') : t('termo.modal.lossTitle')}
+          {won && <span className="modal-emoji"> 🎉</span>}
+        </h2>
         <p className="modal-subtitle">
-          {t('termo.modal.answerWas')} <strong className="lsd-gradient-text">{word}</strong>
+          {t('termo.modal.answerWas')} <strong>{word}</strong>
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1.5rem' }}>

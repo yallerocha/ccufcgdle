@@ -25,4 +25,13 @@ if (!i18n.isInitialized) {
   });
 }
 
+// Always (re)apply the latest bundles. The i18n instance is a process-level
+// singleton initialized only once, so without this an HMR edit to a locale file
+// would not reach the already-initialized server instance — making SSR render
+// raw keys while the freshly-loaded client renders translations (hydration
+// mismatch). Re-adding the bundles on every module evaluation keeps SSR and
+// client in sync without a dev-server restart. (No-op cost in production.)
+i18n.addResourceBundle('pt', 'translation', pt, true, true);
+i18n.addResourceBundle('en', 'translation', en, true, true);
+
 export default i18n;

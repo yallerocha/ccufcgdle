@@ -17,15 +17,11 @@ export default function Navbar() {
       <div className="navbar-content container">
         <Link href="/" className="nav-logo">
           <img src="/logo_icone.png" alt="LSD Logo Icon" style={{ height: '32px', width: 'auto' }} />
-          <span style={{ marginLeft: '4px', fontWeight: 800 }}>
-            <span style={{ color: 'var(--lsd-teal)' }}>L</span>
-            <span style={{ color: 'var(--lsd-blue)' }}>S</span>
-            <span style={{ color: 'var(--lsd-purple)' }}>D</span>
-            <span style={{ color: 'var(--text-muted)', margin: '0 3px', fontWeight: 400 }}> </span>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>GAME</span>
-            <span style={{ color: 'var(--lsd-magenta)' }}>H</span>
-            <span style={{ color: 'var(--lsd-red)' }}>U</span>
-            <span style={{ color: 'var(--lsd-orange)' }}>B</span>
+          {/* Single gradient spanning the whole name (L → B); GAME stays solid. */}
+          <span className="lsd-gradient-text" style={{ marginLeft: '4px', fontWeight: 800 }}>
+            LSD{' '}
+            <span style={{ WebkitTextFillColor: 'var(--text-primary)', color: 'var(--text-primary)', fontWeight: 600 }}>GAME</span>
+            HUB
           </span>
           <span className="nav-logo-sub">LSD-UFCG</span>
         </Link>
