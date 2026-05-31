@@ -119,6 +119,13 @@
   scrollbar-color: var(--border-color) var(--bg-main);
 }
 
+html {
+  /* Always reserve the scrollbar gutter so short pages (no scrollbar) and tall
+     pages (with scrollbar) center their content identically — otherwise the
+     centered .container shifts a few pixels between pages. */
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--bg-main);
   color: var(--text-primary);
@@ -1186,6 +1193,12 @@ input:focus, select:focus, textarea:focus {
 .termo-cell.filled {
   border-color: var(--text-dim);
   animation: scaleIn 0.12s ease;
+}
+
+/* Active cell the next typed letter goes into (click any cell to move it). */
+.termo-cell.cursor {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 .termo-cell.correct {

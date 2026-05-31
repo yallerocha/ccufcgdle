@@ -6,6 +6,7 @@ import {
   MAX_ATTEMPTS,
   normalize,
   isValidGuess,
+  displayFor,
   evaluateGuess,
   getOrCreateDailyWord,
 } from '../../server/termo';
@@ -98,7 +99,9 @@ router.post('/guess', withAuth, async (req, res) => {
     // Only reveal the answer once the player solved it or used every attempt.
     const revealed = solved || attemptsUsed >= MAX_ATTEMPTS ? display : undefined;
 
-    return res.json({ results, solved, revealed });
+    // Accented form of the guess, so the board can auto-fill accents (Termo rule:
+    // accents are filled in automatically and don't affect the hints).
+    return res.json({ results, solved, revealed, display: displayFor(guess) });
   } catch (error) {
     console.error('Error handling termo guess:', error);
     return res.status(500).json({ error: 'Erro interno ao processar o palpite.' });

@@ -1,5 +1,6 @@
 import { prisma } from './db';
 import { getLocalDateString } from '@/shared/utils';
+import { TERMO_GUESS_WORDS } from './termo-words';
 
 export const WORD_LENGTH = 5;
 export const MAX_ATTEMPTS = 6;
@@ -48,8 +49,17 @@ export function normalize(word: string): string {
     .replace(/[^A-Z]/g, '');
 }
 
-// normalized solution -> accented display form, for revealing the answer.
-const DISPLAY_BY_NORM = new Map<string, string>(WORDS.map((w) => [normalize(w), w]));
+// normalized form -> accented display form, used both to validate a guess and to
+// auto-fill its accents. Built from the broad accepted-guess dictionary, with the
+// curated answer words layered on top so daily reveals use their exact accents.
+const DISPLAY_BY_NORM = new Map<string, string>();
+for (const w of TERMO_GUESS_WORDS) {
+  const n = normalize(w);
+  if (n.length === WORD_LENGTH && !DISPLAY_BY_NORM.has(n)) DISPLAY_BY_NORM.set(n, w);
+}
+for (const w of WORDS) {
+  DISPLAY_BY_NORM.set(normalize(w), w); // curated answers win for display
+}
 const VALID_GUESSES = new Set(DISPLAY_BY_NORM.keys());
 
 export function isValidGuess(normalized: string): boolean {
