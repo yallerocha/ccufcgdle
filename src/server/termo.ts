@@ -71,12 +71,19 @@ export function displayFor(normalized: string): string {
 }
 
 // Deterministic daily index so everyone gets the same word for a given date.
-function hashDate(dateStr: string): number {
-  let h = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    h = (h * 31 + dateStr.charCodeAt(i)) | 0;
+// FNV-1a + a final xorshift mix: gives a well-spread value even for sequential
+// dates (a plain `h*31+c` left near-sequential indices, e.g. 185,186,187…).
+export function hashString(str: string): number {
+  let h = 2166136261; // FNV offset basis
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619); // FNV prime
   }
-  return Math.abs(h);
+  // Final avalanche so adjacent inputs land far apart.
+  h ^= h >>> 15;
+  h = Math.imul(h, 2246822507);
+  h ^= h >>> 13;
+  return h >>> 0; // unsigned
 }
 
 export interface DailyWord {
@@ -101,7 +108,7 @@ export async function getOrCreateDailyWord(dateStr?: string): Promise<DailyWord>
     return { word: existing.word, display: existing.display };
   }
 
-  const display = WORDS[hashDate(date) % WORDS.length];
+  const display = WORDS[hashString(date) % WORDS.length];
   const word = normalize(display);
 
   try {

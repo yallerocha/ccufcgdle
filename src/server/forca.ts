@@ -1,6 +1,6 @@
 import { prisma } from './db';
 import { getLocalDateString } from '@/shared/utils';
-import { normalize } from './termo';
+import { normalize, hashString } from './termo';
 import { getActiveUsers } from './game';
 
 // Classic hangman: 6 wrong guesses complete the drawing (head, torso, 2 arms,
@@ -34,15 +34,6 @@ export function displayFor(normalized: string): string {
   return DISPLAY_BY_NORM.get(normalized) ?? normalized;
 }
 
-// Deterministic daily index so everyone gets the same word for a given date.
-function hashDate(dateStr: string): number {
-  let h = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    h = (h * 31 + dateStr.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
-}
-
 export interface DailyWord {
   word: string; // normalized solution
   display: string; // accented form for the reveal
@@ -56,12 +47,17 @@ export function randomWord(): { word: string; display: string } {
   return { word: normalize(display), display };
 }
 
-// Pick a random active registered person to be "saved" today (flavor only).
-async function pickDailyPerson(): Promise<{ name: string | null; photo: string | null }> {
+// Pick the active registered person to be "saved" today (flavor only).
+// Deterministic by date — same date → same person — but seeded differently from
+// the word ('forca-person:'), so the word and person aren't correlated. The
+// active-user list can change over time; that only shifts who maps to a date,
+// which is fine since the choice is snapshotted into ForcaDaily on creation.
+async function pickDailyPerson(date: string): Promise<{ name: string | null; photo: string | null }> {
   try {
     const users = await getActiveUsers();
     if (users.length === 0) return { name: null, photo: null };
-    const u = users[Math.floor(Math.random() * users.length)];
+    const sorted = [...users].sort((a, b) => a.id.localeCompare(b.id));
+    const u = sorted[hashString(`forca-person:${date}`) % sorted.length];
     return { name: u.name, photo: u.photoUrl ?? null };
   } catch {
     return { name: null, photo: null };
@@ -81,9 +77,9 @@ export async function getOrCreateDailyWord(dateStr?: string): Promise<DailyWord>
     };
   }
 
-  const display = WORDS[hashDate(date) % WORDS.length];
+  const display = WORDS[hashString(date) % WORDS.length];
   const word = normalize(display);
-  const person = await pickDailyPerson();
+  const person = await pickDailyPerson(date);
 
   try {
     const created = await prisma.forcaDaily.create({
