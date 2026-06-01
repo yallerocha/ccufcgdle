@@ -6,11 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
-import { HelpCircle, Search, Trophy, CheckCircle, Info, ArrowLeft } from 'lucide-react';
+import { HelpCircle, Search, Trophy, Info, ArrowLeft } from 'lucide-react';
 import { VictoryModal } from '@/client/components/VictoryModal';
 import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
-import { shareStoryImage, type CellResult } from '@/client/lib/storyImage';
 
 interface CharacterOption {
   id: string;
@@ -36,9 +35,6 @@ export default function GamePage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showRules, setShowRules] = useState(false);
-  const [imageSharing, setImageSharing] = useState(false);
-  const [imageNote, setImageNote] = useState('');
-  const [imageNoteType, setImageNoteType] = useState<'success' | 'error'>('success');
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const todayStr = getLocalDateString();
@@ -214,61 +210,6 @@ export default function GamePage() {
       }
     } else if (e.key === 'Escape') {
       setShowDropdown(false);
-    }
-  };
-
-  // Build a 1080x1920 image from the result and share it (mobile: Web Share
-  // sheet → Instagram → Stories; desktop: downloads the PNG).
-  const shareStoryCard = async () => {
-    if (imageSharing) return;
-    setImageSharing(true);
-    setImageNote('');
-
-    const keysOrder = ['gender', 'role', 'entrySemester', 'area', 'projects', 'isColab', 'likesCoffee'] as const;
-    const grid: CellResult[][] = guesses.map((guess) =>
-      keysOrder.map((key): CellResult => {
-        const field = guess.fields[key];
-        const r = (field as { result: string }).result;
-        if (r === 'correct') return 'correct';
-        if (r === 'higher' || r === 'lower' || r === 'partial') return 'partial';
-        return 'incorrect';
-      })
-    );
-
-    const count = guesses.length;
-    const url = window.location.origin;
-
-    try {
-      const outcome = await shareStoryImage(
-        {
-          attempts: count,
-          dateLabel: todayStr.split('-').reverse().join('/'),
-          grid,
-          targetName,
-          targetPhoto,
-          url,
-          labels: {
-            resultTitle: t('victory.imageResultTitle'),
-            attemptsWord: count === 1 ? t('victory.attemptLabel') : t('victory.attemptsLabel'),
-            answerWas: t('victory.imageAnswer'),
-            playAt: t('victory.imagePlayAt'),
-          },
-        },
-        t('victory.shareImageText', { date: todayStr, count, url })
-      );
-
-      if (outcome === 'downloaded') {
-        setImageNoteType('success');
-        setImageNote(t('victory.imageDownloaded'));
-        setTimeout(() => setImageNote(''), 5000);
-      }
-    } catch (err) {
-      console.error('Error sharing story image:', err);
-      setImageNoteType('error');
-      setImageNote(t('victory.imageError'));
-      setTimeout(() => setImageNote(''), 5000);
-    } finally {
-      setImageSharing(false);
     }
   };
 
@@ -538,18 +479,15 @@ export default function GamePage() {
             targetName={targetName}
             targetPhoto={targetPhoto}
             attempts={guesses.length}
-            guesses={guesses}
-            onShareImage={shareStoryCard}
-            imageSharing={imageSharing}
             onClose={() => setShowWinModal(false)}
             todayStr={todayStr}
           />
 
-          {/* Top-of-screen notification (guess error / image download / share) */}
+          {/* Top-of-screen notification (guess error) */}
           <Toast
-            message={errorMsg || imageNote}
-            type={errorMsg ? 'error' : imageNoteType}
-            onClose={() => { setErrorMsg(''); setImageNote(''); }}
+            message={errorMsg}
+            type="error"
+            onClose={() => setErrorMsg('')}
           />
         </div>
       )}

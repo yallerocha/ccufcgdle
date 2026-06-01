@@ -31,9 +31,6 @@ interface VictoryModalProps {
   targetName: string;
   targetPhoto: string;
   attempts: number;
-  guesses: any[];
-  onShareImage: () => void;
-  imageSharing: boolean;
   onClose: () => void;
   todayStr: string;
 }
@@ -43,9 +40,6 @@ export function VictoryModal({
   targetName,
   targetPhoto,
   attempts,
-  guesses,
-  onShareImage,
-  imageSharing,
   onClose,
   todayStr,
 }: VictoryModalProps) {
@@ -270,53 +264,6 @@ export function VictoryModal({
     </div>
   ) : null;
 
-  const gridCard = (
-    <div style={{
-      width: '100%',
-      padding: '0.75rem',
-      borderRadius: 'var(--border-radius)',
-      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-      border: '1px solid var(--border-color)',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600 }}>
-        {t('victory.gridPreview')}
-      </p>
-      <div className="share-blocks" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        {(() => {
-          const MAX_ROWS = 6;
-          const overflow = guesses.length > MAX_ROWS ? guesses.length - MAX_ROWS : 0;
-          // Get the last 6 guesses and reverse them so latest is at the top (matches the board)
-          const visibleGuesses = [...(overflow > 0 ? guesses.slice(-MAX_ROWS) : guesses)].reverse();
-          const keysOrder = ['gender', 'role', 'entrySemester', 'area', 'projects', 'isColab', 'likesCoffee'];
-          const rows = visibleGuesses.map((guess: any) => {
-            return keysOrder
-              .map(key => {
-                const f = guess.fields[key];
-                if (f.result === 'correct') return '🟩';
-                if (f.result === 'higher' || f.result === 'lower' || f.result === 'partial') return '🟧';
-                return '⬛';
-              })
-              .join('');
-          }).join('\n');
-          return (
-            <>
-              <div style={{ whiteSpace: 'pre', fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                {rows}
-              </div>
-              {overflow > 0 && (
-                <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.4', textAlign: 'center' }}>
-                  + {overflow}
-                </div>
-              )}
-            </>
-          );
-        })()}
-      </div>
-    </div>
-  );
-
   const rankingCard = (
     <Link href="/lsdle/ranking" className="ranking-preview-card" style={{
       width: '100%',
@@ -403,10 +350,6 @@ export function VictoryModal({
 
   const buttonsBlock = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      <button onClick={onShareImage} disabled={imageSharing} className="btn" style={{ width: '100%' }}>
-        <ImageIcon size={18} />
-        {imageSharing ? t('victory.sharingImage') : t('victory.shareImage')}
-      </button>
       <button onClick={onClose} className="btn btn-secondary">
         {t('victory.back')}
       </button>
@@ -446,7 +389,6 @@ export function VictoryModal({
             <div style={columnStyle}>
               {photoBlock}
               {statsBlock}
-              {gridCard}
             </div>
             <div style={columnStyle}>
               {noteBlock}
@@ -457,10 +399,7 @@ export function VictoryModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1.5rem' }}>
             {photoBlock}
             {statsBlock}
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 120px', display: 'flex' }}>{gridCard}</div>
-              <div style={{ flex: '1.2 1 160px', display: 'flex' }}>{rankingCard}</div>
-            </div>
+            {rankingCard}
           </div>
         )}
 

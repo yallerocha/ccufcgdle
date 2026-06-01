@@ -406,7 +406,6 @@ export default function TermoPage() {
         word={revealed}
         attempts={guesses.length}
         maxAttempts={maxAttempts}
-        results={results}
         todayStr={todayStr}
         onClose={() => setShowResult(false)}
       />

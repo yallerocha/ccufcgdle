@@ -98,8 +98,8 @@ export const pt = {
     modal: {
       winTitle: 'Você venceu!',
       lossTitle: 'Enforcado!',
-      savedPerson: 'Você salvou {{name}} a tempo! 🦸',
-      hangedPerson: '{{name}} foi para a forca... 💀',
+      savedPerson: 'Você salvou {{name}} a tempo!',
+      hangedPerson: '{{name}} foi para a forca...',
       answerWas: 'A palavra de hoje era',
       errors: 'Erros',
       errorsShort: 'erros',

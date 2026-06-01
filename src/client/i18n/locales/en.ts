@@ -102,8 +102,8 @@ export const en: Dictionary = {
     modal: {
       winTitle: 'You won!',
       lossTitle: 'Hanged!',
-      savedPerson: 'You saved {{name}} in time! 🦸',
-      hangedPerson: '{{name}} ended up on the gallows... 💀',
+      savedPerson: 'You saved {{name}} in time!',
+      hangedPerson: '{{name}} ended up on the gallows...',
       answerWas: "Today's word was",
       errors: 'Mistakes',
       errorsShort: 'errors',

@@ -7,8 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { Trophy, Frown, Clock } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 
-type LetterResult = 'correct' | 'present' | 'absent';
-
 interface RankingEntry {
   rank: number;
   name: string;
@@ -25,7 +23,6 @@ function formatDuration(ms: number): string {
 }
 
 const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
-const EMOJI: Record<LetterResult, string> = { correct: '🟩', present: '🟨', absent: '⬛' };
 
 interface TermoResultModalProps {
   show: boolean;
@@ -33,7 +30,6 @@ interface TermoResultModalProps {
   word: string;
   attempts: number;
   maxAttempts: number;
-  results: LetterResult[][];
   todayStr: string;
   onClose: () => void;
 }
@@ -44,7 +40,6 @@ export function TermoResultModal({
   word,
   attempts,
   maxAttempts,
-  results,
   todayStr,
   onClose,
 }: TermoResultModalProps) {
@@ -68,8 +63,6 @@ export function TermoResultModal({
   }, [show, todayStr]);
 
   if (!show || !mounted) return null;
-
-  const emojiGrid = results.map((row) => row.map((r) => EMOJI[r]).join('')).join('\n');
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
@@ -110,28 +103,9 @@ export function TermoResultModal({
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
-            {/* Emoji grid of the result */}
-            <div style={{ flex: '1 1 120px', display: 'flex' }}>
-              <div style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--border-radius)',
-                backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid var(--border-color)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <div style={{ whiteSpace: 'pre', fontFamily: 'monospace', fontSize: '1rem', lineHeight: '1.4' }}>
-                  {emojiGrid}
-                </div>
-              </div>
-            </div>
-
             {/* Today's ranking preview */}
             <Link href="/termo/ranking" className="ranking-preview-card" style={{
-              flex: '1.2 1 160px',
+              flex: '1 1 100%',
               padding: '0.75rem',
               borderRadius: 'var(--border-radius)',
               backgroundColor: 'rgba(255, 255, 255, 0.02)',
