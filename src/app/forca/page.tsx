@@ -8,6 +8,7 @@ import { getLocalDateString } from '@/shared/utils';
 import { HelpCircle, Info, Trophy, ArrowLeft } from 'lucide-react';
 import { Toast } from '@/client/components/Toast';
 import { ForcaResultModal } from '@/client/components/ForcaResultModal';
+import type { StreakInfo } from '@/client/components/StreakBadge';
 import { apiFetch } from '@/client/lib/api';
 
 type Status = 'playing' | 'won' | 'lost';
@@ -77,6 +78,7 @@ export default function ForcaPage() {
   const [wrong, setWrong] = useState(0);
   const [status, setStatus] = useState<Status>('playing');
   const [revealed, setRevealed] = useState('');
+  const [streak, setStreak] = useState<StreakInfo | null>(null);
   const [showResult, setShowResult] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -121,6 +123,7 @@ export default function ForcaPage() {
             setWrong(saved.wrong || 0);
             setStatus(savedStatus);
             setRevealed(saved.revealed || '');
+            setStreak(saved.streak ?? null);
             setShowResult(savedStatus !== 'playing');
             restored = true;
           }
@@ -131,6 +134,7 @@ export default function ForcaPage() {
           setWrong(0);
           setStatus('playing');
           setRevealed('');
+          setStreak(null);
           setShowResult(false);
         }
       } catch (err) {
@@ -178,12 +182,14 @@ export default function ForcaPage() {
         if (data.solved) newStatus = 'won';
         else if (data.lost) newStatus = 'lost';
         const newRevealedWord = data.revealed || (newStatus !== 'playing' ? revealed : '');
+        const newStreak: StreakInfo | null = data.streak ?? streak;
 
         setRevealedLetters(newRevealed);
         setGuessed(newGuessed);
         setWrong(newWrong);
         setStatus(newStatus);
         setRevealed(newRevealedWord);
+        setStreak(newStreak);
         if (newStatus !== 'playing') {
           setTimeout(() => setShowResult(true), 700);
         }
@@ -195,6 +201,7 @@ export default function ForcaPage() {
             wrong: newWrong,
             status: newStatus,
             revealed: newRevealedWord,
+            streak: newStreak,
             dailyKey,
           })
         );
@@ -205,7 +212,7 @@ export default function ForcaPage() {
         submittingRef.current = false;
       }
     },
-    [status, guessed, revealedLetters, wrong, revealed, storageKey, dailyKey, t]
+    [status, guessed, revealedLetters, wrong, revealed, streak, storageKey, dailyKey, t]
   );
 
   // Physical keyboard support.
@@ -238,7 +245,6 @@ export default function ForcaPage() {
 
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <img src="/logo.png" alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
-        <h1 className="lsd-gradient-text" style={{ paddingBottom: '0.2rem' }}>FORCA</h1>
         <p>{t('forca.tagline')}</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button onClick={() => setShowRules(!showRules)} className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
@@ -334,6 +340,7 @@ export default function ForcaPage() {
         wrong={wrong}
         maxWrong={maxWrong}
         personName={personName}
+        streak={streak}
         todayStr={todayStr}
         onClose={() => setShowResult(false)}
       />

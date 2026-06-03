@@ -8,6 +8,7 @@ import { getLocalDateString } from '@/shared/utils';
 import { HelpCircle, Info, Trophy, Delete, CornerDownLeft, ArrowLeft } from 'lucide-react';
 import { Toast } from '@/client/components/Toast';
 import { TermoResultModal } from '@/client/components/TermoResultModal';
+import type { StreakInfo } from '@/client/components/StreakBadge';
 import { apiFetch } from '@/client/lib/api';
 
 type LetterResult = 'correct' | 'present' | 'absent';
@@ -40,6 +41,7 @@ export default function TermoPage() {
   const [cursor, setCursor] = useState(0);
   const [status, setStatus] = useState<Status>('playing');
   const [revealed, setRevealed] = useState('');
+  const [streak, setStreak] = useState<StreakInfo | null>(null);
   const [showResult, setShowResult] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -93,6 +95,7 @@ export default function TermoPage() {
             setResults(saved.results || []);
             setStatus(savedStatus);
             setRevealed(saved.revealed || '');
+            setStreak(saved.streak ?? null);
             setShowResult(savedStatus !== 'playing'); // reopen result if finished
             restored = true;
           }
@@ -103,6 +106,7 @@ export default function TermoPage() {
           setResults([]);
           setStatus('playing');
           setRevealed('');
+          setStreak(null);
           setShowResult(false);
         }
         setCells(Array.from({ length: data.wordLength ?? 5 }, () => ''));
@@ -123,7 +127,7 @@ export default function TermoPage() {
   }, [todayStr, user?.id, authLoading]);
 
   const persist = useCallback(
-    (next: { guesses: string[]; displays: string[]; results: LetterResult[][]; status: Status; revealed: string }) => {
+    (next: { guesses: string[]; displays: string[]; results: LetterResult[][]; status: Status; revealed: string; streak: StreakInfo | null }) => {
       localStorage.setItem(storageKey, JSON.stringify({ ...next, dailyKey }));
     },
     [storageKey, dailyKey]
@@ -168,19 +172,21 @@ export default function TermoPage() {
       else if (newGuesses.length >= maxAttempts) newStatus = 'lost';
 
       const newRevealed = data.revealed || (newStatus !== 'playing' ? revealed : '');
+      const newStreak: StreakInfo | null = data.streak ?? streak;
 
       setGuesses(newGuesses);
       setDisplays(newDisplays);
       setResults(newResults);
       setStatus(newStatus);
       setRevealed(newRevealed);
+      setStreak(newStreak);
       setCells(blankRow());
       setCursor(0);
       if (newStatus !== 'playing') {
         // Let the final row's colors register before the modal covers the board.
         setTimeout(() => setShowResult(true), 900);
       }
-      persist({ guesses: newGuesses, displays: newDisplays, results: newResults, status: newStatus, revealed: newRevealed });
+      persist({ guesses: newGuesses, displays: newDisplays, results: newResults, status: newStatus, revealed: newRevealed, streak: newStreak });
     } catch (err) {
       console.error('Error submitting termo guess:', err);
       setErrorMsg(t('termo.error'));
@@ -188,7 +194,7 @@ export default function TermoPage() {
       setSubmitting(false);
       submittingRef.current = false;
     }
-  }, [status, cells, wordLength, guesses, displays, results, maxAttempts, revealed, persist, blankRow, t]);
+  }, [status, cells, wordLength, guesses, displays, results, maxAttempts, revealed, streak, persist, blankRow, t]);
 
   // Auto-validate a completed row: once every cell is filled, submit it and
   // advance to the next line — no Enter needed. The lastTriedRef guard keeps an
@@ -284,7 +290,6 @@ export default function TermoPage() {
 
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <img src="/logo.png" alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
-        <h1 className="lsd-gradient-text" style={{ paddingBottom: '0.2rem' }}>TERMO</h1>
         <p>{t('termo.tagline')}</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button
@@ -406,6 +411,7 @@ export default function TermoPage() {
         word={revealed}
         attempts={guesses.length}
         maxAttempts={maxAttempts}
+        streak={streak}
         todayStr={todayStr}
         onClose={() => setShowResult(false)}
       />

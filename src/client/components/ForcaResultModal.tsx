@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Trophy, Frown, Clock } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
 
 interface RankingEntry {
   rank: number;
@@ -31,11 +32,12 @@ interface ForcaResultModalProps {
   wrong: number;
   maxWrong: number;
   personName?: string | null;
+  streak?: StreakInfo | null;
   todayStr: string;
   onClose: () => void;
 }
 
-export function ForcaResultModal({ show, won, word, wrong, maxWrong, personName, todayStr, onClose }: ForcaResultModalProps) {
+export function ForcaResultModal({ show, won, word, wrong, maxWrong, personName, streak, todayStr, onClose }: ForcaResultModalProps) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [rankingPreview, setRankingPreview] = useState<RankingEntry[]>([]);
@@ -102,6 +104,8 @@ export function ForcaResultModal({ show, won, word, wrong, maxWrong, personName,
             </div>
           </div>
 
+          {streak && <StreakBadge streak={streak} />}
+
           <Link href="/forca/ranking" className="ranking-preview-card" style={{
             padding: '0.75rem',
             borderRadius: 'var(--border-radius)',
@@ -123,6 +127,13 @@ export function ForcaResultModal({ show, won, word, wrong, maxWrong, personName,
                       <span style={{ fontWeight: 700, minWidth: '1.25rem', textAlign: 'center' }}>
                         {MEDALS[entry.rank] || `${entry.rank}.`}
                       </span>
+                      {entry.photoUrl ? (
+                        <img src={entry.photoUrl} alt={entry.name} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700 }}>
+                          {entry.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
                       <span style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '110px' }}>
                         {entry.name}
                       </span>

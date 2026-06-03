@@ -1389,3 +1389,203 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+
+/* ── MEMBERS roster ──────────────────────────────────────────────────────────*/
+.members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.member-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1rem;
+}
+
+.member-photo {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.member-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.member-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+@media (max-width: 520px) {
+  .members-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  .member-photo {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* Clickable member card */
+.member-card-button {
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.member-card-button:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Member stats modal */
+.member-stat-highlights {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.member-stat-hl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: var(--border-radius);
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.member-stat-hl-val {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.member-stat-hl-lbl {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.member-game-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+}
+
+.member-game-metrics {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.member-game-metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+@media (max-width: 520px) {
+  .member-stat-highlights {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── PODIUM ──────────────────────────────────────────────────────────────────*/
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 560px;
+  margin: 1.5rem auto 0 auto;
+}
+
+.podium-col {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  padding: 0;
+  transition: transform 0.12s ease;
+}
+
+.podium-col:hover {
+  transform: translateY(-4px);
+}
+
+.podium-medal {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.podium-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium-points {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.podium-base {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.4rem;
+  box-shadow: var(--shadow-md);
+}
+
+.podium-place {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 520px) {
+  .podium { gap: 0.4rem; }
+  .podium-name { font-size: 0.78rem; }
+}

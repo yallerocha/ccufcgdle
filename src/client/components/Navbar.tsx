@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/client/context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Terminal, User, ShieldCheck, LogOut } from 'lucide-react';
+import { Terminal, User, Users, Trophy, ShieldCheck, LogOut } from 'lucide-react';
 import ThemeToggle from '@/client/components/ThemeToggle';
 import LanguageToggle from '@/client/components/LanguageToggle';
 
@@ -27,6 +27,14 @@ export default function Navbar() {
         </Link>
 
         <div className="nav-links">
+          <Link href="/podium" className="nav-link">
+            <Trophy size={18} /> {t('podium.nav')}
+          </Link>
+
+          <Link href="/members" className="nav-link">
+            <Users size={18} /> {t('nav.members')}
+          </Link>
+
           {user ? (
             <>
               <Link href="/profile" className="nav-link">

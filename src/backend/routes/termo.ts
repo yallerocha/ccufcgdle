@@ -10,6 +10,7 @@ import {
   evaluateGuess,
   getOrCreateDailyWord,
 } from '../../server/termo';
+import { recordStreakSolve, getStreak, type StreakInfo } from '../../server/streak';
 import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
@@ -58,6 +59,7 @@ router.post('/guess', withAuth, async (req, res) => {
     // to decide when to reveal the answer to them.
     let attemptsUsed =
       typeof req.body?.attemptNumber === 'number' ? req.body.attemptNumber : 0;
+    let streak: StreakInfo | undefined;
 
     if (req.auth) {
       const date = getLocalDateString();
@@ -92,6 +94,7 @@ router.post('/guess', withAuth, async (req, res) => {
               update: {},
             }),
           ]);
+          streak = await recordStreakSolve(playerId, 'termo', date);
         }
       }
     }
@@ -101,7 +104,7 @@ router.post('/guess', withAuth, async (req, res) => {
 
     // Accented form of the guess, so the board can auto-fill accents (Termo rule:
     // accents are filled in automatically and don't affect the hints).
-    return res.json({ results, solved, revealed, display: displayFor(guess) });
+    return res.json({ results, solved, revealed, display: displayFor(guess), streak });
   } catch (error) {
     console.error('Error handling termo guess:', error);
     return res.status(500).json({ error: 'Erro interno ao processar o palpite.' });
@@ -115,7 +118,8 @@ router.get('/result', requireAuth, async (req, res) => {
     const result = await prisma.termoResult.findUnique({
       where: { date_playerId: { date, playerId: req.auth!.userId } },
     });
-    return res.json({ result: result ?? null });
+    const streak = await getStreak(req.auth!.userId, 'termo');
+    return res.json({ result: result ?? null, streak });
   } catch (error) {
     console.error('Error loading termo result:', error);
     return res.status(500).json({ error: 'Erro ao carregar resultado.' });

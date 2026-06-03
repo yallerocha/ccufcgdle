@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Clock, Camera, Save } from 'lucide-react';
+import { Clock, Camera, Save, AlertTriangle } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
@@ -47,6 +49,13 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const router = useRouter();
+  // Pending navigation held back by the unsaved-changes guard, surfaced through
+  // the confirmation modal. `null` means no prompt is open.
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     setGender(user.gender);
     setRole(user.role);
@@ -57,6 +66,60 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     setLikesCoffee(user.likesCoffee);
     setPhotoUrl(user.photoUrl || '');
   }, [user]);
+
+  // True when the form differs from the saved user (so we know to warn on exit).
+  const isDirty =
+    gender !== user.gender ||
+    role !== user.role ||
+    entrySemester !== user.entrySemester ||
+    isColab !== user.isColab ||
+    area !== user.area ||
+    likesCoffee !== user.likesCoffee ||
+    photoUrl !== (user.photoUrl || '') ||
+    projects.length !== (user.projects?.length ?? 0) ||
+    projects.some((p) => !(user.projects ?? []).includes(p));
+
+  // Keep the latest dirty flag in a ref so the (once-registered) DOM listeners
+  // always read the current value.
+  const dirtyRef = useRef(isDirty);
+  dirtyRef.current = isDirty;
+
+  // Warn on full-page exits (closing the tab, reload, external navigation).
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!dirtyRef.current) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, []);
+
+  // Intercept in-app navigation (clicks on <a>/<Link>) while there are unsaved
+  // changes, so we can show the confirmation modal instead of leaving.
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (!dirtyRef.current) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const anchor = (e.target as HTMLElement)?.closest('a');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#') || anchor.target === '_blank') return;
+      // Don't intercept clicks within the profile page itself.
+      if (href === window.location.pathname) return;
+      e.preventDefault();
+      setPendingHref(href);
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, []);
+
+  const confirmLeave = () => {
+    const href = pendingHref;
+    setPendingHref(null);
+    dirtyRef.current = false; // allow the navigation through
+    if (href) router.push(href);
+  };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,7 +141,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
       });
       const data = await res.json();
       setSubmitting(false);
-      if (res.ok) { setSuccessMsg(t('profileEdit.success')); refreshUser(); }
+      if (res.ok) { setSuccessMsg(t('profileEdit.success')); dirtyRef.current = false; refreshUser(); }
       else { setErrorMsg(data.error || t('profileEdit.error')); }
     } catch (err) { setSubmitting(false); setErrorMsg(t('profileEdit.errorConn')); }
   };
@@ -99,7 +162,10 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
       <div className="card">
         <h2 className="card-title">{t('profileEdit.attrTitle')}</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{t('profileEdit.attrSubtitle')}</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>{t('profileEdit.attrSubtitle')}</p>
+        <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <Clock size={14} style={{ flexShrink: 0 }} /> {t('profileEdit.changeNote')}
+        </p>
 
         <Toast
           message={errorMsg || successMsg}
@@ -161,6 +227,26 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
           </div>
         </form>
       </div>
+
+      {/* Unsaved-changes confirmation */}
+      {mounted && pendingHref && createPortal(
+        <div className="modal-overlay" onClick={() => setPendingHref(null)}>
+          <div className="modal-content" style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
+            <AlertTriangle size={44} style={{ color: 'var(--accent)', margin: '0 auto 1rem auto' }} />
+            <h2 className="modal-title">{t('profileEdit.unsavedTitle')}</h2>
+            <p className="modal-subtitle">{t('profileEdit.unsavedBody')}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button onClick={confirmLeave} className="btn btn-secondary" style={{ width: '100%' }}>
+                {t('profileEdit.unsavedLeave')}
+              </button>
+              <button onClick={() => setPendingHref(null)} className="btn" style={{ width: '100%' }}>
+                {t('profileEdit.unsavedStay')}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

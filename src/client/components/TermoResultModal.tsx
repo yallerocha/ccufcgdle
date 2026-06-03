@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Trophy, Frown, Clock } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
 
 interface RankingEntry {
   rank: number;
@@ -30,6 +31,7 @@ interface TermoResultModalProps {
   word: string;
   attempts: number;
   maxAttempts: number;
+  streak?: StreakInfo | null;
   todayStr: string;
   onClose: () => void;
 }
@@ -40,6 +42,7 @@ export function TermoResultModal({
   word,
   attempts,
   maxAttempts,
+  streak,
   todayStr,
   onClose,
 }: TermoResultModalProps) {
@@ -102,6 +105,8 @@ export function TermoResultModal({
             </div>
           </div>
 
+          {streak && <StreakBadge streak={streak} />}
+
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
             {/* Today's ranking preview */}
             <Link href="/termo/ranking" className="ranking-preview-card" style={{
@@ -126,6 +131,13 @@ export function TermoResultModal({
                         <span style={{ fontWeight: 700, minWidth: '1.25rem', textAlign: 'center' }}>
                           {MEDALS[entry.rank] || `${entry.rank}.`}
                         </span>
+                        {entry.photoUrl ? (
+                          <img src={entry.photoUrl} alt={entry.name} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700 }}>
+                            {entry.name.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
                         <span style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
                           {entry.name}
                         </span>

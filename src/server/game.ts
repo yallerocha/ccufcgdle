@@ -2,11 +2,57 @@ import { prisma } from './db';
 import { User } from '@prisma/client';
 import { INACTIVITY_DAYS, getLocalDateString } from '@/shared/utils';
 
+// Promotes each user's editable attributes into their daily game snapshot
+// (game* fields) at most once per day. Because a profile edit never touches the
+// game* fields directly (see PUT /api/auth/me), and this only runs when the
+// snapshot is stale (gameSyncDate != today), an edit made today is only picked
+// up by the next day's sync — so the games reflect attribute changes a day late.
+let lastSyncDate = '';
+export async function syncGameAttributes(): Promise<void> {
+  const today = getLocalDateString();
+  // Cheap in-process guard so we don't issue the UPDATE on every request.
+  if (lastSyncDate === today) return;
+  await prisma.$executeRaw`
+    UPDATE "User" SET
+      "gameGender" = "gender",
+      "gameRole" = "role",
+      "gameEntrySemester" = "entrySemester",
+      "gameIsColab" = "isColab",
+      "gameArea" = "area",
+      "gameProjects" = "projects",
+      "gameLikesCoffee" = "likesCoffee",
+      "gamePhotoUrl" = "photoUrl",
+      "gameSyncDate" = ${today}
+    WHERE "gameSyncDate" <> ${today}
+  `;
+  lastSyncDate = today;
+}
+
+// Returns a User whose attribute fields are the daily game snapshot (game*),
+// falling back to the editable values when a user has never been synced (e.g.
+// just registered). Games must compare/display through this view so that
+// same-day profile edits don't leak into the current round.
+export function gameView(u: User): User {
+  return {
+    ...u,
+    gender: u.gameSyncDate ? u.gameGender : u.gender,
+    role: u.gameSyncDate ? u.gameRole : u.role,
+    entrySemester: u.gameSyncDate ? u.gameEntrySemester : u.entrySemester,
+    isColab: u.gameSyncDate ? u.gameIsColab : u.isColab,
+    area: u.gameSyncDate ? u.gameArea : u.area,
+    projects: u.gameSyncDate ? u.gameProjects : u.projects,
+    likesCoffee: u.gameSyncDate ? u.gameLikesCoffee : u.likesCoffee,
+    photoUrl: u.gameSyncDate ? u.gamePhotoUrl : u.photoUrl,
+  };
+}
+
 export async function getActiveUsers(): Promise<User[]> {
+  await syncGameAttributes();
+
   const activeThreshold = new Date();
   activeThreshold.setDate(activeThreshold.getDate() - INACTIVITY_DAYS);
 
-  return prisma.user.findMany({
+  const users = await prisma.user.findMany({
     where: {
       isActive: true,
       lastLogin: {
@@ -14,10 +60,13 @@ export async function getActiveUsers(): Promise<User[]> {
       }
     }
   });
+  // Expose the daily snapshot, not the live (possibly just-edited) attributes.
+  return users.map(gameView);
 }
 
 export async function getOrCreateDailyCharacter(dateStr?: string): Promise<User | null> {
   const targetDate = dateStr || getLocalDateString();
+  await syncGameAttributes();
 
   // 1. Check if daily character already exists for this date
   const existingDaily = await prisma.dailyCharacter.findUnique({
@@ -26,7 +75,7 @@ export async function getOrCreateDailyCharacter(dateStr?: string): Promise<User 
   });
 
   if (existingDaily) {
-    return existingDaily.character;
+    return gameView(existingDaily.character);
   }
 
   // 2. No daily character found, let's select a new one
@@ -44,7 +93,7 @@ export async function getOrCreateDailyCharacter(dateStr?: string): Promise<User 
         characterId: anyUser.id
       }
     });
-    return anyUser;
+    return gameView(anyUser);
   }
 
   // 3. To make it more fun, try to avoid choosing characters chosen recently (e.g., in the last 10 days)
@@ -78,14 +127,14 @@ export async function getOrCreateDailyCharacter(dateStr?: string): Promise<User 
         character: true
       }
     });
-    return newDaily.character;
+    return gameView(newDaily.character);
   } catch (error) {
     // In case of parallel requests creating the same daily character, return the existing one
     const checkAgain = await prisma.dailyCharacter.findUnique({
       where: { date: targetDate },
       include: { character: true }
     });
-    return checkAgain ? checkAgain.character : selectedUser;
+    return checkAgain ? gameView(checkAgain.character) : gameView(selectedUser);
   }
 }
 

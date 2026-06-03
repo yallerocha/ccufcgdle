@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
@@ -38,6 +39,11 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'lsdle' | 'termo' | 'forca' | 'users' | 'comingSoon'>('lsdle');
   const [termoWord, setTermoWord] = useState('');
   const [forcaWord, setForcaWord] = useState('');
+  // User pending deletion, surfaced through the confirmation modal.
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const today = getLocalDateString();
 
@@ -110,14 +116,13 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string, username: string) => {
-    if (!window.confirm(t('admin.confirmDelete', { name: username }))) {
-      return;
-    }
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
     setErrorMsg('');
     setSuccessMsg('');
+    setDeleting(true);
     try {
-      const res = await apiFetch(`/api/admin/users?userId=${userId}`, {
+      const res = await apiFetch(`/api/admin/users?userId=${userToDelete.id}`, {
         method: 'DELETE'
       });
       const data = await res.json();
@@ -129,6 +134,9 @@ export default function AdminPage() {
       }
     } catch (err) {
       setErrorMsg(t('admin.errorDelete'));
+    } finally {
+      setDeleting(false);
+      setUserToDelete(null);
     }
   };
 
@@ -550,7 +558,7 @@ export default function AdminPage() {
                             </button>
 
                             <button
-                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              onClick={() => setUserToDelete(u)}
                               disabled={u.id === currentUser.id}
                               className="btn btn-secondary btn-danger"
                               style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', border: 'none' }}
@@ -571,6 +579,33 @@ export default function AdminPage() {
         )}
 
       </div>
+
+      {/* Delete-user confirmation */}
+      {mounted && userToDelete && createPortal(
+        <div className="modal-overlay" onClick={() => !deleting && setUserToDelete(null)}>
+          <div className="modal-content" style={{ maxWidth: '440px' }} onClick={(e) => e.stopPropagation()}>
+            <AlertTriangle size={44} style={{ color: '#ef4444', margin: '0 auto 1rem auto' }} />
+            <h2 className="modal-title">{t('admin.deleteTitle')}</h2>
+            <p className="modal-subtitle" style={{ overflowWrap: 'anywhere' }}>
+              {t('admin.confirmDelete', { name: userToDelete.name })}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={confirmDeleteUser}
+                disabled={deleting}
+                className="btn btn-danger"
+                style={{ width: '100%', backgroundColor: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+              >
+                <Trash2 size={18} /> {deleting ? t('admin.deleting') : t('admin.deleteConfirm')}
+              </button>
+              <button onClick={() => setUserToDelete(null)} disabled={deleting} className="btn btn-secondary" style={{ width: '100%' }}>
+                {t('admin.deleteCancel')}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { prisma } from '../../server/db';
 import { getLocalDateString } from '../../shared/utils';
 import { normalize } from '../../server/termo';
 import { MAX_WRONG, getOrCreateDailyWord, countWrong, isSolved } from '../../server/forca';
+import { recordStreakSolve, getStreak, type StreakInfo } from '../../server/streak';
 import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
@@ -77,6 +78,7 @@ router.post('/guess', withAuth, async (req, res) => {
         const solved = isSolved(guessed, solution);
         const lost = wrong >= MAX_WRONG;
 
+        let streak: StreakInfo | undefined;
         if (solved && !progress.solved) {
           const solvedAt = new Date();
           const durationMs = Math.max(0, solvedAt.getTime() - progress.firstGuessAt.getTime());
@@ -91,6 +93,7 @@ router.post('/guess', withAuth, async (req, res) => {
               update: {},
             }),
           ]);
+          streak = await recordStreakSolve(playerId, 'forca', date);
         }
 
         const over = solved || lost;
@@ -103,6 +106,7 @@ router.post('/guess', withAuth, async (req, res) => {
           lost,
           maxWrong: MAX_WRONG,
           revealed: over ? display : undefined,
+          streak,
         });
       }
     }
@@ -139,7 +143,8 @@ router.get('/result', requireAuth, async (req, res) => {
     const result = await prisma.forcaResult.findUnique({
       where: { date_playerId: { date, playerId: req.auth!.userId } },
     });
-    return res.json({ result: result ?? null });
+    const streak = await getStreak(req.auth!.userId, 'forca');
+    return res.json({ result: result ?? null, streak });
   } catch (error) {
     console.error('Error loading forca result:', error);
     return res.status(500).json({ error: 'Erro ao carregar resultado.' });

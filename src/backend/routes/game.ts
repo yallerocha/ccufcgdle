@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { prisma } from '../../server/db';
-import { getActiveUsers, getOrCreateDailyCharacter, compareCharacters } from '../../server/game';
+import { getActiveUsers, getOrCreateDailyCharacter, compareCharacters, gameView } from '../../server/game';
+import { recordStreakSolve, getStreak, type StreakInfo } from '../../server/streak';
+import { computeLeaderboard } from '../../server/score';
 import { getLocalDateString } from '../../shared/utils';
 import { validateDailyMessage } from '../../shared/validation';
 import { requireAuth, withAuth } from '../middleware/auth';
@@ -34,6 +36,105 @@ router.get('/active-characters', async (_req, res) => {
   }
 });
 
+// GET /api/game/leaderboard — overall ranking across all games (unified points).
+router.get('/leaderboard', async (_req, res) => {
+  try {
+    const board = await computeLeaderboard();
+    const ranking = board.map((p, i) => ({ rank: i + 1, ...p }));
+    return res.json({ ranking });
+  } catch (error) {
+    console.error('Error in leaderboard API:', error);
+    return res.status(500).json({ error: 'Erro ao carregar a classificação.' });
+  }
+});
+
+// GET /api/game/members — public roster of registered members. Deliberately
+// exposes only name + photo (never the guessable game attributes like area /
+// projects / role), so the members page doesn't spoil the LSDLE game.
+router.get('/members', async (_req, res) => {
+  try {
+    const members = await prisma.user.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, photoUrl: true },
+    });
+    return res.json({ members, count: members.length });
+  } catch (error) {
+    console.error('Error in members API:', error);
+    return res.status(500).json({ error: 'Erro ao carregar os membros.' });
+  }
+});
+
+// GET /api/game/members/:id/stats — aggregated public stats for one member,
+// across all three games, for the member-profile modal. Only counts/aggregates,
+// never the guessable attributes (so it doesn't spoil the LSDLE game).
+router.get('/members/:id/stats', async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const member = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, photoUrl: true, createdAt: true },
+    });
+    if (!member) {
+      return res.status(404).json({ error: 'Membro não encontrado.' });
+    }
+
+    // Per-game wins + best (fewest attempts/wrongs, fastest) + current streak.
+    const perGame = async (
+      resultModel: { aggregate: Function; findFirst: Function },
+      game: string,
+    ) => {
+      const agg = await resultModel.aggregate({
+        where: { playerId: id },
+        _count: { _all: true },
+        _avg: { attempts: true },
+        _min: { attempts: true },
+      });
+      const fastest = await resultModel.findFirst({
+        where: { playerId: id },
+        orderBy: [{ durationMs: 'asc' }],
+        select: { durationMs: true },
+      });
+      const streak = await prisma.gameStreak.findUnique({
+        where: { playerId_game: { playerId: id, game } },
+        select: { current: true, best: true, lastDate: true },
+      });
+      return {
+        wins: agg._count._all as number,
+        avgAttempts: agg._avg.attempts as number | null,
+        bestAttempts: agg._min.attempts as number | null,
+        fastestMs: fastest?.durationMs ?? null,
+        streakBest: streak?.best ?? 0,
+      };
+    };
+
+    const [lsdle, termo, forca] = await Promise.all([
+      perGame(prisma.gameResult, 'lsdle'),
+      perGame(prisma.termoResult, 'termo'),
+      perGame(prisma.forcaResult, 'forca'),
+    ]);
+
+    // Fun flavor counters tied to this person.
+    const [timesPersonOfDay, timesForcaTarget] = await Promise.all([
+      prisma.dailyCharacter.count({ where: { characterId: id } }),
+      prisma.forcaDaily.count({ where: { personName: member.name } }),
+    ]);
+
+    const totalWins = lsdle.wins + termo.wins + forca.wins;
+    const bestStreak = Math.max(lsdle.streakBest, termo.streakBest, forca.streakBest);
+
+    return res.json({
+      member,
+      totals: { wins: totalWins, bestStreak, timesPersonOfDay, timesForcaTarget },
+      games: { lsdle, termo, forca },
+    });
+  } catch (error) {
+    console.error('Error in member stats API:', error);
+    return res.status(500).json({ error: 'Erro ao carregar as estatísticas.' });
+  }
+});
+
 // POST /api/game/guess — compares a guessed character with today's target.
 // For authenticated players, attempts and timing are tracked server-side so the
 // daily ranking is recorded from real play, not from client-supplied numbers.
@@ -52,12 +153,16 @@ router.post('/guess', withAuth, async (req, res) => {
       });
     }
 
-    const guessUser = await prisma.user.findUnique({ where: { id: guessId } });
-    if (!guessUser) {
+    const guessUserRaw = await prisma.user.findUnique({ where: { id: guessId } });
+    if (!guessUserRaw) {
       return res.status(404).json({ error: 'Pessoa não encontrada.' });
     }
 
-    const feedback = compareCharacters(guessUser, target);
+    // Compare using the daily snapshot so a same-day profile edit (to either the
+    // guess or the target) doesn't change today's feedback.
+    const feedback = compareCharacters(gameView(guessUserRaw), target);
+
+    let streak: StreakInfo | undefined;
 
     // Track progress only for logged-in players whose account still exists
     // (the seed may have recreated users with new IDs while old JWTs persist).
@@ -96,6 +201,7 @@ router.post('/guess', withAuth, async (req, res) => {
               update: {},
             }),
           ]);
+          streak = await recordStreakSolve(playerId, 'lsdle', date);
         }
       }
     }
@@ -104,6 +210,7 @@ router.post('/guess', withAuth, async (req, res) => {
       feedback,
       targetName: feedback.correct ? target.name : undefined,
       photoUrl: feedback.correct ? target.photoUrl : undefined,
+      streak,
     });
   } catch (error) {
     console.error('Error handling guess:', error);
@@ -120,7 +227,8 @@ router.get('/result', requireAuth, async (req, res) => {
     const result = await prisma.gameResult.findUnique({
       where: { date_playerId: { date, playerId: req.auth!.userId } },
     });
-    return res.json({ result: result ?? null });
+    const streak = await getStreak(req.auth!.userId, 'lsdle');
+    return res.json({ result: result ?? null, streak });
   } catch (error) {
     console.error('Error loading game result:', error);
     return res.status(500).json({ error: 'Erro ao carregar resultado.' });

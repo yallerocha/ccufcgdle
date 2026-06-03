@@ -21,7 +21,21 @@ model User {
   projects         String[]         // Projetos/linhas no LSD (uma pessoa pode estar em vários)
   likesCoffee      String           // "Sim", "Não", "Só energético"
   photoUrl         String?          // Base64 data URL or photo URL
-  
+
+  // Daily game snapshot: the games (LSDLE etc.) read these, NOT the editable
+  // fields above. They are promoted from the editable values at most once per day
+  // (see syncGameAttributes), so a profile edit only reaches the games the next
+  // day. `gameSyncDate` is the "YYYY-MM-DD" the snapshot reflects ("" = never).
+  gameGender        String          @default("")
+  gameRole          String          @default("")
+  gameEntrySemester String          @default("")
+  gameIsColab       String          @default("")
+  gameArea          String          @default("")
+  gameProjects      String[]        @default([])
+  gameLikesCoffee   String          @default("")
+  gamePhotoUrl      String?
+  gameSyncDate      String          @default("")
+
   // Metadata & Activity Tracking
   lastLogin        DateTime         @default(now())
   isActive         Boolean          @default(true)
@@ -36,6 +50,23 @@ model User {
   termoProgress    TermoProgress[]
   forcaResults     ForcaResult[]
   forcaProgress    ForcaProgress[]
+  streaks          GameStreak[]
+}
+
+// Per-player, per-game daily streak. `current` counts consecutive days solved
+// (resets to 1 after a gap), `best` is the all-time max, `lastDate` is the last
+// "YYYY-MM-DD" the player solved that game. One row per (playerId, game).
+model GameStreak {
+  id        Int      @id @default(autoincrement())
+  playerId  String
+  player    User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  game      String   // "lsdle" | "termo" | "forca"
+  current   Int      @default(0)
+  best      Int      @default(0)
+  lastDate  String   @default("") // last solved date, "YYYY-MM-DD"
+  updatedAt DateTime @updatedAt
+
+  @@unique([playerId, game])
 }
 
 model DailyCharacter {

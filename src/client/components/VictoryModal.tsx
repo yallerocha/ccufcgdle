@@ -7,6 +7,7 @@ import { Trophy, Clock, Image as ImageIcon, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
+import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
 import { MAX_DAILY_MESSAGE_LENGTH } from '@/shared/validation';
 
 interface RankingEntry {
@@ -31,6 +32,7 @@ interface VictoryModalProps {
   targetName: string;
   targetPhoto: string;
   attempts: number;
+  streak?: StreakInfo | null;
   onClose: () => void;
   todayStr: string;
 }
@@ -40,6 +42,7 @@ export function VictoryModal({
   targetName,
   targetPhoto,
   attempts,
+  streak,
   onClose,
   todayStr,
 }: VictoryModalProps) {
@@ -182,6 +185,8 @@ export function VictoryModal({
       </div>
     </div>
   );
+
+  const streakBlock = streak ? <StreakBadge streak={streak} /> : null;
 
   // Daily note: editor for the person of the day, read-only card for the players
   // who just guessed them. Null when there is nothing to show/edit.
@@ -389,6 +394,7 @@ export function VictoryModal({
             <div style={columnStyle}>
               {photoBlock}
               {statsBlock}
+              {streakBlock}
             </div>
             <div style={columnStyle}>
               {noteBlock}
@@ -399,6 +405,7 @@ export function VictoryModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1.5rem' }}>
             {photoBlock}
             {statsBlock}
+            {streakBlock}
             {rankingCard}
           </div>
         )}

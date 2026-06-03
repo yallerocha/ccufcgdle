@@ -8,6 +8,7 @@ import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
 import { HelpCircle, Search, Trophy, Info, ArrowLeft } from 'lucide-react';
 import { VictoryModal } from '@/client/components/VictoryModal';
+import type { StreakInfo } from '@/client/components/StreakBadge';
 import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
 
@@ -30,6 +31,7 @@ export default function GamePage() {
   const [targetName, setTargetName] = useState('');
   const [targetPhoto, setTargetPhoto] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [streak, setStreak] = useState<StreakInfo | null>(null);
   const [dailyKey, setDailyKey] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -51,6 +53,7 @@ export default function GamePage() {
     setTargetName('');
     setTargetPhoto('');
     setStartTime(null);
+    setStreak(null);
   };
 
   // Load characters list and restore this account's saved guesses. Re-runs when
@@ -89,6 +92,7 @@ export default function GamePage() {
             setTargetName(savedState.targetName || '');
             setTargetPhoto(savedState.targetPhoto || '');
             setStartTime(savedState.startTime ?? null);
+            setStreak(savedState.streak ?? null);
             setShowWinModal(!!savedState.isWon);
             restored = true;
           }
@@ -162,11 +166,14 @@ export default function GamePage() {
       const target = data.targetName || '';
       const photo = data.photoUrl || '';
 
+      const newStreak: StreakInfo | null = data.streak ?? streak;
+
       setGuesses(updatedGuesses);
       setIsWon(won);
       if (won) {
         setTargetName(target);
         setTargetPhoto(photo);
+        setStreak(newStreak);
         setShowWinModal(true);
         // The daily ranking result is recorded server-side by /api/game/guess
         // (using the server's own attempt count and timing).
@@ -176,7 +183,7 @@ export default function GamePage() {
       // tagged with the daily key so a later admin reset can be detected.
       localStorage.setItem(
         storageKey,
-        JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo, startTime: effectiveStart, dailyKey })
+        JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo, startTime: effectiveStart, streak: newStreak, dailyKey })
       );
 
       // Reset search inputs
@@ -479,6 +486,7 @@ export default function GamePage() {
             targetName={targetName}
             targetPhoto={targetPhoto}
             attempts={guesses.length}
+            streak={streak}
             onClose={() => setShowWinModal(false)}
             todayStr={todayStr}
           />
