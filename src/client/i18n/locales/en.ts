@@ -212,6 +212,16 @@ export const en: Dictionary = {
       labProj: 'Projects',
       coffee: 'Coffee Club',
     },
+    headerTips: {
+      name: "The person's name or nickname, as it appears in the game.",
+      gender: "The gender listed on the person's profile.",
+      role: "The person's relationship with the LSD (e.g. Student, Professor, Collaborator).",
+      period: "The semester the person joined the LSD. The arrow shows whether the secret person joined later (↑) or earlier (↓).",
+      area: "The person's main area of interest within the lab.",
+      labProj: 'The LSD projects the person takes part in. Orange means at least one project in common.',
+      colabs: 'Whether the person is part of Colabs.',
+      coffee: 'Whether the person is part of the coffee club.',
+    },
     tiles: {
       name: 'Name',
       gender: 'Gender',

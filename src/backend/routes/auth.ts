@@ -217,8 +217,18 @@ router.put('/me', requireAuth, async (req, res) => {
       photoUrl,
     } = req.body ?? {};
 
+    // A photo identical to the one already stored is never re-validated:
+    // legacy photos saved before the format validation existed must not block
+    // unrelated profile updates.
+    const current = await prisma.user.findUnique({
+      where: { id: req.auth!.userId },
+      select: { photoUrl: true },
+    });
+    const photoUnchanged = (photoUrl || '') === (current?.photoUrl || '');
+
     const fieldError = validateCharacterFields({
-      gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl,
+      gender, role, entrySemester, isColab, area, projects, likesCoffee,
+      photoUrl: photoUnchanged ? null : photoUrl,
     });
     if (fieldError) {
       return res.status(400).json({ error: fieldError });

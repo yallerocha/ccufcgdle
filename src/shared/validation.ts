@@ -138,15 +138,18 @@ export function validateDailyMessage(message?: string | null, mediaUrl?: string 
 }
 
 // Validates an optional profile photo: must be empty/absent or a base64-encoded
-// image data URL within the size limit.
+// image data URL within the size limit. Any image/* mime is accepted — uploads
+// come from <input accept="image/*">, so restricting to a fixed mime list would
+// reject valid photos (e.g. AVIF) including ones already stored before this
+// validation existed.
 export function validatePhoto(photoUrl?: string | null): string | null {
   if (photoUrl === undefined || photoUrl === null || photoUrl === '') return null;
   if (typeof photoUrl !== 'string') return 'Foto inválida.';
 
-  const match = /^data:image\/(png|jpe?g|webp|gif);base64,([A-Za-z0-9+/=]+)$/.exec(photoUrl);
+  const match = /^data:image\/[a-z0-9.+-]+;base64,([A-Za-z0-9+/=]+)$/i.exec(photoUrl);
   if (!match) return 'Formato de foto inválido.';
 
-  const base64 = match[2];
+  const base64 = match[1];
   // Decoded byte length of base64 without constructing the buffer.
   const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
   const bytes = Math.floor((base64.length * 3) / 4) - padding;

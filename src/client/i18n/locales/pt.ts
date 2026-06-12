@@ -208,6 +208,16 @@ export const pt = {
       labProj: 'Projetos',
       coffee: 'Clube do Café',
     },
+    headerTips: {
+      name: 'O nome ou apelido da pessoa, como aparece no jogo.',
+      gender: 'O gênero informado no perfil da pessoa.',
+      role: 'O vínculo da pessoa com o LSD (ex.: Estudante, Professor, Colaborador).',
+      period: 'O período/semestre em que a pessoa entrou no LSD. A seta indica se a pessoa secreta entrou depois (↑) ou antes (↓).',
+      area: 'A principal área de interesse da pessoa dentro do laboratório.',
+      labProj: 'Os projetos do LSD em que a pessoa participa. Laranja indica ao menos um projeto em comum.',
+      colabs: 'Indica se a pessoa faz parte do Colabs.',
+      coffee: 'Indica se a pessoa faz parte do clube do café.',
+    },
     tiles: {
       name: 'Nome',
       gender: 'Gênero',

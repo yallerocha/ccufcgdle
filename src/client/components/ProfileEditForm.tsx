@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Clock, Camera, Save, AlertTriangle } from 'lucide-react';
+import { Clock, Camera, Save, AlertTriangle, Settings2, Trash2, FolderGit2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
@@ -147,23 +147,54 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   };
 
   return (
-    <div style={{ maxWidth: '650px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
-      <div className="card" style={{ borderLeft: '4px solid var(--primary)', padding: '1.5rem 2rem' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.25rem', marginBottom: '0.75rem' }}>
-          <Clock size={20} style={{ color: 'var(--primary)' }} /> {t('profileEdit.statusTitle')}
-        </h3>
-        <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-          {t('profileEdit.statusBody', { name: user.name, days: INACTIVITY_DAYS })}
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
-          <span className="badge badge-active" style={{ fontSize: '0.85rem', padding: '0.35rem 0.75rem' }}>{t('profileEdit.activeBadge')}</span>
+    <div className="profile-page fade-in">
+      {/* Hero: banner + avatar + name + status */}
+      <div className="card profile-hero">
+        <div className="profile-hero-banner lsd-gradient-bg" />
+        <div className="profile-hero-body">
+          <div className="profile-avatar-wrap">
+            {photoUrl ? (
+              <img src={photoUrl} alt={user.name} className="profile-avatar" />
+            ) : (
+              <div className="profile-avatar profile-avatar-placeholder">
+                {user.name.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-edit" />
+            <label htmlFor="photo-upload-edit" className="profile-avatar-edit" title={t('photo.select')}>
+              <Camera size={15} />
+            </label>
+            {photoUrl && (
+              <button
+                type="button"
+                onClick={() => setPhotoUrl('')}
+                className="profile-avatar-edit profile-avatar-remove"
+                title={t('photo.remove')}
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
+
+          <div className="profile-hero-info">
+            <h2 className="profile-hero-name">{user.name}</h2>
+            <span className="badge badge-active">{t('profileEdit.activeBadge')}</span>
+          </div>
+
+          <p className="profile-hero-status">
+            {t('profileEdit.statusBody', { name: user.name, days: INACTIVITY_DAYS })}
+          </p>
+
         </div>
       </div>
 
+      {/* Attributes form */}
       <div className="card">
-        <h2 className="card-title">{t('profileEdit.attrTitle')}</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>{t('profileEdit.attrSubtitle')}</p>
-        <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <h2 className="card-title">
+          <Settings2 size={22} style={{ color: 'var(--primary)' }} /> {t('profileEdit.attrTitle')}
+        </h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{t('profileEdit.attrSubtitle')}</p>
+        <p className="profile-change-note">
           <Clock size={14} style={{ flexShrink: 0 }} /> {t('profileEdit.changeNote')}
         </p>
 
@@ -174,32 +205,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         />
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>{t('profileEdit.nameLabel')}</label>
-            <input type="text" value={user.name} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} />
-          </div>
-
-          <div className="form-group">
-            <label>{t('photo.label')}</label>
-            <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', marginTop: '0.5rem' }}>
-              {photoUrl ? (
-                <img src={photoUrl} alt="Preview" style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} />
-              ) : (
-                <div style={{ width: '96px', height: '96px', borderRadius: '50%', border: '2px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)', flexShrink: 0 }}>
-                  <Camera size={28} />
-                </div>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
-                <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-edit" />
-                <label htmlFor="photo-upload-edit" className="btn btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Camera size={16} /> {t('photo.select')}</label>
-                {photoUrl
-                  ? <button type="button" onClick={() => setPhotoUrl('')} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto', backgroundColor: '#ef4444', color: 'white', border: 'none' }}>{t('photo.remove')}</button>
-                  : <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{t('photo.none')}</span>}
-              </div>
-            </div>
-            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>{t('photo.hint')}</span>
-          </div>
-
           <div className="form-row">
             <div className="form-group"><label>{t('profileEdit.genderLabel')}</label><select value={gender} onChange={(e) => setGender(e.target.value)}>{GENDER_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
             <div className="form-group"><label>{t('profileEdit.roleLabel')}</label><select value={role} onChange={(e) => setRole(e.target.value)}>{ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
@@ -208,9 +213,15 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             <div className="form-group"><label>{t('profileEdit.entryLabel')}</label><select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>{ENTRY_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
             <div className="form-group"><label>{t('profileEdit.colabsLabel')}</label><select value={isColab} onChange={(e) => setIsColab(e.target.value)}>{COLAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
           </div>
-          <div className="form-group"><label>{t('profileEdit.areaLabel')}</label><select value={area} onChange={(e) => setArea(e.target.value)}>{AREA_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-          <div className="form-group">
-            <label>{t('profileEdit.labLabel')}</label>
+          <div className="form-row">
+            <div className="form-group"><label>{t('profileEdit.areaLabel')}</label><select value={area} onChange={(e) => setArea(e.target.value)}>{AREA_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group"><label>{t('profileEdit.coffeeLabel')}</label><select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+          </div>
+
+          <div className="profile-projects-section">
+            <label className="profile-projects-label">
+              <FolderGit2 size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.labLabel')}
+            </label>
             <div className="checkbox-group">
               {PROJECT_OPTIONS.map(opt => (
                 <label key={opt} className={`checkbox-chip ${projects.includes(opt) ? 'selected' : ''}`}>
@@ -220,10 +231,16 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
               ))}
             </div>
           </div>
-          <div className="form-group"><label>{t('profileEdit.coffeeLabel')}</label><select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
 
-          <div style={{ marginTop: '2rem' }}>
-            <button type="submit" disabled={submitting} className="btn" style={{ width: '100%' }}><Save size={18} /> {submitting ? t('profileEdit.saving') : t('profileEdit.save')}</button>
+          <div className="profile-save-bar">
+            {isDirty && (
+              <span className="profile-dirty-hint">
+                <AlertTriangle size={13} /> {t('profileEdit.unsavedTitle')}
+              </span>
+            )}
+            <button type="submit" disabled={submitting} className="btn profile-save-btn">
+              <Save size={18} /> {submitting ? t('profileEdit.saving') : t('profileEdit.save')}
+            </button>
           </div>
         </form>
       </div>

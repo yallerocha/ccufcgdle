@@ -512,6 +512,68 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 1rem;
 }
 
+.grid-header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.info-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.info-tooltip-trigger:hover,
+.info-tooltip-trigger:focus-visible {
+  color: var(--primary);
+  background-color: rgba(139, 92, 246, 0.12);
+  outline: none;
+}
+
+.info-tooltip-bubble {
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 1000;
+  max-width: 240px;
+  width: max-content;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  background-color: var(--bg-card, #1f2030);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+}
+
+.info-tooltip-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--border-color);
+}
+
 .tile {
   aspect-ratio: 1;
   background-color: var(--color-incorrect);
@@ -996,17 +1058,29 @@ input:focus, select:focus, textarea:focus {
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-/* Guess Photo Hover Animations (Centered) */
+/* Name tile: the photo fills the entire square. */
+.tile-photo {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* The name tile shows only the photo — hide its label. */
+.tile-photo .tile-label {
+  display: none;
+}
+
 .tile-photo-container {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-top: 0.2rem;
   flex-shrink: 0;
 }
 
@@ -1014,8 +1088,8 @@ input:focus, select:focus, textarea:focus {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-radius: 50%;
+  border: none;
+  border-radius: 0;
 }
 
 .guess-photo-placeholder {
@@ -1023,12 +1097,12 @@ input:focus, select:focus, textarea:focus {
   height: 100%;
   background-color: rgba(255, 255, 255, 0.12);
   color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
+  border: none;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   font-weight: 700;
 }
 
@@ -1039,6 +1113,7 @@ input:focus, select:focus, textarea:focus {
   position: absolute;
   left: 50%;
   top: 58%;
+  z-index: 3;
   pointer-events: none;
   font-size: 0.75rem;
   font-weight: 700;
@@ -1142,8 +1217,9 @@ input:focus, select:focus, textarea:focus {
   }
   
   .tile-photo-container {
-    width: 38px;
-    height: 38px;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
   /* Modal adjustments */
@@ -1588,4 +1664,172 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 520px) {
   .podium { gap: 0.4rem; }
   .podium-name { font-size: 0.78rem; }
+}
+
+/* ===== Profile page ===== */
+.profile-page {
+  max-width: 680px;
+  width: 100%;
+  margin: 2rem auto 0 auto;
+}
+
+/* Hero card: gradient banner with the avatar overlapping it */
+.profile-hero {
+  padding: 0;
+  overflow: hidden;
+}
+
+.profile-hero-banner {
+  height: 110px;
+}
+
+.profile-hero-body {
+  padding: 0 2rem 1.75rem 2rem;
+  text-align: center;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  margin: -56px auto 0 auto;
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--bg-card);
+  box-shadow: var(--shadow-md);
+  background-color: var(--bg-input);
+}
+
+.profile-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+/* Small camera button over the avatar to change the photo */
+.profile-avatar-edit {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid var(--bg-card);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.profile-avatar-edit:hover {
+  background-color: var(--primary-hover);
+  transform: scale(1.08);
+}
+
+/* Trash variant, placed just to the right of the camera button */
+.profile-avatar-remove {
+  right: -36px;
+  background-color: #ef4444;
+  padding: 0;
+}
+
+.profile-avatar-remove:hover {
+  background-color: #dc2626;
+}
+
+.profile-hero-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.profile-hero-name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.profile-hero-status {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  max-width: 480px;
+  margin: 0.75rem auto 0 auto;
+  line-height: 1.5;
+}
+
+.profile-change-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-projects-section {
+  margin: 0.25rem 0 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background-color: var(--bg-board);
+}
+
+.profile-projects-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.profile-save-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.profile-dirty-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-partial);
+}
+
+.profile-save-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 520px) {
+  .profile-hero-body {
+    padding: 0 1.25rem 1.5rem 1.25rem;
+  }
+
+  .profile-hero-name {
+    font-size: 1.3rem;
+  }
 }

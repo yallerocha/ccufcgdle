@@ -8,6 +8,7 @@ import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
 import { HelpCircle, Search, Trophy, Info, ArrowLeft } from 'lucide-react';
 import { VictoryModal } from '@/client/components/VictoryModal';
+import { InfoTooltip } from '@/client/components/InfoTooltip';
 import type { StreakInfo } from '@/client/components/StreakBadge';
 import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
@@ -388,14 +389,38 @@ export default function GamePage() {
             <div className="game-board fade-in">
               {/* Header Row */}
               <div className="grid-row grid-header">
-                <div>{t('home.headers.name')}</div>
-                <div>{t('home.headers.gender')}</div>
-                <div>{t('home.headers.role')}</div>
-                <div>{t('home.headers.period')}</div>
-                <div>{t('home.headers.area')}</div>
-                <div>{t('home.headers.labProj')}</div>
-                <div>{t('home.headers.colabs')}</div>
-                <div>{t('home.headers.coffee')}</div>
+                <div className="grid-header-cell">
+                  <span>{t('home.headers.name')}</span>
+                  <InfoTooltip text={t('home.headerTips.name')} />
+                </div>
+                <div className="grid-header-cell">
+                  <span>{t('home.headers.gender')}</span>
+                  <InfoTooltip text={t('home.headerTips.gender')} />
+                </div>
+                <div className="grid-header-cell">
+                  <span>{t('home.headers.role')}</span>
+                  <InfoTooltip text={t('home.headerTips.role')} />
+                </div>
+                <div className="grid-header-cell">
+                  <span>{t('home.headers.period')}</span>
+                  <InfoTooltip text={t('home.headerTips.period')} />
+                </div>
+                <div className="grid-header-cell">
+                  <span>{t('home.headers.area')}</span>
+                  <InfoTooltip text={t('home.headerTips.area')} />
+                </div>
+                <div className="grid-header-cell">
+                  <span>{t('home.headers.labProj')}</span>
+                  <InfoTooltip text={t('home.headerTips.labProj')} />
+                </div>
+                <div className="grid-header-cell">
+                  <span>{t('home.headers.colabs')}</span>
+                  <InfoTooltip text={t('home.headerTips.colabs')} />
+                </div>
+                <div className="grid-header-cell">
+                  <span>{t('home.headers.coffee')}</span>
+                  <InfoTooltip text={t('home.headerTips.coffee')} />
+                </div>
               </div>
 
               {/* Guess Rows (Reversed so latest is at top) */}
