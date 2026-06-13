@@ -21,6 +21,19 @@ interface CharacterOption {
   photoUrl?: string | null;
 }
 
+function photoForName(name: string, characters: CharacterOption[]): string | null | undefined {
+  const match = characters.find((c) => c.name.toLowerCase() === name.toLowerCase());
+  return match?.photoUrl;
+}
+
+function refreshGuessPhotos(guesses: GuessFeedback[], characters: CharacterOption[]): GuessFeedback[] {
+  if (characters.length === 0) return guesses;
+  return guesses.map((guess) => {
+    const fresh = photoForName(guess.fields.name.value, characters);
+    return fresh !== undefined ? { ...guess, photoUrl: fresh } : guess;
+  });
+}
+
 export default function GamePage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
@@ -92,15 +105,35 @@ export default function GamePage() {
           if (roundWasReset) {
             localStorage.removeItem(storageKey);
           } else {
-            setGuesses(savedState.guesses || []);
+            const chars: CharacterOption[] = data.characters || [];
+            const restoredGuesses = refreshGuessPhotos(savedState.guesses || [], chars);
+            const restoredTargetPhoto = savedState.targetName
+              ? (photoForName(savedState.targetName, chars) ?? savedState.targetPhoto ?? '')
+              : (savedState.targetPhoto ?? '');
+
+            setGuesses(restoredGuesses);
             setIsWon(savedState.isWon || false);
             setTargetName(savedState.targetName || '');
-            setTargetPhoto(savedState.targetPhoto || '');
+            setTargetPhoto(restoredTargetPhoto);
             setStartTime(savedState.startTime ?? null);
             setStreak(savedState.streak ?? null);
             setIsPersonOfDay(!!savedState.isPersonOfDay);
             setShowWinModal(!!savedState.isWon);
             restored = true;
+
+            if (
+              restoredGuesses.some((g, i) => g.photoUrl !== savedState.guesses?.[i]?.photoUrl) ||
+              restoredTargetPhoto !== (savedState.targetPhoto ?? '')
+            ) {
+              localStorage.setItem(
+                storageKey,
+                JSON.stringify({
+                  ...savedState,
+                  guesses: restoredGuesses,
+                  targetPhoto: restoredTargetPhoto,
+                })
+              );
+            }
           }
         }
         // No saved board for this account → make sure nothing from a previous
@@ -166,11 +199,16 @@ export default function GamePage() {
       }
 
       const newFeedback: GuessFeedback = data.feedback;
-      const updatedGuesses = [...guesses, newFeedback];
+      const guessedChar = characters.find((c) => c.id === characterId);
+      const feedbackWithPhoto: GuessFeedback = {
+        ...newFeedback,
+        photoUrl: guessedChar?.photoUrl ?? data.photoUrl ?? newFeedback.photoUrl,
+      };
+      const updatedGuesses = [...guesses, feedbackWithPhoto];
       
-      const won = newFeedback.correct;
+      const won = feedbackWithPhoto.correct;
       const target = data.targetName || '';
-      const photo = data.photoUrl || '';
+      const photo = data.photoUrl ?? guessedChar?.photoUrl ?? feedbackWithPhoto.photoUrl ?? '';
 
       const newStreak: StreakInfo | null = data.streak ?? streak;
 

@@ -160,8 +160,11 @@ router.post('/guess', withAuth, async (req, res) => {
     }
 
     // Compare using the daily snapshot so a same-day profile edit (to either the
-    // guess or the target) doesn't change today's feedback.
-    const feedback = compareCharacters(gameView(guessUserRaw), target);
+    // guess or the target) doesn't change today's feedback. Photos always use the
+    // live profile value.
+    const guess = gameView(guessUserRaw);
+    const feedback = compareCharacters(guess, target);
+    feedback.photoUrl = guessUserRaw.photoUrl ?? feedback.photoUrl;
 
     let streak: StreakInfo | undefined;
     let isPersonOfDay = false;
@@ -212,7 +215,7 @@ router.post('/guess', withAuth, async (req, res) => {
     return res.json({
       feedback,
       targetName: feedback.correct ? target.name : undefined,
-      photoUrl: feedback.correct ? target.photoUrl : undefined,
+      photoUrl: feedback.correct ? (target.photoUrl ?? guessUserRaw.photoUrl) : undefined,
       streak,
       isPersonOfDay: feedback.correct ? isPersonOfDay : undefined,
     });
