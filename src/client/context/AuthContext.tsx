@@ -24,7 +24,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; code?: string; email?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -69,7 +69,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(data.user);
         return { success: true };
       } else {
-        return { success: false, error: data.error || 'Erro ao fazer login.' };
+        return {
+          success: false,
+          error: data.error || 'Erro ao fazer login.',
+          code: data.code,
+          email: data.email,
+        };
       }
     } catch (error) {
       return { success: false, error: 'Erro de conexão com o servidor.' };

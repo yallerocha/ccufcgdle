@@ -40,6 +40,7 @@ model User {
   lastLogin        DateTime         @default(now())
   isActive         Boolean          @default(true)
   isAdmin          Boolean          @default(false)
+  emailVerifiedAt  DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -52,6 +53,30 @@ model User {
   forcaProgress    ForcaProgress[]
   streaks          GameStreak[]
   createdProjects  Project[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Catalog of LSD research projects/lines. Users pick from this list (and may

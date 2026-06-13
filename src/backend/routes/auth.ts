@@ -5,6 +5,14 @@ import { signToken } from '../../server/auth';
 import { requireAuth } from '../middleware/auth';
 import { validateCharacterFields, isAllowedEmailDomain, isStrongPassword } from '../../shared/validation';
 import { getAllowedProjectNames } from '../../server/projects';
+import { isEmailVerified, issueVerificationToken, consumeVerificationToken, findUnverifiedUserByEmail } from '../../server/email-verification';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../../server/email';
+import {
+  findVerifiedUserForPasswordReset,
+  issuePasswordResetToken,
+  validatePasswordResetToken,
+  consumePasswordResetToken,
+} from '../../server/password-reset';
 
 const router = Router();
 
@@ -31,6 +39,14 @@ router.post('/login', async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
     if (!user || !passwordMatch) {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
+    }
+
+    if (!isEmailVerified(user)) {
+      return res.status(403).json({
+        error: 'Confirme seu email antes de entrar. Verifique sua caixa de entrada ou solicite um novo link.',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+      });
     }
 
     // Update lastLogin, which renews their active status in the game
@@ -117,10 +133,27 @@ router.post('/register', async (req, res) => {
       where: {
         OR: [{ email: email.toLowerCase() }, { name: name }],
       },
+      select: { email: true, name: true, id: true, emailVerifiedAt: true },
     });
 
     if (existingUser) {
       if (existingUser.email.toLowerCase() === email.toLowerCase()) {
+        if (!existingUser.emailVerifiedAt) {
+          try {
+            const verificationToken = await issueVerificationToken(existingUser.id);
+            await sendVerificationEmail(existingUser.email, name, verificationToken);
+          } catch (err) {
+            console.error('Failed to resend verification email:', err);
+            return res.status(503).json({
+              error: 'Não foi possível enviar o email de verificação. Tente novamente em instantes.',
+            });
+          }
+          return res.status(200).json({
+            message: 'Este email já tem cadastro pendente. Enviamos um novo link de verificação.',
+            needsEmailVerification: true,
+            email: existingUser.email,
+          });
+        }
         return res.status(400).json({ error: 'Este email já está cadastrado.' });
       }
       if (existingUser.name.toLowerCase() === name.toLowerCase()) {
@@ -151,13 +184,50 @@ router.post('/register', async (req, res) => {
             isAdmin: totalUsers === 0,
             lastLogin: new Date(),
             isActive: true,
+            emailVerifiedAt: null,
           },
         });
       },
       { isolationLevel: 'Serializable' }
     );
 
-    const token = signToken({
+    try {
+      const verificationToken = await issueVerificationToken(user.id);
+      await sendVerificationEmail(user.email, user.name, verificationToken);
+    } catch (err) {
+      console.error('Failed to send verification email:', err);
+      await prisma.user.delete({ where: { id: user.id } });
+      return res.status(503).json({
+        error: 'Não foi possível enviar o email de verificação. Tente novamente em instantes.',
+      });
+    }
+
+    return res.status(201).json({
+      message: 'Cadastro realizado! Verifique seu email para ativar a conta.',
+      needsEmailVerification: true,
+      email: user.email,
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({ error: 'Erro interno ao realizar cadastro.' });
+  }
+});
+
+// GET /api/auth/verify-email?token=... — confirms email and returns session.
+router.get('/verify-email', async (req, res) => {
+  try {
+    const token = typeof req.query.token === 'string' ? req.query.token : '';
+    const result = await consumeVerificationToken(token);
+    if (!result) {
+      return res.status(400).json({ error: 'Link inválido ou expirado. Solicite um novo email de verificação.' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: result.userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const jwt = signToken({
       userId: user.id,
       email: user.email,
       name: user.name,
@@ -165,15 +235,142 @@ router.post('/register', async (req, res) => {
     });
 
     const { passwordHash: _, ...userWithoutPassword } = user;
-
     return res.json({
-      message: 'Cadastro realizado com sucesso!',
-      token,
+      message: 'Email confirmado com sucesso!',
+      token: jwt,
       user: userWithoutPassword,
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    return res.status(500).json({ error: 'Erro interno ao realizar cadastro.' });
+    console.error('Email verification error:', error);
+    return res.status(500).json({ error: 'Erro ao confirmar email.' });
+  }
+});
+
+// POST /api/auth/resend-verification — sends a fresh verification link.
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body ?? {};
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Email é obrigatório.' });
+    }
+
+    const user = await findUnverifiedUserByEmail(email);
+    const okMessage = 'Se existir uma conta pendente com este email, enviamos um novo link de verificação.';
+
+    if (!user) {
+      return res.json({ message: okMessage });
+    }
+
+    const token = await issueVerificationToken(user.id);
+    await sendVerificationEmail(user.email, user.name, token);
+    return res.json({ message: okMessage });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    return res.status(500).json({ error: 'Não foi possível reenviar o email de verificação.' });
+  }
+});
+
+// POST /api/auth/forgot-password — sends a password reset link if the account exists.
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body ?? {};
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Email é obrigatório.' });
+    }
+
+    const okMessage =
+      'Se existir uma conta verificada com este email, enviamos um link para redefinir a senha.';
+
+    const user = await findVerifiedUserForPasswordReset(email);
+    if (!user) {
+      return res.json({ message: okMessage });
+    }
+
+    const token = await issuePasswordResetToken(user.id);
+    await sendPasswordResetEmail(user.email, user.name, token);
+    return res.json({ message: okMessage });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ error: 'Não foi possível enviar o email de redefinição.' });
+  }
+});
+
+// GET /api/auth/reset-password?token=... — checks whether a reset link is still valid.
+router.get('/reset-password', async (req, res) => {
+  try {
+    const token = typeof req.query.token === 'string' ? req.query.token : '';
+    const result = await validatePasswordResetToken(token);
+    if (!result) {
+      return res.status(400).json({ error: 'Link inválido ou expirado. Solicite um novo email de redefinição.' });
+    }
+    return res.json({ valid: true });
+  } catch (error) {
+    console.error('Reset password validate error:', error);
+    return res.status(500).json({ error: 'Erro ao validar link de redefinição.' });
+  }
+});
+
+// POST /api/auth/reset-password — sets a new password using a valid reset token.
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password, confirmPassword } = req.body ?? {};
+
+    if (!token || !password || !confirmPassword) {
+      return res.status(400).json({ error: 'Token e nova senha são obrigatórios.' });
+    }
+
+    if (typeof password !== 'string' || !isStrongPassword(password)) {
+      return res.status(400).json({
+        error: 'A senha deve ter ao menos 8 caracteres, incluindo letra maiúscula, minúscula e número.',
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ error: 'As senhas não coincidem.' });
+    }
+
+    const existing = await validatePasswordResetToken(token);
+    if (!existing) {
+      return res.status(400).json({ error: 'Link inválido ou expirado. Solicite um novo email de redefinição.' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: existing.userId },
+      select: { id: true, passwordHash: true, email: true, name: true, isAdmin: true },
+    });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const sameAsCurrent = await bcrypt.compare(password, user.passwordHash);
+    if (sameAsCurrent) {
+      return res.status(400).json({ error: 'A nova senha deve ser diferente da atual.' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const result = await consumePasswordResetToken(token, passwordHash);
+    if (!result) {
+      return res.status(400).json({ error: 'Link inválido ou expirado. Solicite um novo email de redefinição.' });
+    }
+
+    const jwt = signToken({
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      isAdmin: user.isAdmin,
+    });
+
+    const fullUser = await prisma.user.findUnique({ where: { id: user.id } });
+    const { passwordHash: _, ...userWithoutPassword } = fullUser!;
+
+    return res.json({
+      message: 'Senha redefinida com sucesso!',
+      token: jwt,
+      user: userWithoutPassword,
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ error: 'Erro ao redefinir a senha.' });
   }
 });
 

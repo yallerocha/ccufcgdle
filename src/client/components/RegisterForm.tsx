@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UserPlus, Camera, Trash2, User as UserIcon, Mail, Lock, LockKeyhole, Briefcase, CalendarDays, Users, Coffee, Layers, FolderGit2 } from 'lucide-react';
+import { UserPlus, Camera, Trash2, User as UserIcon, Mail, Lock, LockKeyhole, Briefcase, CalendarDays, Users, Coffee, Layers, FolderGit2, MailCheck } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
 import { fileToResizedDataUrl } from '@/client/lib/image';
 import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
@@ -50,7 +50,10 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const [photoUrl, setPhotoUrl] = useState('');
 
   const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [resending, setResending] = useState(false);
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,6 +72,26 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
       const reader = new FileReader();
       reader.onloadend = () => setPhotoUrl(reader.result as string);
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!pendingEmail || resending) return;
+    setResending(true);
+    setErrorMsg('');
+    setInfoMsg('');
+    try {
+      const res = await apiFetch('/api/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({ email: pendingEmail }),
+      });
+      const data = await res.json();
+      if (res.ok) setInfoMsg(data.message || t('verifyEmail.resendSuccess'));
+      else setErrorMsg(data.error || t('verifyEmail.resendError'));
+    } catch {
+      setErrorMsg(t('verifyEmail.resendError'));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -97,6 +120,11 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
       });
       const data = await res.json();
       setSubmitting(false);
+      if (res.ok && data.needsEmailVerification) {
+        setPendingEmail(data.email || email);
+        setInfoMsg(data.message || t('verifyEmail.pendingRegister', { email: data.email || email }));
+        return;
+      }
       if (res.ok) {
         if (data.token) setToken(data.token);
         onRegisterSuccess();
@@ -108,6 +136,29 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
       setErrorMsg(t('register.errorConn'));
     }
   };
+
+  if (pendingEmail) {
+    return (
+      <div style={{ maxWidth: '600px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
+        <div className="card" style={{ textAlign: 'center' }}>
+          <h2 className="card-title" style={{ justifyContent: 'center' }}>
+            <MailCheck size={22} style={{ color: 'var(--primary)' }} /> {t('verifyEmail.title')}
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1rem' }}>
+            {t('verifyEmail.pendingRegister', { email: pendingEmail })}
+          </p>
+          <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
+          <Toast message={infoMsg} type="success" onClose={() => setInfoMsg('')} />
+          <button type="button" className="btn btn-secondary" style={{ width: '100%', marginBottom: '0.75rem' }} onClick={handleResend} disabled={resending}>
+            {resending ? t('verifyEmail.resending') : t('verifyEmail.resend')}
+          </button>
+          <button type="button" className="btn btn-secondary" style={{ width: '100%' }} onClick={onSwitchToLogin}>
+            {t('register.toLogin')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '600px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">

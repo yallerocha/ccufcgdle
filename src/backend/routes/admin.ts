@@ -95,8 +95,7 @@ router.put('/users', async (req, res) => {
 });
 
 // POST /api/admin/users/reset-password — generate a new temporary password for
-// a user (the "forgot password" flow: there's no email infrastructure, so an
-// admin generates the password and hands it to the person). The plaintext is
+// a user when email recovery is unavailable. The plaintext is returned once.
 // returned once, to the admin only, and never stored.
 router.post('/users/reset-password', async (req, res) => {
   try {

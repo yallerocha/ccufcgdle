@@ -32,6 +32,9 @@ services:
       PORT: 3001
       # Origem do front liberada no CORS
       CORS_ORIGIN: http://localhost:${WEB_PORT:-3003}
+      APP_URL: http://localhost:${WEB_PORT:-3003}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-LSD Game Hub <onboarding@resend.dev>}
     depends_on:
       db:
         condition: service_healthy

@@ -59,6 +59,9 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/resend-verification', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/reset-password', authLimiter);
 
 app.use('/api/auth', authRouter);
 app.use('/api/game', gameRouter);

@@ -55,6 +55,7 @@ export async function getActiveUsers(): Promise<User[]> {
   const users = await prisma.user.findMany({
     where: {
       isActive: true,
+      emailVerifiedAt: { not: null },
       lastLogin: {
         gte: activeThreshold
       }

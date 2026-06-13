@@ -6,7 +6,9 @@ WORKDIR /app
 
 # Install all dependencies (the backend runs via tsx, so source is kept as-is)
 COPY package.json package-lock.json ./
-RUN npm ci
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+RUN npm ci --ignore-scripts
 
 COPY . .
 
@@ -17,7 +19,8 @@ RUN npx prisma generate
 ENV NODE_ENV=production
 ENV PORT=3001
 
+RUN chmod +x scripts/start-api.sh
+
 EXPOSE 3001
 
-# Apply schema + seed, then start the API. db push/seed is idempotent.
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx prisma db seed && npm run start:api"]
+CMD ["./scripts/start-api.sh"]

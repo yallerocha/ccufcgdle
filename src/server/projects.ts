@@ -15,7 +15,7 @@ export async function getAllowedProjectNames(): Promise<Set<string>> {
 export async function listProjectsWithCounts(): Promise<ProjectWithCount[]> {
   const [catalog, users] = await Promise.all([
     prisma.project.findMany({ orderBy: { name: 'asc' } }),
-    prisma.user.findMany({ where: { isActive: true }, select: { projects: true } }),
+    prisma.user.findMany({ where: { isActive: true, emailVerifiedAt: { not: null } }, select: { projects: true } }),
   ]);
 
   const counts = new Map<string, number>();

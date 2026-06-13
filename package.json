@@ -8,7 +8,8 @@
     "start": "next start",
     "start:api": "tsx src/backend/index.ts",
     "dev:api": "tsx watch src/backend/index.ts",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/prisma-generate-if-present.mjs"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",

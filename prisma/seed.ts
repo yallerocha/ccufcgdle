@@ -152,6 +152,7 @@ async function main() {
         passwordHash,
         lastLogin: new Date(),
         isActive: true,
+        emailVerifiedAt: new Date(),
       }
     });
     console.log(`Created user: ${createdUser.name} (${createdUser.email})`);

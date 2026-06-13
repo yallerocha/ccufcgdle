@@ -1819,6 +1819,33 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-dim);
 }
 
+.verify-email-banner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(69, 98, 193, 0.35);
+  background: rgba(69, 98, 193, 0.08);
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.verify-email-banner p {
+  margin: 0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
 .profile-hero-info {
   display: flex;
   flex-wrap: wrap;

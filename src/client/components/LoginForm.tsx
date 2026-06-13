@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Mail } from 'lucide-react';
+import { apiFetch } from '@/client/lib/api';
 import { PasswordInput } from '@/client/components/PasswordInput';
 import { Toast } from '@/client/components/Toast';
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
   onSwitchToRegister: () => void;
-  loginFn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginFn: (email: string, password: string) => Promise<{ success: boolean; error?: string; code?: string; email?: string }>;
 }
 
 export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: LoginFormProps) {
@@ -17,21 +19,50 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
+  const [pendingEmail, setPendingEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    const target = pendingEmail || email;
+    if (!target || resending) return;
+    setResending(true);
+    setErrorMsg('');
+    setInfoMsg('');
+    try {
+      const res = await apiFetch('/api/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({ email: target }),
+      });
+      const data = await res.json();
+      if (res.ok) setInfoMsg(data.message || t('verifyEmail.resendSuccess'));
+      else setErrorMsg(data.error || t('verifyEmail.resendError'));
+    } catch {
+      setErrorMsg(t('verifyEmail.resendError'));
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setInfoMsg('');
+    setPendingEmail('');
     setSubmitting(true);
 
     try {
       const res = await loginFn(email, password);
       if (res.success) {
         onLoginSuccess();
+      } else if (res.code === 'EMAIL_NOT_VERIFIED') {
+        setPendingEmail(res.email || email);
+        setErrorMsg(res.error || t('login.error'));
       } else {
         setErrorMsg(res.error || t('login.error'));
       }
-    } catch (err) {
+    } catch {
       setErrorMsg(t('login.errorConn'));
     } finally {
       setSubmitting(false);
@@ -49,6 +80,19 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
         </p>
 
         <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
+        <Toast message={infoMsg} type="success" onClose={() => setInfoMsg('')} />
+
+        {pendingEmail && (
+          <div className="verify-email-banner">
+            <Mail size={16} aria-hidden="true" />
+            <div>
+              <p>{t('verifyEmail.pendingLogin', { email: pendingEmail })}</p>
+              <button type="button" className="btn btn-secondary" style={{ marginTop: '0.65rem', width: '100%' }} onClick={handleResend} disabled={resending}>
+                {resending ? t('verifyEmail.resending') : t('verifyEmail.resend')}
+              </button>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -77,7 +121,9 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
           </button>
 
           <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>
-            {t('login.forgotHint')}
+            <Link href="/forgot-password" style={{ color: 'var(--primary)' }}>
+              {t('login.forgotLink')}
+            </Link>
           </p>
         </form>
 

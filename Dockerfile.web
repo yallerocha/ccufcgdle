@@ -8,7 +8,9 @@ RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+RUN npm ci --ignore-scripts
 
 # Rebuild the source code only when needed
 FROM base AS builder

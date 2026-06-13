@@ -55,7 +55,7 @@ router.get('/leaderboard', async (_req, res) => {
 router.get('/members', async (_req, res) => {
   try {
     const members = await prisma.user.findMany({
-      where: { isActive: true },
+      where: { isActive: true, emailVerifiedAt: { not: null } },
       orderBy: { name: 'asc' },
       select: { id: true, name: true, photoUrl: true },
     });
