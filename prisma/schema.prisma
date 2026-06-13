@@ -51,6 +51,18 @@ model User {
   forcaResults     ForcaResult[]
   forcaProgress    ForcaProgress[]
   streaks          GameStreak[]
+  createdProjects  Project[]
+}
+
+// Catalog of LSD research projects/lines. Users pick from this list (and may
+// propose new entries). `User.projects` stores the selected names; member counts
+// are derived by aggregating active users' project arrays.
+model Project {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
 }
 
 // Per-player, per-game daily streak. `current` counts consecutive days solved

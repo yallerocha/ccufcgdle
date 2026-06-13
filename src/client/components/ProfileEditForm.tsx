@@ -12,6 +12,7 @@ import { apiFetch } from '@/client/lib/api';
 import { fileToResizedDataUrl } from '@/client/lib/image';
 import { Toast } from '@/client/components/Toast';
 import { PasswordInput } from '@/client/components/PasswordInput';
+import { ProjectPicker } from '@/client/components/ProjectPicker';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
 const ROLE_OPTIONS = ['Professor', 'Graduando', 'Mestrando', 'Doutorando', 'Pesquisador', 'Funcionário'];
@@ -25,8 +26,6 @@ const ENTRY_OPTIONS = [
 ];
 const COLAB_OPTIONS = ['Sim', 'Não'];
 const AREA_OPTIONS = ['Engenharia de Software', 'Sistemas Distribuídos / Redes', 'Ciência de Dados / IA', 'Teoria da Computação', 'Hardware / Embarcados', 'Segurança da Informação', 'Outra'];
-// Projetos / linhas de pesquisa dentro do LSD (multivalor)
-const PROJECT_OPTIONS = ['Computação em Nuvem', 'Computação na Borda', 'Blockchain', 'Big Data', 'HPC', 'Observabilidade', 'IoT', 'Computação Verde', 'Outro'];
 const COFFEE_OPTIONS = ['Sim', 'Não'];
 
 interface ProfileEditFormProps {
@@ -43,9 +42,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [area, setArea] = useState(user.area);
   const [projects, setProjects] = useState<string[]>(user.projects ?? []);
 
-  const toggleProject = (proj: string) => {
-    setProjects((prev) => prev.includes(proj) ? prev.filter((p) => p !== proj) : [...prev, proj]);
-  };
   const [likesCoffee, setLikesCoffee] = useState(user.likesCoffee);
   const [photoUrl, setPhotoUrl] = useState(user.photoUrl || '');
   const [errorMsg, setErrorMsg] = useState('');
@@ -281,14 +277,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             <label className="profile-projects-label">
               <FolderGit2 size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.labLabel')}
             </label>
-            <div className="checkbox-group">
-              {PROJECT_OPTIONS.map(opt => (
-                <label key={opt} className={`checkbox-chip ${projects.includes(opt) ? 'selected' : ''}`}>
-                  <input type="checkbox" checked={projects.includes(opt)} onChange={() => toggleProject(opt)} />
-                  {opt}
-                </label>
-              ))}
-            </div>
+            <ProjectPicker selected={projects} onChange={setProjects} savedProjects={user.projects ?? []} allowCreate />
           </div>
 
           <div className="profile-save-bar">

@@ -39,7 +39,7 @@ export const AREA_OPTIONS = [
   'Outra',
 ] as const;
 
-export const PROJECT_OPTIONS = [
+export const DEFAULT_PROJECT_NAMES = [
   'Computação em Nuvem',
   'Computação na Borda',
   'Blockchain',
@@ -48,8 +48,20 @@ export const PROJECT_OPTIONS = [
   'Observabilidade',
   'IoT',
   'Computação Verde',
-  'Outro',
 ] as const;
+
+/** @deprecated Use DEFAULT_PROJECT_NAMES — kept for imports that expect PROJECT_OPTIONS */
+export const PROJECT_OPTIONS = DEFAULT_PROJECT_NAMES;
+
+export const MAX_PROJECT_NAME_LENGTH = 60;
+export const MAX_PROJECTS_PER_USER = 8;
+
+export function normalizeProjectName(name: unknown): string | null {
+  if (typeof name !== 'string') return null;
+  const normalized = name.trim().replace(/\s+/g, ' ');
+  if (normalized.length < 2 || normalized.length > MAX_PROJECT_NAME_LENGTH) return null;
+  return normalized;
+}
 
 export const COFFEE_OPTIONS = ['Sim', 'Não', 'Só energético'] as const;
 
@@ -95,7 +107,11 @@ export interface CharacterFields {
 
 // Validates the shared character attributes. Returns an error message (in
 // Portuguese, to surface directly to the user) or null when everything is valid.
-export function validateCharacterFields(input: CharacterFields): string | null {
+// `allowedProjects` must be the current Project catalog from the database.
+export function validateCharacterFields(
+  input: CharacterFields,
+  options?: { allowedProjects?: ReadonlySet<string> }
+): string | null {
   const inList = (value: unknown, list: readonly string[]) =>
     typeof value === 'string' && list.includes(value);
 
@@ -109,7 +125,15 @@ export function validateCharacterFields(input: CharacterFields): string | null {
   if (!Array.isArray(input.projects) || input.projects.length === 0) {
     return 'Selecione ao menos um projeto.';
   }
-  if (input.projects.some((p) => !inList(p, PROJECT_OPTIONS))) {
+  if (input.projects.length > MAX_PROJECTS_PER_USER) {
+    return `Selecione no máximo ${MAX_PROJECTS_PER_USER} projetos.`;
+  }
+  const allowed = options?.allowedProjects;
+  if (!allowed) {
+    if (input.projects.some((p) => typeof p !== 'string' || !(DEFAULT_PROJECT_NAMES as readonly string[]).includes(p))) {
+      return 'Projeto inválido.';
+    }
+  } else if (input.projects.some((p) => typeof p !== 'string' || !allowed.has(p))) {
     return 'Projeto inválido.';
   }
 

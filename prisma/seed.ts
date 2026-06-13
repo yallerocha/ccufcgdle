@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
+import { DEFAULT_PROJECT_NAMES } from '../src/shared/validation';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -126,7 +127,23 @@ async function main() {
   await prisma.dailyCharacter.deleteMany({});
   await prisma.user.deleteMany({});
 
+  for (const name of DEFAULT_PROJECT_NAMES) {
+    await prisma.project.upsert({
+      where: { name },
+      create: { name },
+      update: {},
+    });
+  }
+
   for (const user of mockUsers) {
+    for (const projectName of user.projects) {
+      await prisma.project.upsert({
+        where: { name: projectName },
+        create: { name: projectName },
+        update: {},
+      });
+    }
+
     const createdUser = await prisma.user.create({
       data: {
         ...user,

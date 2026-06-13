@@ -7,6 +7,7 @@ import gameRouter from './routes/game';
 import termoRouter from './routes/termo';
 import forcaRouter from './routes/forca';
 import adminRouter from './routes/admin';
+import { ensureDefaultProjects, syncProjectsFromUsers } from '../server/projects';
 
 const app = express();
 
@@ -64,6 +65,17 @@ app.use('/api/game', gameRouter);
 app.use('/api/termo', termoRouter);
 app.use('/api/forca', forcaRouter);
 app.use('/api/admin', adminRouter);
+
+async function bootstrapProjects() {
+  try {
+    await ensureDefaultProjects();
+    await syncProjectsFromUsers();
+  } catch (err) {
+    console.error('[api] Failed to sync project catalog:', err);
+  }
+}
+
+void bootstrapProjects();
 
 app.listen(PORT, () => {
   console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN || '*'})`);

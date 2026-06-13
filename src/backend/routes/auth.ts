@@ -4,6 +4,7 @@ import { prisma } from '../../server/db';
 import { signToken } from '../../server/auth';
 import { requireAuth } from '../middleware/auth';
 import { validateCharacterFields, isAllowedEmailDomain, isStrongPassword } from '../../shared/validation';
+import { getAllowedProjectNames } from '../../server/projects';
 
 const router = Router();
 
@@ -103,9 +104,11 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    const fieldError = validateCharacterFields({
-      gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl,
-    });
+    const allowedProjects = await getAllowedProjectNames();
+    const fieldError = validateCharacterFields(
+      { gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl },
+      { allowedProjects }
+    );
     if (fieldError) {
       return res.status(400).json({ error: fieldError });
     }
@@ -226,10 +229,14 @@ router.put('/me', requireAuth, async (req, res) => {
     });
     const photoUnchanged = (photoUrl || '') === (current?.photoUrl || '');
 
-    const fieldError = validateCharacterFields({
-      gender, role, entrySemester, isColab, area, projects, likesCoffee,
-      photoUrl: photoUnchanged ? null : photoUrl,
-    });
+    const allowedProjects = await getAllowedProjectNames();
+    const fieldError = validateCharacterFields(
+      {
+        gender, role, entrySemester, isColab, area, projects, likesCoffee,
+        photoUrl: photoUnchanged ? null : photoUrl,
+      },
+      { allowedProjects }
+    );
     if (fieldError) {
       return res.status(400).json({ error: fieldError });
     }

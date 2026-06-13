@@ -5,6 +5,7 @@ import { recordStreakSolve, getStreak, type StreakInfo } from '../../server/stre
 import { computeLeaderboard } from '../../server/score';
 import { getLocalDateString } from '../../shared/utils';
 import { validateDailyMessage } from '../../shared/validation';
+import { createProject, listProjectsWithCounts } from '../../server/projects';
 import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
@@ -361,6 +362,42 @@ router.get('/ranking', async (req, res) => {
   } catch (error) {
     console.error('Error loading ranking:', error);
     return res.status(500).json({ error: 'Erro ao carregar o ranking.' });
+  }
+});
+
+// GET /api/game/projects — catalog with how many active members selected each project.
+router.get('/projects', async (_req, res) => {
+  try {
+    const projects = await listProjectsWithCounts();
+    return res.json({ projects });
+  } catch (error) {
+    console.error('Error loading projects:', error);
+    return res.status(500).json({ error: 'Erro ao carregar os projetos.' });
+  }
+});
+
+// POST /api/game/projects — authenticated users may propose a new project name.
+router.post('/projects', requireAuth, async (req, res) => {
+  try {
+    const { name } = req.body ?? {};
+    if (typeof name !== 'string' || name.trim() === '') {
+      return res.status(400).json({ error: 'Informe o nome do projeto.' });
+    }
+
+    const result = await createProject(name, req.auth!.userId);
+    if ('error' in result) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    const projects = await listProjectsWithCounts();
+    const entry = projects.find((p) => p.id === result.project.id);
+    return res.status(result.created ? 201 : 200).json({
+      project: entry ?? { ...result.project, memberCount: 0 },
+      created: result.created,
+    });
+  } catch (error) {
+    console.error('Error creating project:', error);
+    return res.status(500).json({ error: 'Erro ao criar o projeto.' });
   }
 });
 
