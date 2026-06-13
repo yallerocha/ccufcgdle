@@ -26,5 +26,5 @@ services:
         generateValue: true
       - key: CORS_ORIGIN
         sync: false
-      - key: SEED_DATABASE
+      - key: ENSURE_DEFAULT_ADMIN
         value: "true"

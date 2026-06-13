@@ -163,33 +163,24 @@ router.post('/register', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // The first registered user becomes admin. Done in a Serializable
-    // transaction so two simultaneous first registrations can't both win.
-    const user = await prisma.$transaction(
-      async (tx) => {
-        const totalUsers = await tx.user.count();
-        return tx.user.create({
-          data: {
-            email: email.toLowerCase(),
-            passwordHash,
-            name,
-            gender,
-            role,
-            entrySemester,
-            isColab,
-            area,
-            projects,
-            likesCoffee,
-            photoUrl,
-            isAdmin: totalUsers === 0,
-            lastLogin: new Date(),
-            isActive: true,
-            emailVerifiedAt: null,
-          },
-        });
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase(),
+        passwordHash,
+        name,
+        gender,
+        role,
+        entrySemester,
+        isColab,
+        area,
+        projects,
+        likesCoffee,
+        photoUrl,
+        lastLogin: new Date(),
+        isActive: true,
+        emailVerifiedAt: null,
       },
-      { isolationLevel: 'Serializable' }
-    );
+    });
 
     try {
       const verificationToken = await issueVerificationToken(user.id);

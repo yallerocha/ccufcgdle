@@ -8,10 +8,19 @@ if ! npx prisma migrate deploy; then
 fi
 
 if [ "${SEED_DATABASE:-}" = "true" ]; then
-  echo "[api] SEED_DATABASE=true — running seed (wipes users)..."
-  npx prisma db seed
+  if [ "${ALLOW_LOCAL_SEED:-}" != "true" ]; then
+    echo "[api] SEED_DATABASE ignored — seed only runs locally (ALLOW_LOCAL_SEED=true in Docker Compose)."
+  else
+    echo "[api] SEED_DATABASE=true — running seed (wipes users)..."
+    npx prisma db seed
+  fi
 else
-  echo "[api] Skipping seed (set SEED_DATABASE=true only for first deploy / dev)."
+  echo "[api] Skipping seed (set SEED_DATABASE=true in .env for local Docker only)."
+fi
+
+if [ "${ENSURE_DEFAULT_ADMIN:-true}" != "false" ]; then
+  echo "[api] Ensuring default admin account..."
+  npx tsx src/server/ensure-default-admin.ts
 fi
 
 echo "[api] Starting server..."

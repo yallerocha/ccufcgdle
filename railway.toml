@@ -3,11 +3,13 @@
 # 2. Adicione um plugin PostgreSQL ao projeto.
 # 3. Crie/edite o serviço da API apontando para este repo e confirme o Dockerfile.api.
 # 4. Variáveis no serviço da API:
-#    DATABASE_URL = ${{Postgres.DATABASE_URL}}
-#    JWT_SECRET   = (string longa aleatória)
-#    CORS_ORIGIN  = https://seu-app.vercel.app
-#    NODE_ENV     = production
-#    SEED_DATABASE = true   (só no primeiro deploy; depois remova ou defina false)
+#    DATABASE_URL         = ${{Postgres.DATABASE_URL}}
+#    JWT_SECRET           = (string longa aleatória)
+#    CORS_ORIGIN          = https://seu-app.vercel.app
+#    APP_URL              = https://seu-app.vercel.app
+#    NODE_ENV             = production
+#    ENSURE_DEFAULT_ADMIN = true
+#    (Não defina SEED_DATABASE nem ALLOW_LOCAL_SEED — seed só roda no Docker local.)
 
 [build]
 builder = "DOCKERFILE"
