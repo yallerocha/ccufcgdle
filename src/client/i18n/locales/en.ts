@@ -372,6 +372,8 @@ export const en: Dictionary = {
     none: 'No photo selected',
     hint: 'Recommended: square photo (e.g. 300x300px), 2MB limit.',
     tooLarge: 'The image is too large. The maximum limit is 2MB.',
+    saved: 'Photo updated!',
+    saveError: 'Could not save the photo.',
   },
   projects: {
     loading: 'Loading projects...',

@@ -11,33 +11,47 @@ export const MAX_ATTEMPTS = 6;
 //  - 'absent'  : letter is not in the word (gray)
 export type LetterResult = 'correct' | 'present' | 'absent';
 
-// Curated pool of 5-letter Portuguese words. Stored with their accented display
-// form; matching always happens on the normalized (accent-free, uppercase) form,
-// so players type plain A–Z letters. This same list is the set of accepted
-// guesses, so a guess only counts if it is a real word from the pool.
+// Curated pool of 5-letter Portuguese words used as daily answers. Stored with
+// their accented display form; matching always happens on the normalized
+// (accent-free, uppercase) form. Accepted guesses come from TERMO_GUESS_WORDS.
 const WORDS: string[] = [
-  'ABRIR', 'AGORA', 'AMIGO', 'AMORA', 'ANTES', 'AREIA', 'ARROZ', 'ASSIM', 'ATUAL', 'AVISO',
-  'AZEDO', 'BANCO', 'BANHO', 'BARCO', 'BEIJO', 'BICHO', 'BOLSA', 'BRAÇO', 'BRAVO', 'BREVE',
-  'CABRA', 'CALMA', 'CAMPO', 'CANAL', 'CANTO', 'CARGA', 'CARRO', 'CASAL', 'CAUSA', 'CEDRO',
-  'CHAVE', 'CHEIO', 'CHUVA', 'CICLO', 'CINCO', 'CLARO', 'COBRA', 'COLAR', 'COMER', 'CORPO',
-  'COURO', 'CREME', 'CRISE', 'CULPA', 'CURSO', 'CUSTO', 'DENTE', 'DEVER', 'DISCO', 'DOBRO',
-  'DRAMA', 'FALAR', 'FALHA', 'FAROL', 'FAZER', 'FEBRE', 'FENDA', 'FESTA', 'FILHO', 'FILME',
-  'FLORA', 'FOLHA', 'FORÇA', 'FORMA', 'FRACO', 'FRASE', 'FRITO', 'FRUTA', 'FUGIR', 'FUNDO',
-  'GANHO', 'GARFO', 'GESTO', 'GLOBO', 'GOSTO', 'GRADE', 'GRAMA', 'GRAVE', 'GRITO', 'GRUPO',
-  'HUMOR', 'IDEIA', 'IGUAL', 'IRMÃO', 'JOGAR', 'JOVEM', 'JUNTO', 'LARGO', 'LEGAL', 'LEITE',
-  'LENTO', 'LETRA', 'LIÇÃO', 'LIMPO', 'LINDO', 'LIVRE', 'LIVRO', 'LOUCO', 'LUGAR', 'MAGRO',
-  'MANGA', 'MARCO', 'MEDIR', 'MELÃO', 'MENOR', 'METAL', 'METRO', 'MEXER', 'MOEDA', 'MORAR',
-  'MORTE', 'MOTOR', 'MUNDO', 'NAÇÃO', 'NADAR', 'NEGRO', 'NERVO', 'NOITE', 'NOIVA', 'NUVEM',
-  'OLHAR', 'ORDEM', 'OUTRO', 'OUVIR', 'PACTO', 'PADRE', 'PALCO', 'PAPEL', 'PARAR', 'PARTE',
-  'PASTA', 'PEDRA', 'PEIXE', 'PENSO', 'PERNA', 'PESCA', 'PINTO', 'PISTA', 'PLACA', 'PLANO',
-  'PLENO', 'POBRE', 'PODER', 'PONTE', 'PONTO', 'PORCO', 'PORTA', 'POSTE', 'POUCO', 'PRAIA',
-  'PRATO', 'PRAZO', 'PREÇO', 'PRESO', 'PRIMA', 'PROVA', 'PULAR', 'QUASE', 'QUEDA', 'QUOTA',
-  'RAIVA', 'REGRA', 'REINO', 'RENDA', 'RISCO', 'RITMO', 'ROCHA', 'RODAR', 'ROUPA', 'SABER',
-  'SABOR', 'SALTO', 'SANTO', 'SAÚDE', 'SELVA', 'SENHA', 'SERRA', 'SINAL', 'SOBRA', 'SÓCIO',
-  'SONHO', 'SORTE', 'SURDO', 'TARDE', 'TEMPO', 'TENDA', 'TERMO', 'TERRA', 'TESTE', 'TIGRE',
-  'TOCAR', 'TOQUE', 'TORTA', 'TRAVA', 'TRIBO', 'TRIGO', 'TROCA', 'ÚNICO', 'USUAL', 'VAGAR',
-  'VALOR', 'VAPOR', 'VAZIO', 'VELHO', 'VENTO', 'VERBO', 'VERDE', 'VÍDEO', 'VIDRO', 'VINHO',
-  'VIRAR', 'VISTA', 'VIVER', 'VOLTA', 'VOTAR', 'ZEBRA',
+  'ABRIR', 'ACENO', 'AGORA', 'ALUNO', 'AMIGO', 'AMORA', 'ANTES', 'AREIA', 'ARROZ', 'ASSIM',
+  'ATLAS', 'ATUAL', 'AVISO', 'AZEDO', 'BALDE', 'BALSA', 'BANCO', 'BANHO', 'BARCO', 'BEIJO',
+  'BICHO', 'BOLSA', 'BRAÇO', 'BRASA', 'BRAVO', 'BREVE', 'BRIGA', 'BROTO', 'CABRA', 'CALMA',
+  'CALOR', 'CAMPO', 'CANAL', 'CANTO', 'CAPAZ', 'CARGA', 'CARTA', 'CARRO', 'CASAL', 'CAUSA',
+  'CEDRO', 'CERCA', 'CHAPA', 'CHAVE', 'CHEIO', 'CHUVA', 'CICLO', 'CINCO', 'CINZA', 'CLARO',
+  'CLIMA', 'CLUBE', 'COBRA', 'COISA', 'COLAR', 'COMER', 'CONTA', 'CORAL', 'CORPO', 'COURO',
+  'CREME', 'CRISE', 'CRUZA', 'CULPA', 'CURSO', 'CUSTO', 'DADOS', 'DENTE', 'DEVER', 'DICAS',
+  'DIETA', 'DISCO', 'DOBRO', 'DÓLAR', 'DRAMA', 'DUPLA', 'ÉPOCA', 'ERVAS', 'FACAS', 'FALAR',
+  'FALHA', 'FALTA', 'FAROL', 'FAZER', 'FEBRE', 'FELIZ', 'FENDA', 'FERRO', 'FESTA', 'FILHO',
+  'FILME', 'FLORA', 'FOLHA', 'FORÇA', 'FORMA', 'FRACO', 'FRADE', 'FRASE', 'FRITO', 'FRUTA',
+  'FUGIR', 'FUNDO', 'GAROA', 'GATOS', 'GANHO', 'GARFO', 'GENTE', 'GENRO', 'GESTO', 'GLOBO',
+  'GORDO', 'GOSTO', 'GRAÇA', 'GRADE', 'GRAMA', 'GRAVE', 'GREVE', 'GRITO', 'GRUPO', 'GRUTA',
+  'HINOS', 'HORDA', 'HUMOR', 'IDEIA', 'IGUAL', 'IRMÃO', 'ISOLA', 'JARRO', 'JEITO', 'JOGAR',
+  'JOVEM', 'JULHO', 'JUNTO', 'LABOR', 'LÁPIS', 'LAÇOS', 'LARGO', 'LEGAL', 'LEITE', 'LENHA',
+  'LENTO', 'LETRA', 'LIÇÃO', 'LIMPO', 'LINDO', 'LIVRE', 'LIVRO', 'LOJAS', 'LOMBO', 'LONGE',
+  'LOUCO', 'LUGAR', 'MACHO', 'MAGRO', 'MALHA', 'MANHÃ', 'MANGA', 'MAPAS', 'MARCO', 'MATAR',
+  'MEDIR', 'MEDOS', 'MELÃO', 'MENOR', 'MENOS', 'MESMO', 'METAL', 'METRO', 'MEXER', 'MICRO',
+  'MILHO', 'MINHA', 'MISSA', 'MITOS', 'MODAS', 'MOEDA', 'MONTE', 'MORAR', 'MORNO', 'MORRO',
+  'MORTE', 'MOTOR', 'MUDAR', 'MUNDO', 'MURAL', 'MUSEU', 'NAÇÃO', 'NADAR', 'NATAL', 'NAVIO',
+  'NEGRO', 'NERVO', 'NICHO', 'NOITE', 'NOIVA', 'NORTE', 'NOZES', 'NUVEM', 'OESTE', 'OLHAR',
+  'OLIVA', 'OMBRO', 'OPERA', 'ORDEM', 'OSTRA', 'ÓTICA', 'OUVIR', 'OUTRO', 'OVINO', 'PACTO',
+  'PADRE', 'PAGAR', 'PALCO', 'PALMA', 'PAPEL', 'PARAR', 'PARTE', 'PASSO', 'PASTA', 'PATAS',
+  'PAUSA', 'PAVOR', 'PEDRA', 'PEITO', 'PEIXE', 'PENSA', 'PENSO', 'PERCA', 'PERDE', 'PERNA',
+  'PESCA', 'PIANO', 'PILHA', 'PINHO', 'PINTO', 'PISTA', 'PLACA', 'PLANO', 'PLENO', 'PLUMA',
+  'POBRE', 'POEMA', 'PODER', 'POLPA', 'POLVO', 'PONTE', 'PONTO', 'PORCA', 'PORCO', 'PORTA',
+  'POSTE', 'POUCO', 'PRADO', 'PRAIA', 'PRATO', 'PRAZO', 'PRECE', 'PREÇO', 'PRESO', 'PRIMA',
+  'PROSA', 'PROVA', 'PUDOR', 'PULAR', 'QUASE', 'QUEDA', 'QUERO', 'QUOTA', 'RÁDIO', 'RAIVA',
+  'RAMPA', 'RAPAZ', 'RATOS', 'REGRA', 'REINO', 'RENDA', 'RESTO', 'RISCO', 'RITMO', 'ROCHA',
+  'RODAR', 'ROUPA', 'RUBRO', 'RURAL', 'SABER', 'SABIA', 'SABOR', 'SALMO', 'SALTO', 'SANTO',
+  'SAPOS', 'SAÚDE', 'SEIVA', 'SELVA', 'SENHA', 'SÉRIE', 'SERRA', 'SERVO', 'SINAL', 'SOBRA',
+  'SÓCIO', 'SOLTO', 'SONDA', 'SONHO', 'SOPRO', 'SORTE', 'SUBIR', 'SUAVE', 'SUÍNO', 'SURDO',
+  'TAMPA', 'TARDE', 'TECLA', 'TEMOR', 'TEMPO', 'TENDA', 'TENOR', 'TERMO', 'TERRA', 'TESTE',
+  'TIGRE', 'TOCAR', 'TOCHA', 'TOQUE', 'TOMAR', 'TORRE', 'TORTA', 'TRAMA', 'TRAVA', 'TRIBO',
+  'TRIGO', 'TREVO', 'TROCA', 'TROCO', 'TURMA', 'ÚNICO', 'USUAL', 'VAGAR', 'VALOR', 'VALSA',
+  'VAPOR', 'VAZIO', 'VELHO', 'VENTO', 'VERBO', 'VERDE', 'VESPA', 'VÍDEO', 'VIDRO', 'VIOLA',
+  'VINHO', 'VIRAR', 'VISTA', 'VITAL', 'VIVER', 'VOLTA', 'VOTAR', 'VOZES', 'ZEBRA', 'ZINCO',
+  'ZOMBA',
 ].filter((w) => normalize(w).length === WORD_LENGTH);
 
 // Uppercase, strip diacritics, keep only A–Z. "ção" → "CAO", "saúde" → "SAUDE".

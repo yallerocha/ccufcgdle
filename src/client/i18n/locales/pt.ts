@@ -368,6 +368,8 @@ export const pt = {
     none: 'Nenhuma foto selecionada',
     hint: 'Recomendado: foto quadrada (ex: 300x300px), limite de 2MB.',
     tooLarge: 'A imagem é muito grande. O limite máximo é de 2MB.',
+    saved: 'Foto atualizada!',
+    saveError: 'Não foi possível salvar a foto.',
   },
   projects: {
     loading: 'Carregando projetos...',

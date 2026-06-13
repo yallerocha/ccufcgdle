@@ -44,6 +44,9 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
   const [likesCoffee, setLikesCoffee] = useState(user.likesCoffee);
   const [photoUrl, setPhotoUrl] = useState(user.photoUrl || '');
+  const [savingPhoto, setSavingPhoto] = useState(false);
+  const [photoMsg, setPhotoMsg] = useState('');
+  const [photoMsgType, setPhotoMsgType] = useState<'success' | 'error'>('error');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -82,7 +85,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     area.length !== (user.area?.length ?? 0) ||
     area.some((a) => !(user.area ?? []).includes(a)) ||
     likesCoffee !== user.likesCoffee ||
-    photoUrl !== (user.photoUrl || '') ||
     projects.length !== (user.projects?.length ?? 0) ||
     projects.some((p) => !(user.projects ?? []).includes(p));
 
@@ -128,21 +130,76 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     if (href) router.push(href);
   };
 
+  const notifyPhoto = (msg: string, type: 'success' | 'error' = 'error') => {
+    setPhotoMsgType(type);
+    setPhotoMsg(msg);
+  };
+
+  // Photo saves immediately so it never blocks navigation or the attribute form.
+  const savePhotoImmediately = async (nextPhotoUrl: string) => {
+    setSavingPhoto(true);
+    setPhotoMsg('');
+    try {
+      const res = await apiFetch('/api/auth/me', {
+        method: 'PUT',
+        body: JSON.stringify({
+          gender: user.gender,
+          role: user.role,
+          entrySemester: user.entrySemester,
+          isColab: user.isColab,
+          area: user.area ?? [],
+          projects: user.projects?.slice(0, 1) ?? [],
+          likesCoffee: user.likesCoffee,
+          photoUrl: nextPhotoUrl,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPhotoUrl(user.photoUrl || '');
+        notifyPhoto(data.error || t('photo.saveError'), 'error');
+        return;
+      }
+      refreshUser();
+      notifyPhoto(t('photo.saved'), 'success');
+    } catch {
+      setPhotoUrl(user.photoUrl || '');
+      notifyPhoto(t('photo.saveError'), 'error');
+    } finally {
+      setSavingPhoto(false);
+    }
+  };
+
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || savingPhoto) return;
+    let nextUrl: string;
     try {
-      // Downscale at upload time so the stored photo (and every list that
-      // includes it) stays small.
-      setPhotoUrl(await fileToResizedDataUrl(file));
+      nextUrl = await fileToResizedDataUrl(file);
     } catch {
-      // Resizing failed (unsupported format?) — fall back to the raw file,
-      // still subject to the original size limit.
-      if (file.size > 2 * 1024 * 1024) { alert(t('photo.tooLarge')); return; }
-      const reader = new FileReader();
-      reader.onloadend = () => setPhotoUrl(reader.result as string);
-      reader.readAsDataURL(file);
+      if (file.size > 2 * 1024 * 1024) {
+        notifyPhoto(t('photo.tooLarge'), 'error');
+        return;
+      }
+      nextUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('read failed'));
+        reader.readAsDataURL(file);
+      }).catch(() => {
+        notifyPhoto(t('photo.saveError'), 'error');
+        return '';
+      });
+      if (!nextUrl) return;
     }
+    setPhotoUrl(nextUrl);
+    await savePhotoImmediately(nextUrl);
+    e.target.value = '';
+  };
+
+  const handlePhotoRemove = async () => {
+    if (savingPhoto) return;
+    setPhotoUrl('');
+    await savePhotoImmediately('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -216,14 +273,15 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
                 {user.name.slice(0, 2).toUpperCase()}
               </div>
             )}
-            <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-edit" />
-            <label htmlFor="photo-upload-edit" className="profile-avatar-edit" title={t('photo.select')}>
+            <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-edit" disabled={savingPhoto} />
+            <label htmlFor="photo-upload-edit" className="profile-avatar-edit" title={t('photo.select')} style={savingPhoto ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
               <Camera size={15} />
             </label>
             {photoUrl && (
               <button
                 type="button"
-                onClick={() => setPhotoUrl('')}
+                onClick={handlePhotoRemove}
+                disabled={savingPhoto}
                 className="profile-avatar-edit profile-avatar-remove"
                 title={t('photo.remove')}
               >
@@ -231,6 +289,12 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
               </button>
             )}
           </div>
+
+          <Toast
+            message={photoMsg}
+            type={photoMsgType}
+            onClose={() => setPhotoMsg('')}
+          />
 
           <div className="profile-hero-info">
             <h2 className="profile-hero-name">{user.name}</h2>
