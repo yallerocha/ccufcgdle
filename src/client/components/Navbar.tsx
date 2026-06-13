@@ -27,31 +27,31 @@ export default function Navbar() {
         </Link>
 
         <div className="nav-links">
-          <Link href="/podium" className="nav-link">
-            <Trophy size={18} /> {t('podium.nav')}
+          <Link href="/podium" className="nav-link" title={t('podium.nav')}>
+            <Trophy size={18} /> <span className="nav-link-label">{t('podium.nav')}</span>
           </Link>
 
-          <Link href="/members" className="nav-link">
-            <Users size={18} /> {t('nav.members')}
+          <Link href="/members" className="nav-link" title={t('nav.members')}>
+            <Users size={18} /> <span className="nav-link-label">{t('nav.members')}</span>
           </Link>
 
           {user ? (
             <>
-              <Link href="/profile" className="nav-link">
-                <User size={18} /> {t('nav.myCharacter')}
+              <Link href="/profile" className="nav-link" title={t('nav.myCharacter')}>
+                <User size={18} /> <span className="nav-link-label">{t('nav.myCharacter')}</span>
               </Link>
               {user.isAdmin && (
-                <Link href="/admin" className="nav-link nav-link-admin">
-                  <ShieldCheck size={18} /> {t('nav.admin')}
+                <Link href="/admin" className="nav-link nav-link-admin" title={t('nav.admin')}>
+                  <ShieldCheck size={18} /> <span className="nav-link-label">{t('nav.admin')}</span>
                 </Link>
               )}
-              <button onClick={logout} className="nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <LogOut size={18} /> {t('nav.logout')}
+              <button onClick={logout} className="nav-link" title={t('nav.logout')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <LogOut size={18} /> <span className="nav-link-label">{t('nav.logout')}</span>
               </button>
             </>
           ) : (
-            <Link href="/profile" className="nav-link">
-              <User size={18} /> {t('nav.joinLogin')}
+            <Link href="/profile" className="nav-link" title={t('nav.joinLogin')}>
+              <User size={18} /> <span className="nav-link-label">{t('nav.joinLogin')}</span>
             </Link>
           )}
 

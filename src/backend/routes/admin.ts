@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../../server/db';
 import { getLocalDateString } from '../../shared/utils';
 import { getOrCreateDailyCharacter, getActiveUsers } from '../../server/game';
@@ -89,6 +91,48 @@ router.put('/users', async (req, res) => {
   } catch (error) {
     console.error('Admin user update error:', error);
     return res.status(500).json({ error: 'Erro ao atualizar usuário.' });
+  }
+});
+
+// POST /api/admin/users/reset-password — generate a new temporary password for
+// a user (the "forgot password" flow: there's no email infrastructure, so an
+// admin generates the password and hands it to the person). The plaintext is
+// returned once, to the admin only, and never stored.
+router.post('/users/reset-password', async (req, res) => {
+  try {
+    const { userId } = req.body ?? {};
+
+    if (!userId) {
+      return res.status(400).json({ error: 'ID do usuário é obrigatório.' });
+    }
+
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true },
+    });
+    if (!target) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    // Random suffix from a mixed-case+digits alphabet; the "Lsd" prefix plus a
+    // digit guarantee the strong-password rules regardless of the random part.
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    const random = Array.from(crypto.randomBytes(8))
+      .map((b) => alphabet[b % alphabet.length])
+      .join('');
+    const tempPassword = `Lsd${Math.floor(Math.random() * 10)}-${random}`;
+
+    const passwordHash = await bcrypt.hash(tempPassword, 12);
+    await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+    return res.json({
+      message: 'Senha temporária gerada com sucesso!',
+      tempPassword,
+      user: { id: target.id, name: target.name },
+    });
+  } catch (error) {
+    console.error('Admin password reset error:', error);
+    return res.status(500).json({ error: 'Erro ao redefinir a senha.' });
   }
 });
 

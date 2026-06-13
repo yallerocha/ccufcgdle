@@ -167,7 +167,7 @@ export function VictoryModal({
           borderRadius: '50%',
           objectFit: 'cover',
           border: '3px solid var(--primary)',
-          boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)',
+          boxShadow: '0 0 15px rgba(69, 98, 193, 0.4)',
         }}
       />
     </div>
@@ -250,7 +250,7 @@ export function VictoryModal({
     <div style={{
       padding: '0.85rem',
       borderRadius: 'var(--border-radius)',
-      backgroundColor: 'rgba(99, 102, 241, 0.08)',
+      backgroundColor: 'rgba(69, 98, 193, 0.08)',
       border: '1px solid var(--primary)',
       textAlign: 'center',
     }}>

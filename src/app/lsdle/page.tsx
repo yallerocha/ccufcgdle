@@ -6,9 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
-import { HelpCircle, Search, Trophy, Info, ArrowLeft } from 'lucide-react';
+import { HelpCircle, Search, Trophy, Info } from 'lucide-react';
 import { VictoryModal } from '@/client/components/VictoryModal';
 import { InfoTooltip } from '@/client/components/InfoTooltip';
+import { BackLink } from '@/client/components/BackLink';
+import { LoadingState } from '@/client/components/LoadingState';
 import type { StreakInfo } from '@/client/components/StreakBadge';
 import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
@@ -222,36 +224,13 @@ export default function GamePage() {
   };
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <div style={{
-          width: '50px',
-          height: '50px',
-          border: '5px solid var(--border-color)',
-          borderTopColor: 'var(--primary)',
-          borderRadius: '50%',
-          animation: 'pulseGlow 1s infinite alternate, spin 1s linear infinite'
-        }}></div>
-        <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)' }}>{t('home.loading')}</p>
-        <style dangerouslySetInnerHTML={{__html: `
-          @keyframes spin { to { transform: rotate(360deg); } }
-        `}} />
-      </div>
-    );
+    return <LoadingState message={t('home.loading')} minHeight="60vh" />;
   }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
-      <div style={{ margin: '2rem 0 0.5rem 0' }}>
-        <Link
-          href="/"
-          className="btn btn-secondary"
-          style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
-        >
-          <ArrowLeft size={16} /> {t('nav.backToHub')}
-        </Link>
-      </div>
+      <BackLink href="/" label={t('nav.backToHub')} style={{ margin: '2rem 0 0.5rem 0' }} />
 
       {/* Hero Section */}
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

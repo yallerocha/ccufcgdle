@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users, ArrowLeft } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
-import { Toast } from '@/client/components/Toast';
+import { BackLink } from '@/client/components/BackLink';
+import { LoadingState } from '@/client/components/LoadingState';
+import { ErrorState } from '@/client/components/ErrorState';
 import { MemberStatsModal } from '@/client/components/MemberStatsModal';
 
 interface Member {
@@ -14,80 +15,107 @@ interface Member {
   photoUrl?: string | null;
 }
 
+// Accent-insensitive lowercase form for name matching.
+function normalizeName(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 export default function MembersPage() {
   const { t } = useTranslation();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setErrorMsg('');
+      const res = await apiFetch('/api/game/members');
+      const data = await res.json();
+      if (res.ok) {
+        setMembers(data.members || []);
+      } else {
+        setErrorMsg(data.error || t('members.error'));
+      }
+    } catch (err) {
+      console.error('Error loading members:', err);
+      setErrorMsg(t('members.error'));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
 
   useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const res = await apiFetch('/api/game/members');
-        const data = await res.json();
-        if (res.ok) {
-          setMembers(data.members || []);
-        } else {
-          setErrorMsg(data.error || t('members.error'));
-        }
-      } catch (err) {
-        console.error('Error loading members:', err);
-        setErrorMsg(t('members.error'));
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
-  }, [t]);
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    const q = normalizeName(query.trim());
+    if (!q) return members;
+    return members.filter((m) => normalizeName(m.name).includes(q));
+  }, [members, query]);
 
   return (
     <div style={{ margin: '2rem 0' }} className="fade-in">
-      <div style={{ marginBottom: '0.5rem' }}>
-        <Link href="/" className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}>
-          <ArrowLeft size={16} /> {t('nav.backToHub')}
-        </Link>
-      </div>
+      <BackLink href="/" label={t('nav.backToHub')} />
 
       <div className="hero" style={{ padding: '1rem 0 1.5rem 0' }}>
         <h1 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontSize: '2.2rem', fontWeight: 800 }}>
           <Users size={30} style={{ color: 'var(--primary)' }} /> {t('members.title')}
         </h1>
         <p>{t('members.subtitle')}</p>
-        {!loading && members.length > 0 && (
+        {!loading && !errorMsg && members.length > 0 && (
           <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
             {t('members.count', { count: members.length })}
           </p>
         )}
       </div>
 
-      <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
-
       {loading ? (
-        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('members.loading')}</p>
+        <LoadingState message={t('members.loading')} />
+      ) : errorMsg ? (
+        <ErrorState message={errorMsg} onRetry={load} />
       ) : members.length === 0 ? (
         <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('members.empty')}</p>
       ) : (
-        <div className="members-grid">
-          {members.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              className="card member-card member-card-button"
-              onClick={() => setSelectedId(m.id)}
-            >
-              {m.photoUrl ? (
-                <img src={m.photoUrl} alt={m.name} className="member-photo" />
-              ) : (
-                <div className="member-photo member-photo-placeholder">
-                  {m.name.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <span className="member-name">{m.name}</span>
-            </button>
-          ))}
-        </div>
+        <>
+          <div style={{ position: 'relative', maxWidth: '380px', margin: '0 auto 1.75rem auto' }}>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('members.searchPlaceholder')}
+              style={{ paddingLeft: '2.5rem' }}
+            />
+            <Search size={17} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+          </div>
+
+          {filtered.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('members.noResults')}</p>
+          ) : (
+            <div className="members-grid">
+              {filtered.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  className="card member-card member-card-button"
+                  onClick={() => setSelectedId(m.id)}
+                >
+                  {m.photoUrl ? (
+                    <img src={m.photoUrl} alt={m.name} className="member-photo" />
+                  ) : (
+                    <div className="member-photo member-photo-placeholder">
+                      {m.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="member-name">{m.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <MemberStatsModal memberId={selectedId} onClose={() => setSelectedId(null)} />

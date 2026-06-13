@@ -260,4 +260,55 @@ router.put('/me', requireAuth, async (req, res) => {
   }
 });
 
+// PUT /api/auth/me/password — change the authenticated user's login password.
+router.put('/me/password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body ?? {};
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Senha atual e nova senha são obrigatórias.' });
+    }
+
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+      return res.status(400).json({ error: 'Senha inválida.' });
+    }
+
+    if (!isStrongPassword(newPassword)) {
+      return res.status(400).json({
+        error: 'A senha deve ter ao menos 8 caracteres, incluindo letra maiúscula, minúscula e número.',
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.auth!.userId },
+      select: { id: true, passwordHash: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const currentMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!currentMatch) {
+      return res.status(401).json({ error: 'Senha atual incorreta.' });
+    }
+
+    const sameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash);
+    if (sameAsCurrent) {
+      return res.status(400).json({ error: 'A nova senha deve ser diferente da atual.' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    });
+
+    return res.json({ message: 'Senha alterada com sucesso!' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    return res.status(500).json({ error: 'Erro ao alterar a senha.' });
+  }
+});
+
 export default router;

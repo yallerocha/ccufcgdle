@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
+import { BackLink } from '@/client/components/BackLink';
+import { LoadingState } from '@/client/components/LoadingState';
 import { LoginForm } from '@/client/components/LoginForm';
 import { RegisterForm } from '@/client/components/RegisterForm';
 import { ProfileEditForm } from '@/client/components/ProfileEditForm';
@@ -15,11 +15,7 @@ export default function ProfilePage() {
   const [isRegistering, setIsRegistering] = useState(false);
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <p style={{ color: 'var(--text-muted)' }}>{t('profileEdit.loadingSession')}</p>
-      </div>
-    );
+    return <LoadingState message={t('profileEdit.loadingSession')} minHeight="50vh" />;
   }
 
   let content;
@@ -44,15 +40,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <div style={{ margin: '2rem 0 0.5rem 0' }}>
-        <Link
-          href="/"
-          className="btn btn-secondary"
-          style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
-        >
-          <ArrowLeft size={16} /> {t('nav.backToHub')}
-        </Link>
-      </div>
+      <BackLink href="/" label={t('nav.backToHub')} style={{ margin: '2rem 0 0.5rem 0' }} />
       {content}
     </>
   );

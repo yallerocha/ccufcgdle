@@ -341,12 +341,13 @@ router.get('/ranking', async (req, res) => {
         { createdAt: 'asc' },
       ],
       include: {
-        player: { select: { name: true, photoUrl: true } },
+        player: { select: { id: true, name: true, photoUrl: true } },
       },
     });
 
     const ranking = results.map((r, i) => ({
       rank: i + 1,
+      playerId: r.player.id,
       name: r.player.name,
       photoUrl: r.player.photoUrl,
       attempts: r.attempts,

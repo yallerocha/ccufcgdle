@@ -3,12 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Clock, Camera, Save, AlertTriangle, Settings2, Trash2, FolderGit2 } from 'lucide-react';
+import { Clock, Camera, Save, AlertTriangle, Settings2, Trash2, FolderGit2, KeyRound } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
+import { isStrongPassword } from '@/shared/validation';
 import { apiFetch } from '@/client/lib/api';
+import { fileToResizedDataUrl } from '@/client/lib/image';
 import { Toast } from '@/client/components/Toast';
+import { PasswordInput } from '@/client/components/PasswordInput';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
 const ROLE_OPTIONS = ['Professor', 'Graduando', 'Mestrando', 'Doutorando', 'Pesquisador', 'Funcionário'];
@@ -48,6 +51,13 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
+  const [passwordSuccessMsg, setPasswordSuccessMsg] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const router = useRouter();
   // Pending navigation held back by the unsaved-changes guard, surfaced through
@@ -121,9 +131,16 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     if (href) router.push(href);
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+    try {
+      // Downscale at upload time so the stored photo (and every list that
+      // includes it) stays small.
+      setPhotoUrl(await fileToResizedDataUrl(file));
+    } catch {
+      // Resizing failed (unsupported format?) — fall back to the raw file,
+      // still subject to the original size limit.
       if (file.size > 2 * 1024 * 1024) { alert(t('photo.tooLarge')); return; }
       const reader = new FileReader();
       reader.onloadend = () => setPhotoUrl(reader.result as string);
@@ -144,6 +161,48 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
       if (res.ok) { setSuccessMsg(t('profileEdit.success')); dirtyRef.current = false; refreshUser(); }
       else { setErrorMsg(data.error || t('profileEdit.error')); }
     } catch (err) { setSubmitting(false); setErrorMsg(t('profileEdit.errorConn')); }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordErrorMsg('');
+    setPasswordSuccessMsg('');
+
+    if (!isStrongPassword(newPassword)) {
+      setPasswordErrorMsg(t('profileEdit.passwordWeak'));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordErrorMsg(t('profileEdit.passwordMismatch'));
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordErrorMsg(t('profileEdit.passwordSameAsCurrent'));
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const res = await apiFetch('/api/auth/me/password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPasswordSuccessMsg(t('profileEdit.passwordSuccess'));
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else if (res.status === 401) {
+        setPasswordErrorMsg(data.error || t('profileEdit.passwordWrongCurrent'));
+      } else {
+        setPasswordErrorMsg(data.error || t('profileEdit.passwordError'));
+      }
+    } catch {
+      setPasswordErrorMsg(t('profileEdit.passwordErrorConn'));
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
@@ -240,6 +299,67 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             )}
             <button type="submit" disabled={submitting} className="btn profile-save-btn">
               <Save size={18} /> {submitting ? t('profileEdit.saving') : t('profileEdit.save')}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Password change — separate form so it doesn't mix with attribute dirty state */}
+      <div className="card">
+        <h2 className="card-title">
+          <KeyRound size={22} style={{ color: 'var(--primary)' }} /> {t('profileEdit.passwordTitle')}
+        </h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+          {t('profileEdit.passwordSubtitle')}
+        </p>
+
+        <Toast
+          message={passwordErrorMsg || passwordSuccessMsg}
+          type={passwordErrorMsg ? 'error' : 'success'}
+          onClose={() => { setPasswordErrorMsg(''); setPasswordSuccessMsg(''); }}
+        />
+
+        <form onSubmit={handlePasswordSubmit}>
+          <div className="form-group">
+            <label htmlFor="profile-current-password">{t('profileEdit.currentPasswordLabel')}</label>
+            <PasswordInput
+              id="profile-current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder={t('profileEdit.currentPasswordPlaceholder')}
+              autoComplete="current-password"
+              required
+            />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="profile-new-password">{t('profileEdit.newPasswordLabel')}</label>
+              <PasswordInput
+                id="profile-new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder={t('profileEdit.newPasswordPlaceholder')}
+                autoComplete="new-password"
+                required
+                minLength={8}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="profile-confirm-password">{t('profileEdit.confirmPasswordLabel')}</label>
+              <PasswordInput
+                id="profile-confirm-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder={t('profileEdit.confirmPasswordPlaceholder')}
+                autoComplete="new-password"
+                required
+                minLength={8}
+              />
+            </div>
+          </div>
+          <div className="profile-save-bar">
+            <button type="submit" disabled={changingPassword} className="btn profile-save-btn">
+              <KeyRound size={18} /> {changingPassword ? t('profileEdit.changingPassword') : t('profileEdit.changePassword')}
             </button>
           </div>
         </form>

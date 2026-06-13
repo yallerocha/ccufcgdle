@@ -133,11 +133,12 @@ router.get('/ranking', async (req, res) => {
     const results = await prisma.termoResult.findMany({
       where: { date },
       orderBy: [{ attempts: 'asc' }, { durationMs: 'asc' }, { createdAt: 'asc' }],
-      include: { player: { select: { name: true, photoUrl: true } } },
+      include: { player: { select: { id: true, name: true, photoUrl: true } } },
     });
 
     const ranking = results.map((r, i) => ({
       rank: i + 1,
+      playerId: r.player.id,
       name: r.player.name,
       photoUrl: r.player.photoUrl,
       attempts: r.attempts,

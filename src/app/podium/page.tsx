@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { Trophy, ArrowLeft, Info } from 'lucide-react';
+import { Trophy, Info } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
-import { Toast } from '@/client/components/Toast';
+import { BackLink } from '@/client/components/BackLink';
+import { LoadingState } from '@/client/components/LoadingState';
+import { ErrorState } from '@/client/components/ErrorState';
 import { MemberStatsModal } from '@/client/components/MemberStatsModal';
 
 interface Entry {
@@ -46,34 +47,32 @@ export default function PodiumPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const res = await apiFetch('/api/game/leaderboard');
-        const data = await res.json();
-        if (res.ok) setRanking(data.ranking || []);
-        else setErrorMsg(data.error || t('podium.error'));
-      } catch (err) {
-        console.error('Error loading leaderboard:', err);
-        setErrorMsg(t('podium.error'));
-      } finally {
-        setLoading(false);
-      }
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setErrorMsg('');
+      const res = await apiFetch('/api/game/leaderboard');
+      const data = await res.json();
+      if (res.ok) setRanking(data.ranking || []);
+      else setErrorMsg(data.error || t('podium.error'));
+    } catch (err) {
+      console.error('Error loading leaderboard:', err);
+      setErrorMsg(t('podium.error'));
+    } finally {
+      setLoading(false);
     }
-    load();
   }, [t]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const top3 = ranking.slice(0, 3);
   const rest = ranking.slice(3);
 
   return (
     <div style={{ margin: '2rem 0' }} className="fade-in">
-      <div style={{ marginBottom: '0.5rem' }}>
-        <Link href="/" className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}>
-          <ArrowLeft size={16} /> {t('nav.backToHub')}
-        </Link>
-      </div>
+      <BackLink href="/" label={t('nav.backToHub')} />
 
       <div className="hero" style={{ padding: '1rem 0 1.5rem 0' }}>
         <h1 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontSize: '2.2rem', fontWeight: 800 }}>
@@ -82,10 +81,10 @@ export default function PodiumPage() {
         <p>{t('podium.subtitle')}</p>
       </div>
 
-      <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
-
       {loading ? (
-        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('podium.loading')}</p>
+        <LoadingState message={t('podium.loading')} />
+      ) : errorMsg ? (
+        <ErrorState message={errorMsg} onRetry={load} />
       ) : ranking.length === 0 ? (
         <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('podium.empty')}</p>
       ) : (
@@ -126,7 +125,7 @@ export default function PodiumPage() {
                     {rest.map((entry) => {
                       const isMe = user && user.name === entry.name;
                       return (
-                        <tr key={entry.id} style={{ cursor: 'pointer', ...(isMe ? { backgroundColor: 'rgba(139, 92, 246, 0.08)' } : {}) }} onClick={() => setSelectedId(entry.id)}>
+                        <tr key={entry.id} style={{ cursor: 'pointer', ...(isMe ? { backgroundColor: 'rgba(69, 98, 193, 0.08)' } : {}) }} onClick={() => setSelectedId(entry.id)}>
                           <td style={{ fontWeight: 700, textAlign: 'center' }}>{entry.rank}</td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>

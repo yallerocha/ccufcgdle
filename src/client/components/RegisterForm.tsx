@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Camera } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
+import { fileToResizedDataUrl } from '@/client/lib/image';
 import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
 import { PasswordInput } from '@/client/components/PasswordInput';
 import { Toast } from '@/client/components/Toast';
@@ -63,9 +64,16 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const [errorMsg, setErrorMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+    try {
+      // Downscale at upload time so the stored photo (and every list that
+      // includes it) stays small.
+      setPhotoUrl(await fileToResizedDataUrl(file));
+    } catch {
+      // Resizing failed (unsupported format?) — fall back to the raw file,
+      // still subject to the original size limit.
       if (file.size > 2 * 1024 * 1024) {
         alert(t('photo.tooLarge'));
         return;

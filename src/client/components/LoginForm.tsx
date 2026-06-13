@@ -75,6 +75,10 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
           <button type="submit" disabled={submitting} className="btn" style={{ width: '100%' }}>
             {submitting ? t('login.submitting') : t('login.submit')}
           </button>
+
+          <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>
+            {t('login.forgotHint')}
+          </p>
         </form>
 
         <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', textAlign: 'center' }}>

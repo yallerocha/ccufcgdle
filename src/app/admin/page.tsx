@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Lock, Type, Ban, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Lock, Type, Ban, KeyRound, Search, Copy, Check } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
+import { BackLink } from '@/client/components/BackLink';
+import { LoadingState } from '@/client/components/LoadingState';
 
 interface AdminUser {
   id: string;
@@ -27,8 +28,10 @@ interface AdminUser {
   createdAt: string;
 }
 
+type UserSort = 'newest' | 'name' | 'lastLogin';
+
 export default function AdminPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user: currentUser, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,10 +45,19 @@ export default function AdminPage() {
   // User pending deletion, surfaced through the confirmation modal.
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [deleting, setDeleting] = useState(false);
+  // Password-reset flow: pending user → confirm modal; tempPassword → result modal.
+  const [userToReset, setUserToReset] = useState<AdminUser | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [tempPassword, setTempPassword] = useState('');
+  const [copied, setCopied] = useState(false);
+  // Users-tab list controls.
+  const [userSearch, setUserSearch] = useState('');
+  const [userSort, setUserSort] = useState<UserSort>('newest');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const today = getLocalDateString();
+  const dateLocale = i18n.language?.startsWith('pt') ? 'pt-BR' : 'en-US';
 
   // When `silent` is true we refresh the data in the background without flipping
   // the page-level `loading` flag, which would otherwise replace the whole panel
@@ -140,6 +152,48 @@ export default function AdminPage() {
     }
   };
 
+  const confirmResetPassword = async () => {
+    if (!userToReset) return;
+    setErrorMsg('');
+    setSuccessMsg('');
+    setResetting(true);
+    try {
+      const res = await apiFetch('/api/admin/users/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ userId: userToReset.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTempPassword(data.tempPassword);
+      } else {
+        setErrorMsg(data.error || t('admin.errorReset'));
+        setUserToReset(null);
+      }
+    } catch (err) {
+      setErrorMsg(t('admin.errorReset'));
+      setUserToReset(null);
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const closeResetModal = () => {
+    setUserToReset(null);
+    setTempPassword('');
+    setCopied(false);
+  };
+
+  const copyTempPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(tempPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (non-HTTPS context) — the admin can still select
+      // and copy the highlighted password manually.
+    }
+  };
+
   const handleForceDaily = async (forceRandom: boolean) => {
     setErrorMsg('');
     setSuccessMsg('');
@@ -219,11 +273,7 @@ export default function AdminPage() {
   };
 
   if (authLoading || (currentUser && loading)) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <p style={{ color: 'var(--text-muted)' }}>{t('admin.loading')}</p>
-      </div>
-    );
+    return <LoadingState message={t('admin.loading')} minHeight="50vh" />;
   }
 
   if (!currentUser || !currentUser.isAdmin) {
@@ -250,17 +300,21 @@ export default function AdminPage() {
     return u.isActive && diffDays < 30;
   });
 
+  // Users-tab list after the search filter + selected ordering.
+  const searchQ = userSearch.trim().toLowerCase();
+  const visibleUsers = (
+    searchQ
+      ? users.filter((u) => u.name.toLowerCase().includes(searchQ) || u.email.toLowerCase().includes(searchQ))
+      : [...users]
+  ).sort((a, b) => {
+    if (userSort === 'name') return a.name.localeCompare(b.name);
+    if (userSort === 'lastLogin') return new Date(b.lastLogin).getTime() - new Date(a.lastLogin).getTime();
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
   return (
     <div style={{ margin: '2rem 0' }} className="fade-in">
-      <div style={{ marginBottom: '0.5rem' }}>
-        <Link
-          href="/"
-          className="btn btn-secondary"
-          style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
-        >
-          <ArrowLeft size={16} /> {t('nav.backToHub')}
-        </Link>
-      </div>
+      <BackLink href="/" label={t('nav.backToHub')} />
       <div className="admin-section-header">
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -476,8 +530,34 @@ export default function AdminPage() {
             <Shield size={20} style={{ color: 'var(--primary)' }} /> {t('admin.usersTitle')} ({users.length})
           </h3>
 
+          {users.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ position: 'relative', flex: '1 1 240px' }}>
+                <input
+                  type="text"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder={t('admin.searchPlaceholder')}
+                  style={{ paddingLeft: '2.4rem' }}
+                />
+                <Search size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+              </div>
+              <select
+                value={userSort}
+                onChange={(e) => setUserSort(e.target.value as UserSort)}
+                style={{ flex: '0 1 180px' }}
+              >
+                <option value="newest">{t('admin.sortNewest')}</option>
+                <option value="name">{t('admin.sortName')}</option>
+                <option value="lastLogin">{t('admin.sortLastLogin')}</option>
+              </select>
+            </div>
+          )}
+
           {users.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('admin.noUsers')}</p>
+          ) : visibleUsers.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('admin.noSearchResults')}</p>
           ) : (
             <div className="admin-table-container">
               <table className="admin-table">
@@ -493,7 +573,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map(u => {
+                  {visibleUsers.map(u => {
                     // Check activity status (isActive + logged in within 30 days)
                     const lastLoginDate = new Date(u.lastLogin);
                     const todayDate = new Date();
@@ -510,7 +590,7 @@ export default function AdminPage() {
                         <td>{u.role}</td>
                         <td>{u.entrySemester}</td>
                         <td style={{ fontSize: '0.85rem' }}>
-                          {lastLoginDate.toLocaleDateString()} {lastLoginDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {lastLoginDate.toLocaleDateString(dateLocale)} {lastLoginDate.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
                         </td>
                         <td>
                           {u.isActive && isSessionActive ? (
@@ -558,6 +638,16 @@ export default function AdminPage() {
                             </button>
 
                             <button
+                              onClick={() => setUserToReset(u)}
+                              disabled={u.id === currentUser.id}
+                              className="btn btn-secondary"
+                              style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
+                              title={t('admin.actionResetPassword')}
+                            >
+                              <KeyRound size={14} style={{ color: 'var(--color-partial)' }} />
+                            </button>
+
+                            <button
                               onClick={() => setUserToDelete(u)}
                               disabled={u.id === currentUser.id}
                               className="btn btn-secondary btn-danger"
@@ -579,6 +669,62 @@ export default function AdminPage() {
         )}
 
       </div>
+
+      {/* Password-reset: confirmation, then one-time display of the temp password */}
+      {mounted && userToReset && createPortal(
+        <div className="modal-overlay" onClick={() => !resetting && closeResetModal()}>
+          <div className="modal-content" style={{ maxWidth: '440px' }} onClick={(e) => e.stopPropagation()}>
+            <KeyRound size={44} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
+            <h2 className="modal-title">{t('admin.resetTitle')}</h2>
+            {!tempPassword ? (
+              <>
+                <p className="modal-subtitle" style={{ overflowWrap: 'anywhere' }}>
+                  {t('admin.resetConfirmBody', { name: userToReset.name })}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <button onClick={confirmResetPassword} disabled={resetting} className="btn" style={{ width: '100%' }}>
+                    <KeyRound size={18} /> {resetting ? t('admin.resetting') : t('admin.resetGenerate')}
+                  </button>
+                  <button onClick={closeResetModal} disabled={resetting} className="btn btn-secondary" style={{ width: '100%' }}>
+                    {t('admin.deleteCancel')}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="modal-subtitle" style={{ overflowWrap: 'anywhere' }}>
+                  {t('admin.resetDoneBody', { name: userToReset.name })}
+                </p>
+                <code
+                  style={{
+                    display: 'block',
+                    fontSize: '1.15rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.05em',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-input)',
+                    border: '1px solid var(--border-color)',
+                    margin: '0 0 1rem 0',
+                    userSelect: 'all',
+                  }}
+                >
+                  {tempPassword}
+                </code>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <button onClick={copyTempPassword} className="btn" style={{ width: '100%' }}>
+                    {copied ? <Check size={18} /> : <Copy size={18} />} {copied ? t('admin.resetCopied') : t('admin.resetCopy')}
+                  </button>
+                  <button onClick={closeResetModal} className="btn btn-secondary" style={{ width: '100%' }}>
+                    {t('admin.resetClose')}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Delete-user confirmation */}
       {mounted && userToDelete && createPortal(

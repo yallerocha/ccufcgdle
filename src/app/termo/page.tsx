@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
-import { HelpCircle, Info, Trophy, Delete, CornerDownLeft, ArrowLeft } from 'lucide-react';
+import { HelpCircle, Info, Trophy, Delete, CornerDownLeft } from 'lucide-react';
+import { BackLink } from '@/client/components/BackLink';
+import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { TermoResultModal } from '@/client/components/TermoResultModal';
 import type { StreakInfo } from '@/client/components/StreakBadge';
@@ -268,25 +270,12 @@ export default function TermoPage() {
   });
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <div style={{ width: '50px', height: '50px', border: '5px solid var(--border-color)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)' }}>{t('termo.loading')}</p>
-      </div>
-    );
+    return <LoadingState message={t('termo.loading')} minHeight="60vh" />;
   }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ margin: '2rem 0 0.5rem 0' }}>
-        <Link
-          href="/"
-          className="btn btn-secondary"
-          style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}
-        >
-          <ArrowLeft size={16} /> {t('nav.backToHub')}
-        </Link>
-      </div>
+      <BackLink href="/" label={t('nav.backToHub')} style={{ margin: '2rem 0 0.5rem 0' }} />
 
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <img src="/logo.png" alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
@@ -367,6 +356,13 @@ export default function TermoPage() {
           );
         })}
       </div>
+
+      {/* Accent reminder, visible without opening the rules */}
+      {status === 'playing' && (
+        <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-dim)', margin: '0 auto 1rem auto', maxWidth: '420px' }}>
+          {t('termo.rules.accents')}
+        </p>
+      )}
 
       {/* Reopen the result modal once the game is over */}
       {status !== 'playing' && (
