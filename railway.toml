@@ -9,6 +9,8 @@
 #    APP_URL              = https://seu-app.vercel.app
 #    NODE_ENV             = production
 #    ENSURE_DEFAULT_ADMIN = true
+#    SKIP_EMAIL_VERIFICATION = true   (auto-verify @ufcg; no Resend needed for signup)
+#    SKIP_EMAIL_VERIFICATION = false  (default — send real verification emails via Resend)
 #    (Não defina SEED_DATABASE nem ALLOW_LOCAL_SEED — seed só roda no Docker local.)
 
 [build]

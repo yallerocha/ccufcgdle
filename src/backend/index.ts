@@ -8,6 +8,7 @@ import termoRouter from './routes/termo';
 import forcaRouter from './routes/forca';
 import adminRouter from './routes/admin';
 import { ensureDefaultProjects, syncProjectsFromUsers } from '../server/projects';
+import { isEmailVerificationRequired } from '../server/email-verification-config';
 
 const app = express();
 
@@ -82,4 +83,7 @@ void bootstrapProjects();
 
 app.listen(PORT, () => {
   console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN || '*'})`);
+  console.log(
+    `[api] Email verification: ${isEmailVerificationRequired() ? 'required (Resend)' : 'disabled (auto-verify @ufcg)'}`
+  );
 });

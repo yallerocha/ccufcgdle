@@ -30,3 +30,5 @@ services:
         sync: false
       - key: ENSURE_DEFAULT_ADMIN
         value: "true"
+      - key: SKIP_EMAIL_VERIFICATION
+        sync: false

@@ -6,6 +6,7 @@ import { requireAuth } from '../middleware/auth';
 import { validateCharacterFields, isAllowedEmailDomain, isStrongPassword } from '../../shared/validation';
 import { getAllowedProjectNames } from '../../server/projects';
 import { isEmailVerified, issueVerificationToken, consumeVerificationToken, findUnverifiedUserByEmail } from '../../server/email-verification';
+import { isEmailVerificationRequired } from '../../server/email-verification-config';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../../server/email';
 import {
   findVerifiedUserForPasswordReset,
@@ -21,6 +22,29 @@ const router = Router();
 // or not the account exists, preventing email enumeration via timing.
 const DUMMY_PASSWORD_HASH = '$2b$12$Q1lo.kalr7biqRwg.KHaN.UdNf15sfLrxvHYPjuFBZkC/h3isj40e';
 
+function authSessionResponse(user: {
+  id: string;
+  email: string;
+  name: string;
+  isAdmin: boolean;
+  passwordHash: string;
+  [key: string]: unknown;
+}) {
+  const token = signToken({
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    isAdmin: user.isAdmin,
+  });
+  const { passwordHash: _, ...userWithoutPassword } = user;
+  return { token, user: userWithoutPassword };
+}
+
+// GET /api/auth/config — public auth settings for the client.
+router.get('/config', (_req, res) => {
+  res.json({ emailVerificationRequired: isEmailVerificationRequired() });
+});
+
 // POST /api/auth/login — validates credentials and returns { token, user }.
 router.post('/login', async (req, res) => {
   try {
@@ -30,7 +54,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
     }
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
@@ -39,6 +63,13 @@ router.post('/login', async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
     if (!user || !passwordMatch) {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
+    }
+
+    if (!isEmailVerified(user) && !isEmailVerificationRequired()) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date(), isActive: true },
+      });
     }
 
     if (!isEmailVerified(user)) {
@@ -139,6 +170,13 @@ router.post('/register', async (req, res) => {
     if (existingUser) {
       if (existingUser.email.toLowerCase() === email.toLowerCase()) {
         if (!existingUser.emailVerifiedAt) {
+          if (!isEmailVerificationRequired()) {
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { emailVerifiedAt: new Date(), isActive: true },
+            });
+            return res.status(400).json({ error: 'Este email já está cadastrado. Faça login.' });
+          }
           try {
             const verificationToken = await issueVerificationToken(existingUser.id);
             await sendVerificationEmail(existingUser.email, name, verificationToken);
@@ -162,6 +200,7 @@ router.post('/register', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+    const verifyOnRegister = isEmailVerificationRequired();
 
     const user = await prisma.user.create({
       data: {
@@ -178,9 +217,18 @@ router.post('/register', async (req, res) => {
         photoUrl,
         lastLogin: new Date(),
         isActive: true,
-        emailVerifiedAt: null,
+        emailVerifiedAt: verifyOnRegister ? null : new Date(),
       },
     });
+
+    if (!verifyOnRegister) {
+      const session = authSessionResponse(user);
+      return res.status(201).json({
+        message: 'Cadastro realizado com sucesso!',
+        needsEmailVerification: false,
+        ...session,
+      });
+    }
 
     try {
       const verificationToken = await issueVerificationToken(user.id);
@@ -246,9 +294,19 @@ router.post('/resend-verification', async (req, res) => {
     }
 
     const user = await findUnverifiedUserByEmail(email);
-    const okMessage = 'Se existir uma conta pendente com este email, enviamos um novo link de verificação.';
+    const okMessage = isEmailVerificationRequired()
+      ? 'Se existir uma conta pendente com este email, enviamos um novo link de verificação.'
+      : 'Se existir uma conta pendente com este email, ela foi ativada. Você já pode fazer login.';
 
     if (!user) {
+      return res.json({ message: okMessage });
+    }
+
+    if (!isEmailVerificationRequired()) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date(), isActive: true },
+      });
       return res.json({ message: okMessage });
     }
 
