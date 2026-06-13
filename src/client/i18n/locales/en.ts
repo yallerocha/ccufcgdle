@@ -385,7 +385,7 @@ export const en: Dictionary = {
     success: 'Attributes updated successfully!',
     error: 'Failed to update profile.',
     errorConn: 'Connection error.',
-    changeNote: 'Changes to your attributes only take effect in the games (like LSDLE) starting the next day.',
+    changeNote: 'Changes to your attributes only take effect in the games (like LSDLE) starting the next day. Your photo updates immediately.',
     unsavedTitle: 'Unsaved changes',
     unsavedBody: "You edited your profile but didn't save. If you leave now, your changes will be lost.",
     unsavedLeave: 'Leave without saving',

@@ -381,7 +381,7 @@ export const pt = {
     success: 'Atributos atualizados com sucesso!',
     error: 'Erro ao atualizar perfil.',
     errorConn: 'Erro de conexão.',
-    changeNote: 'As mudanças nos seus atributos só entram nos jogos (como o LSDLE) a partir do dia seguinte.',
+    changeNote: 'As mudanças nos seus atributos só entram nos jogos (como o LSDLE) a partir do dia seguinte. A foto é atualizada na hora.',
     unsavedTitle: 'Alterações não salvas',
     unsavedBody: 'Você editou seu perfil mas não salvou. Se sair agora, as alterações serão perdidas.',
     unsavedLeave: 'Sair sem salvar',

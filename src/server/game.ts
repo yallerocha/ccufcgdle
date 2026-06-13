@@ -7,6 +7,7 @@ import { INACTIVITY_DAYS, getLocalDateString } from '@/shared/utils';
 // game* fields directly (see PUT /api/auth/me), and this only runs when the
 // snapshot is stale (gameSyncDate != today), an edit made today is only picked
 // up by the next day's sync — so the games reflect attribute changes a day late.
+// Photo is the exception: gameView always reads the live photoUrl.
 let lastSyncDate = '';
 export async function syncGameAttributes(): Promise<void> {
   const today = getLocalDateString();
@@ -21,7 +22,6 @@ export async function syncGameAttributes(): Promise<void> {
       "gameArea" = "area",
       "gameProjects" = "projects",
       "gameLikesCoffee" = "likesCoffee",
-      "gamePhotoUrl" = "photoUrl",
       "gameSyncDate" = ${today}
     WHERE "gameSyncDate" <> ${today}
   `;
@@ -30,8 +30,9 @@ export async function syncGameAttributes(): Promise<void> {
 
 // Returns a User whose attribute fields are the daily game snapshot (game*),
 // falling back to the editable values when a user has never been synced (e.g.
-// just registered). Games must compare/display through this view so that
-// same-day profile edits don't leak into the current round.
+// just registered). Games must compare/display attributes through this view so
+// that same-day profile edits don't leak into the current round. Photo always
+// uses the live value so avatar changes appear immediately.
 export function gameView(u: User): User {
   return {
     ...u,
@@ -42,8 +43,18 @@ export function gameView(u: User): User {
     area: u.gameSyncDate ? u.gameArea : u.area,
     projects: u.gameSyncDate ? u.gameProjects : u.projects,
     likesCoffee: u.gameSyncDate ? u.gameLikesCoffee : u.likesCoffee,
-    photoUrl: u.gameSyncDate ? u.gamePhotoUrl : u.photoUrl,
+    photoUrl: u.photoUrl,
   };
+}
+
+/** Resolves the current profile photo for a member shown in games (e.g. Forca). */
+export async function livePhotoByUserName(name: string | null | undefined): Promise<string | null> {
+  if (!name) return null;
+  const user = await prisma.user.findUnique({
+    where: { name },
+    select: { photoUrl: true },
+  });
+  return user?.photoUrl ?? null;
 }
 
 export async function getActiveUsers(): Promise<User[]> {

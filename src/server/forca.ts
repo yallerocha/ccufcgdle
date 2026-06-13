@@ -1,7 +1,7 @@
 import { prisma } from './db';
 import { getLocalDateString } from '@/shared/utils';
 import { normalize, hashString } from './termo';
-import { getActiveUsers } from './game';
+import { getActiveUsers, livePhotoByUserName } from './game';
 
 // Classic hangman: 6 wrong guesses complete the drawing (head, torso, 2 arms,
 // 2 legs) and the round is lost.
@@ -69,11 +69,12 @@ export async function getOrCreateDailyWord(dateStr?: string): Promise<DailyWord>
 
   const existing = await prisma.forcaDaily.findUnique({ where: { date } });
   if (existing) {
+    const personPhoto = (await livePhotoByUserName(existing.personName)) ?? existing.personPhoto;
     return {
       word: existing.word,
       display: existing.display,
       personName: existing.personName,
-      personPhoto: existing.personPhoto,
+      personPhoto,
     };
   }
 
@@ -85,17 +86,25 @@ export async function getOrCreateDailyWord(dateStr?: string): Promise<DailyWord>
     const created = await prisma.forcaDaily.create({
       data: { date, word, display, personName: person.name, personPhoto: person.photo },
     });
+    const personPhoto = (await livePhotoByUserName(created.personName)) ?? created.personPhoto;
     return {
       word: created.word,
       display: created.display,
       personName: created.personName,
-      personPhoto: created.personPhoto,
+      personPhoto,
     };
   } catch {
     const again = await prisma.forcaDaily.findUnique({ where: { date } });
-    return again
-      ? { word: again.word, display: again.display, personName: again.personName, personPhoto: again.personPhoto }
-      : { word, display, personName: person.name, personPhoto: person.photo };
+    if (again) {
+      const personPhoto = (await livePhotoByUserName(again.personName)) ?? again.personPhoto;
+      return {
+        word: again.word,
+        display: again.display,
+        personName: again.personName,
+        personPhoto,
+      };
+    }
+    return { word, display, personName: person.name, personPhoto: person.photo };
   }
 }
 
