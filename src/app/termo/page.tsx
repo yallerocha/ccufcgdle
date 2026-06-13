@@ -12,6 +12,7 @@ import { Toast } from '@/client/components/Toast';
 import { TermoResultModal } from '@/client/components/TermoResultModal';
 import type { StreakInfo } from '@/client/components/StreakBadge';
 import { apiFetch } from '@/client/lib/api';
+import { Logo } from '@/client/components/Logo';
 
 type LetterResult = 'correct' | 'present' | 'absent';
 type Status = 'playing' | 'won' | 'lost';
@@ -278,7 +279,7 @@ export default function TermoPage() {
       <BackLink href="/" label={t('nav.backToHub')} style={{ margin: '2rem 0 0.5rem 0' }} />
 
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <img src="/logo.png" alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
+        <Logo alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
         <p>{t('termo.tagline')}</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button

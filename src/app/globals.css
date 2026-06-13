@@ -58,6 +58,24 @@
   color-scheme: dark;
 }
 
+/* Theme-aware logos (see Logo.tsx) */
+.theme-logo--light {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-logo--dark {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-logo--light {
+  display: inline;
+}
+
+:root[data-theme="dark"] .theme-logo--dark,
+:root:not([data-theme="light"]) .theme-logo--dark {
+  display: inline;
+}
+
 /* Light theme overrides */
 :root[data-theme="light"] {
   --bg-main: #fafafa;

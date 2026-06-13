@@ -6,6 +6,7 @@ import { Gamepad2, Lock, Type, Ban, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
+import { Logo } from '@/client/components/Logo';
 
 type GameId = 'lsdle' | 'termo' | 'forca';
 
@@ -68,8 +69,7 @@ export default function HubPage() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem 1rem' }} className="fade-in">
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem' }}>
-        <img
-          src="/logo.png"
+        <Logo
           alt="LSD Logo"
           style={{ width: '180px', maxWidth: '100%', marginBottom: '1rem' }}
         />

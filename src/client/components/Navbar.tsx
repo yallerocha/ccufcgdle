@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Terminal, User, Users, Trophy, ShieldCheck, LogOut } from 'lucide-react';
 import ThemeToggle from '@/client/components/ThemeToggle';
 import LanguageToggle from '@/client/components/LanguageToggle';
+import { Logo } from '@/client/components/Logo';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -16,7 +17,7 @@ export default function Navbar() {
     <nav className="navbar" style={{ position: 'relative' }}>
       <div className="navbar-content container">
         <Link href="/" className="nav-logo">
-          <img src="/logo_icone.png" alt="LSD Logo Icon" style={{ height: '32px', width: 'auto' }} />
+          <Logo variant="icon" alt="LSD Logo Icon" style={{ height: '32px', width: 'auto' }} />
           {/* Single gradient spanning the whole name (L → B); GAME stays solid. */}
           <span className="lsd-gradient-text" style={{ marginLeft: '4px', fontWeight: 800 }}>
             LSD{' '}

@@ -14,6 +14,7 @@ import { LoadingState } from '@/client/components/LoadingState';
 import type { StreakInfo } from '@/client/components/StreakBadge';
 import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
+import { Logo } from '@/client/components/Logo';
 
 interface CharacterOption {
   id: string;
@@ -285,9 +286,7 @@ export default function GamePage() {
 
       {/* Hero Section */}
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {/* Substitua "logo.png" pelo nome real do arquivo se você o colocar na pasta public/ */}
-        <img 
-          src="/logo.png" 
+        <Logo 
           alt="LSD Logo" 
           style={{ width: '180px', maxWidth: '100%', marginBottom: '1rem' }} 
         />

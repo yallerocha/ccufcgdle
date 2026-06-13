@@ -12,6 +12,7 @@ import { Toast } from '@/client/components/Toast';
 import { ForcaResultModal } from '@/client/components/ForcaResultModal';
 import type { StreakInfo } from '@/client/components/StreakBadge';
 import { apiFetch } from '@/client/lib/api';
+import { Logo } from '@/client/components/Logo';
 
 type Status = 'playing' | 'won' | 'lost';
 
@@ -237,7 +238,7 @@ export default function ForcaPage() {
       <BackLink href="/" label={t('nav.backToHub')} style={{ margin: '2rem 0 0.5rem 0' }} />
 
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <img src="/logo.png" alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
+        <Logo alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
         <p>{t('forca.tagline')}</p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
           <button onClick={() => setShowRules(!showRules)} className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
