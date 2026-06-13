@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Clock, Image as ImageIcon, MessageSquare } from 'lucide-react';
+import { Trophy, Clock, Camera, Trash2, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/client/lib/api';
+import { fileToResizedDataUrl } from '@/client/lib/image';
 import { Toast } from '@/client/components/Toast';
 import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
 import { MAX_DAILY_MESSAGE_LENGTH } from '@/shared/validation';
@@ -33,6 +34,8 @@ interface VictoryModalProps {
   targetPhoto: string;
   attempts: number;
   streak?: StreakInfo | null;
+  /** Set on win when the logged-in player is today's target (from /api/game/guess). */
+  isPersonOfDay?: boolean;
   onClose: () => void;
   todayStr: string;
 }
@@ -43,6 +46,7 @@ export function VictoryModal({
   targetPhoto,
   attempts,
   streak,
+  isPersonOfDay = false,
   onClose,
   todayStr,
 }: VictoryModalProps) {
@@ -58,9 +62,11 @@ export function VictoryModal({
   const [savedMedia, setSavedMedia] = useState<string | null>(null);
   const [draftMessage, setDraftMessage] = useState('');
   const [draftMedia, setDraftMedia] = useState<string | null>(null);
+  const [draftMediaFileName, setDraftMediaFileName] = useState<string | null>(null);
   const [savingMessage, setSavingMessage] = useState(false);
   const [messageNote, setMessageNote] = useState('');
   const [messageNoteType, setMessageNoteType] = useState<'success' | 'error'>('error');
+  const [loadingDailyMessage, setLoadingDailyMessage] = useState(false);
 
   // Shows a top-of-screen toast for the daily-note editor feedback.
   const notify = (msg: string, type: 'success' | 'error' = 'error') => {
@@ -92,7 +98,18 @@ export function VictoryModal({
 
   // Load today's note (the player has already solved, so the server reveals it).
   useEffect(() => {
-    if (!show) return;
+    if (!show) {
+      setCanEditMessage(false);
+      setSavedMessage(null);
+      setSavedMedia(null);
+      setDraftMessage('');
+      setDraftMedia(null);
+      setDraftMediaFileName(null);
+      setLoadingDailyMessage(false);
+      return;
+    }
+
+    setLoadingDailyMessage(true);
     apiFetch('/api/game/daily-message')
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -103,19 +120,32 @@ export function VictoryModal({
         setDraftMessage(data.message ?? '');
         setDraftMedia(data.mediaUrl ?? null);
       })
-      .catch((err) => console.error('Error loading daily message:', err));
+      .catch((err) => console.error('Error loading daily message:', err))
+      .finally(() => setLoadingDailyMessage(false));
   }, [show]);
 
-  const handleMessageImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMessageImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      notify(t('photo.tooLarge'), 'error');
-      return;
+    try {
+      setDraftMedia(await fileToResizedDataUrl(file));
+      setDraftMediaFileName(file.name);
+    } catch (err) {
+      console.error('Error resizing daily message image:', err);
+      // Resizing failed (unsupported format?) — fall back to the raw file,
+      // still subject to the original size limit.
+      if (file.size > 2 * 1024 * 1024) {
+        notify(t('photo.tooLarge'), 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDraftMedia(reader.result as string);
+        setDraftMediaFileName(file.name);
+      };
+      reader.readAsDataURL(file);
     }
-    const reader = new FileReader();
-    reader.onloadend = () => setDraftMedia(reader.result as string);
-    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   // There is something to save only when the text or the image is filled in.
@@ -148,13 +178,16 @@ export function VictoryModal({
 
   if (!show || !mounted) return null;
 
-  // When the person of the day left a note (or the viewer is that person and can
-  // write one), the modal switches to a wider two-column layout so it isn't too
-  // tall: left = photo + stats + grid, right = note + ranking.
-  const hasNote = canEditMessage || !!savedMessage || !!savedMedia;
-  // The person of the day may leave their note only once: once something is
-  // saved, the editor is replaced by the read-only card.
-  const canWriteNote = canEditMessage && !savedMessage && !savedMedia;
+  // Wide split layout when the person of the day still needs to leave their note
+  // (editor on the right, ranking on the left), or when a saved note is shown.
+  // `isPersonOfDay` from the win response avoids waiting on /daily-message before
+  // opening the editor column.
+  const canWriteNote =
+    !savedMessage &&
+    !savedMedia &&
+    (canEditMessage || (loadingDailyMessage && isPersonOfDay));
+  const hasReadOnlyNote = !canWriteNote && (!!savedMessage || !!savedMedia);
+  const useSplitLayout = canWriteNote || hasReadOnlyNote;
 
   const photoBlock = targetPhoto ? (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -188,10 +221,18 @@ export function VictoryModal({
 
   const streakBlock = streak ? <StreakBadge streak={streak} /> : null;
 
+  const notePanelStyle: React.CSSProperties = {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+  };
+
   // Daily note: editor for the person of the day, read-only card for the players
   // who just guessed them. Null when there is nothing to show/edit.
   const noteBlock = canWriteNote ? (
     <div style={{
+      ...notePanelStyle,
       padding: '0.85rem',
       borderRadius: 'var(--border-radius)',
       backgroundColor: 'rgba(255, 255, 255, 0.02)',
@@ -207,8 +248,8 @@ export function VictoryModal({
         onChange={(e) => setDraftMessage(e.target.value)}
         maxLength={MAX_DAILY_MESSAGE_LENGTH}
         placeholder={t('victory.dailyMsg.placeholder')}
-        rows={2}
-        style={{ width: '100%', resize: 'vertical' }}
+        rows={5}
+        style={{ width: '100%', resize: 'vertical', flex: 1, minHeight: '7rem' }}
       />
       <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textAlign: 'right', marginTop: '0.15rem' }}>
         {draftMessage.length}/{MAX_DAILY_MESSAGE_LENGTH}
@@ -216,30 +257,61 @@ export function VictoryModal({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
         <input type="file" accept="image/*" onChange={handleMessageImage} style={{ display: 'none' }} id="daily-msg-image" />
-        <label
-          htmlFor="daily-msg-image"
-          className="btn btn-secondary"
-          style={{
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.4rem',
-            whiteSpace: 'nowrap',
-            ...(draftMedia ? { backgroundColor: '#dc2626', borderColor: '#dc2626', color: '#fff' } : {}),
-          }}
-        >
-          <ImageIcon size={16} />
-          {draftMedia ? t('victory.dailyMsg.changeImage') : t('victory.dailyMsg.addImage')}
-        </label>
-        {draftMedia && (
-          <button
-            type="button"
-            onClick={() => setDraftMedia(null)}
-            style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+          <label
+            htmlFor="daily-msg-image"
+            className="btn"
+            style={{
+              flex: 1,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              whiteSpace: 'nowrap',
+              ...(draftMedia
+                ? {
+                    backgroundColor: 'rgba(69, 98, 193, 0.22)',
+                    border: '1px solid var(--primary)',
+                    color: 'var(--primary)',
+                    boxShadow: 'none',
+                  }
+                : {}),
+            }}
           >
-            {t('victory.dailyMsg.removeImage')}
-          </button>
+            <Camera size={16} />
+            {draftMedia ? t('victory.dailyMsg.changeImage') : t('victory.dailyMsg.addImage')}
+          </label>
+          {draftMedia && (
+            <button
+              type="button"
+              onClick={() => {
+                setDraftMedia(null);
+                setDraftMediaFileName(null);
+              }}
+              className="btn btn-danger"
+              title={t('victory.dailyMsg.removeImage')}
+              aria-label={t('victory.dailyMsg.removeImage')}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.75rem 1rem' }}
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+        </div>
+        {draftMedia && draftMediaFileName && (
+          <p
+            style={{
+              margin: 0,
+              fontSize: '0.78rem',
+              color: 'var(--text-muted)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            title={draftMediaFileName}
+          >
+            {draftMediaFileName}
+          </p>
         )}
         <button onClick={saveMessage} disabled={savingMessage || !hasDraftContent} className="btn" style={{ whiteSpace: 'nowrap' }}>
           {savingMessage ? t('victory.dailyMsg.saving') : t('victory.dailyMsg.save')}
@@ -248,11 +320,13 @@ export function VictoryModal({
     </div>
   ) : (savedMessage || savedMedia) ? (
     <div style={{
+      ...notePanelStyle,
       padding: '0.85rem',
       borderRadius: 'var(--border-radius)',
       backgroundColor: 'rgba(69, 98, 193, 0.08)',
       border: '1px solid var(--primary)',
       textAlign: 'center',
+      justifyContent: 'center',
     }}>
       <p style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
         <MessageSquare size={15} />
@@ -264,7 +338,7 @@ export function VictoryModal({
         </p>
       )}
       {savedMedia && (
-        <img src={savedMedia} alt="" style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '8px' }} />
+        <img src={savedMedia} alt="" style={{ maxWidth: '100%', maxHeight: '280px', borderRadius: '8px', objectFit: 'contain' }} />
       )}
     </div>
   ) : null;
@@ -373,7 +447,7 @@ export function VictoryModal({
   // transformed `main.fade-in` ancestor and can span the full viewport.
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className={`modal-content${hasNote ? ' modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-content${useSplitLayout ? ' modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
         {/* LSD color bar at the top, matching the footer's */}
         <div className="modal-color-bar">
           <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
@@ -389,16 +463,16 @@ export function VictoryModal({
           {t('victory.subtitlePre')}<strong>{targetName}</strong>!
         </p>
 
-        {hasNote ? (
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        {useSplitLayout ? (
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'stretch', marginBottom: '1.5rem' }}>
             <div style={columnStyle}>
               {photoBlock}
               {statsBlock}
               {streakBlock}
-            </div>
-            <div style={columnStyle}>
-              {noteBlock}
               {rankingCard}
+            </div>
+            <div style={{ ...columnStyle, display: 'flex', flexDirection: 'column' }}>
+              {noteBlock}
             </div>
           </div>
         ) : (

@@ -163,6 +163,7 @@ router.post('/guess', withAuth, async (req, res) => {
     const feedback = compareCharacters(gameView(guessUserRaw), target);
 
     let streak: StreakInfo | undefined;
+    let isPersonOfDay = false;
 
     // Track progress only for logged-in players whose account still exists
     // (the seed may have recreated users with new IDs while old JWTs persist).
@@ -202,6 +203,7 @@ router.post('/guess', withAuth, async (req, res) => {
             }),
           ]);
           streak = await recordStreakSolve(playerId, 'lsdle', date);
+          isPersonOfDay = target.id === playerId;
         }
       }
     }
@@ -211,6 +213,7 @@ router.post('/guess', withAuth, async (req, res) => {
       targetName: feedback.correct ? target.name : undefined,
       photoUrl: feedback.correct ? target.photoUrl : undefined,
       streak,
+      isPersonOfDay: feedback.correct ? isPersonOfDay : undefined,
     });
   } catch (error) {
     console.error('Error handling guess:', error);

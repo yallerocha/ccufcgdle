@@ -35,6 +35,7 @@ export default function GamePage() {
   const [targetPhoto, setTargetPhoto] = useState('');
   const [startTime, setStartTime] = useState<number | null>(null);
   const [streak, setStreak] = useState<StreakInfo | null>(null);
+  const [isPersonOfDay, setIsPersonOfDay] = useState(false);
   const [dailyKey, setDailyKey] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -57,6 +58,7 @@ export default function GamePage() {
     setTargetPhoto('');
     setStartTime(null);
     setStreak(null);
+    setIsPersonOfDay(false);
   };
 
   // Load characters list and restore this account's saved guesses. Re-runs when
@@ -96,6 +98,7 @@ export default function GamePage() {
             setTargetPhoto(savedState.targetPhoto || '');
             setStartTime(savedState.startTime ?? null);
             setStreak(savedState.streak ?? null);
+            setIsPersonOfDay(!!savedState.isPersonOfDay);
             setShowWinModal(!!savedState.isWon);
             restored = true;
           }
@@ -177,6 +180,7 @@ export default function GamePage() {
         setTargetName(target);
         setTargetPhoto(photo);
         setStreak(newStreak);
+        setIsPersonOfDay(!!data.isPersonOfDay);
         setShowWinModal(true);
         // The daily ranking result is recorded server-side by /api/game/guess
         // (using the server's own attempt count and timing).
@@ -186,7 +190,16 @@ export default function GamePage() {
       // tagged with the daily key so a later admin reset can be detected.
       localStorage.setItem(
         storageKey,
-        JSON.stringify({ guesses: updatedGuesses, isWon: won, targetName: target, targetPhoto: photo, startTime: effectiveStart, streak: newStreak, dailyKey })
+        JSON.stringify({
+          guesses: updatedGuesses,
+          isWon: won,
+          targetName: target,
+          targetPhoto: photo,
+          startTime: effectiveStart,
+          streak: newStreak,
+          isPersonOfDay: !!data.isPersonOfDay,
+          dailyKey,
+        })
       );
 
       // Reset search inputs
@@ -491,6 +504,7 @@ export default function GamePage() {
             targetPhoto={targetPhoto}
             attempts={guesses.length}
             streak={streak}
+            isPersonOfDay={isPersonOfDay}
             onClose={() => setShowWinModal(false)}
             todayStr={todayStr}
           />
