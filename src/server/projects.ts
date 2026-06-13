@@ -1,5 +1,5 @@
 import { prisma } from './db';
-import { DEFAULT_PROJECT_NAMES, normalizeProjectName } from '../shared/validation';
+import { DEFAULT_PROJECT_NAMES, normalizeProjectName, PROJECT_OTHER_NAME } from '../shared/validation';
 
 export interface ProjectWithCount {
   id: string;
@@ -53,6 +53,37 @@ export async function createProject(
     select: { id: true, name: true },
   });
   return { project, created: true };
+}
+
+/** Removes a project from the catalog. Users on that project are moved to "Outro". */
+export async function deleteProject(projectId: string): Promise<{ ok: true; reassigned: number } | { error: string }> {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) {
+    return { error: 'Projeto não encontrado.' };
+  }
+  if (project.name === PROJECT_OTHER_NAME) {
+    return { error: 'O projeto "Outro" não pode ser removido.' };
+  }
+
+  let reassigned = 0;
+  await prisma.$transaction(async (tx) => {
+    const usersWithProject = await tx.user.findMany({
+      where: { projects: { has: project.name } },
+      select: { id: true },
+    });
+    reassigned = usersWithProject.length;
+
+    for (const user of usersWithProject) {
+      await tx.user.update({
+        where: { id: user.id },
+        data: { projects: [PROJECT_OTHER_NAME] },
+      });
+    }
+
+    await tx.project.delete({ where: { id: projectId } });
+  });
+
+  return { ok: true, reassigned };
 }
 
 /** Seeds the default catalog; safe to call on every deploy/seed. */

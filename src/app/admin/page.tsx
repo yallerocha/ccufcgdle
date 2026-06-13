@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Lock, Type, Ban, KeyRound, Search, Copy, Check } from 'lucide-react';
+import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Type, Ban, KeyRound, Search, Copy, Check, FolderGit2, Plus } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
@@ -30,6 +30,12 @@ interface AdminUser {
 
 type UserSort = 'newest' | 'name' | 'lastLogin';
 
+interface AdminProject {
+  id: string;
+  name: string;
+  memberCount: number;
+}
+
 export default function AdminPage() {
   const { t, i18n } = useTranslation();
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -39,9 +45,13 @@ export default function AdminPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [selectedForceChar, setSelectedForceChar] = useState('');
-  const [activeTab, setActiveTab] = useState<'lsdle' | 'termo' | 'forca' | 'users' | 'comingSoon'>('lsdle');
+  const [activeTab, setActiveTab] = useState<'lsdle' | 'termo' | 'forca' | 'users' | 'projects'>('lsdle');
   const [termoWord, setTermoWord] = useState('');
   const [forcaWord, setForcaWord] = useState('');
+  const [projects, setProjects] = useState<AdminProject[]>([]);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [projectToDelete, setProjectToDelete] = useState<AdminProject | null>(null);
+  const [deletingProject, setDeletingProject] = useState(false);
   // User pending deletion, surfaced through the confirmation modal.
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -82,9 +92,21 @@ export default function AdminPage() {
     }
   };
 
+  const loadProjects = async () => {
+    try {
+      const res = await apiFetch('/api/admin/projects');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.projects) setProjects(data.projects);
+    } catch (err) {
+      console.error('Error loading projects:', err);
+    }
+  };
+
   useEffect(() => {
     if (currentUser && currentUser.isAdmin) {
       loadAdminData();
+      loadProjects();
     }
   }, [currentUser]);
 
@@ -272,6 +294,57 @@ export default function AdminPage() {
     }
   };
 
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newProjectName.trim();
+    if (!name || submitting) return;
+    setErrorMsg('');
+    setSuccessMsg('');
+    setSubmitting(true);
+    try {
+      const res = await apiFetch('/api/admin/projects', {
+        method: 'POST',
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(data.message || t('admin.projectsCreateSuccess'));
+        setNewProjectName('');
+        if (data.projects) setProjects(data.projects);
+        else loadProjects();
+      } else {
+        setErrorMsg(data.error || t('admin.projectsCreateError'));
+      }
+    } catch {
+      setErrorMsg(t('admin.projectsCreateError'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete || deletingProject) return;
+    setDeletingProject(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await apiFetch(`/api/admin/projects/${projectToDelete.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(data.message || t('admin.projectsDeleteSuccess'));
+        if (data.projects) setProjects(data.projects);
+        else loadProjects();
+        setProjectToDelete(null);
+      } else {
+        setErrorMsg(data.error || t('admin.projectsDeleteError'));
+      }
+    } catch {
+      setErrorMsg(t('admin.projectsDeleteError'));
+    } finally {
+      setDeletingProject(false);
+    }
+  };
+
   if (authLoading || (currentUser && loading)) {
     return <LoadingState message={t('admin.loading')} minHeight="50vh" />;
   }
@@ -364,11 +437,10 @@ export default function AdminPage() {
         </button>
         <button
           type="button"
-          className="admin-tab"
-          disabled
-          title={t('admin.comingSoonTitle')}
+          className={`admin-tab ${activeTab === 'projects' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('projects')}
         >
-          <Lock size={18} /> {t('admin.tabComingSoon')}
+          <FolderGit2 size={18} /> {t('admin.tabProjects')}
         </button>
       </div>
 
@@ -520,6 +592,70 @@ export default function AdminPage() {
           <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.75rem' }}>
             {t('admin.forcaNote')}
           </span>
+        </div>
+        )}
+
+        {activeTab === 'projects' && (
+        <div className="card" style={{ padding: '1.5rem 2rem' }}>
+          <h3 className="card-title" style={{ marginBottom: '1rem' }}>
+            <FolderGit2 size={20} style={{ color: 'var(--primary)' }} /> {t('admin.projectsTitle')}
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            {t('admin.projectsDesc')}
+          </p>
+
+          <form onSubmit={handleCreateProject} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
+            <div className="form-group" style={{ flex: '1 1 280px', marginBottom: 0 }}>
+              <label>{t('admin.projectsNewLabel')}</label>
+              <input
+                type="text"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder={t('admin.projectsNewPlaceholder')}
+                maxLength={60}
+                style={{ height: '42px', padding: '0 1rem' }}
+              />
+            </div>
+            <button type="submit" className="btn" style={{ height: '42px' }} disabled={submitting || newProjectName.trim().length < 2}>
+              <Plus size={18} /> {submitting ? t('admin.projectsCreating') : t('admin.projectsCreate')}
+            </button>
+          </form>
+
+          {projects.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('admin.projectsEmpty')}</p>
+          ) : (
+            <div className="admin-table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>{t('admin.projectsColName')}</th>
+                    <th>{t('admin.projectsColMembers')}</th>
+                    <th>{t('admin.thActions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.map((p) => (
+                    <tr key={p.id}>
+                      <td style={{ fontWeight: 600 }}>{p.name}</td>
+                      <td>{t('projects.members', { count: p.memberCount })}</td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => setProjectToDelete(p)}
+                          disabled={p.name === 'Outro'}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
+                          title={p.name === 'Outro' ? t('admin.projectsOutroLocked') : t('admin.projectsDelete')}
+                        >
+                          <Trash2 size={14} style={{ color: p.name === 'Outro' ? 'var(--text-dim)' : '#ef4444' }} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
         )}
 
@@ -745,6 +881,32 @@ export default function AdminPage() {
                 <Trash2 size={18} /> {deleting ? t('admin.deleting') : t('admin.deleteConfirm')}
               </button>
               <button onClick={() => setUserToDelete(null)} disabled={deleting} className="btn btn-secondary" style={{ width: '100%' }}>
+                {t('admin.deleteCancel')}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {mounted && projectToDelete && createPortal(
+        <div className="modal-overlay" onClick={() => !deletingProject && setProjectToDelete(null)}>
+          <div className="modal-content" style={{ maxWidth: '440px' }} onClick={(e) => e.stopPropagation()}>
+            <AlertTriangle size={44} style={{ color: '#ef4444', margin: '0 auto 1rem auto' }} />
+            <h2 className="modal-title">{t('admin.projectsDeleteTitle')}</h2>
+            <p className="modal-subtitle" style={{ overflowWrap: 'anywhere' }}>
+              {t('admin.projectsDeleteConfirm', { name: projectToDelete.name, count: projectToDelete.memberCount })}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={confirmDeleteProject}
+                disabled={deletingProject}
+                className="btn btn-danger"
+                style={{ width: '100%', backgroundColor: '#ef4444', borderColor: '#ef4444', color: 'white' }}
+              >
+                <Trash2 size={18} /> {deletingProject ? t('admin.deleting') : t('admin.projectsDeleteConfirmBtn')}
+              </button>
+              <button onClick={() => setProjectToDelete(null)} disabled={deletingProject} className="btn btn-secondary" style={{ width: '100%' }}>
                 {t('admin.deleteCancel')}
               </button>
             </div>

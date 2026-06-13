@@ -17,6 +17,7 @@ import {
   isPoolWord as isForcaPoolWord,
 } from '../../server/forca';
 import { requireAdmin } from '../middleware/auth';
+import { createProject, deleteProject, listProjectsWithCounts } from '../../server/projects';
 
 const router = Router();
 
@@ -315,6 +316,68 @@ router.post('/forca-force-daily', async (req, res) => {
   } catch (error) {
     console.error('Error forcing forca word:', error);
     return res.status(500).json({ error: 'Erro ao atualizar a palavra do dia.' });
+  }
+});
+
+// GET /api/admin/projects — catalog with member counts.
+router.get('/projects', async (_req, res) => {
+  try {
+    const projects = await listProjectsWithCounts();
+    return res.json({ projects });
+  } catch (error) {
+    console.error('Error listing admin projects:', error);
+    return res.status(500).json({ error: 'Erro ao carregar os projetos.' });
+  }
+});
+
+// POST /api/admin/projects — create a project in the catalog.
+router.post('/projects', async (req, res) => {
+  try {
+    const { name } = req.body ?? {};
+    if (typeof name !== 'string' || name.trim() === '') {
+      return res.status(400).json({ error: 'Informe o nome do projeto.' });
+    }
+
+    const result = await createProject(name, req.auth!.userId);
+    if ('error' in result) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    const projects = await listProjectsWithCounts();
+    const entry = projects.find((p) => p.id === result.project.id);
+    return res.status(result.created ? 201 : 200).json({
+      message: result.created ? 'Projeto criado com sucesso!' : 'Este projeto já existe no catálogo.',
+      project: entry ?? { ...result.project, memberCount: 0 },
+      created: result.created,
+      projects,
+    });
+  } catch (error) {
+    console.error('Error creating admin project:', error);
+    return res.status(500).json({ error: 'Erro ao criar o projeto.' });
+  }
+});
+
+// DELETE /api/admin/projects/:id — remove from catalog (members → "Outro").
+router.delete('/projects/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await deleteProject(id);
+    if ('error' in result) {
+      const status = result.error.includes('não encontrado') ? 404 : 400;
+      return res.status(status).json({ error: result.error });
+    }
+
+    const projects = await listProjectsWithCounts();
+    return res.json({
+      message:
+        result.reassigned > 0
+          ? `Projeto removido. ${result.reassigned} membro(s) movido(s) para "Outro".`
+          : 'Projeto removido com sucesso!',
+      projects,
+    });
+  } catch (error) {
+    console.error('Error deleting admin project:', error);
+    return res.status(500).json({ error: 'Erro ao excluir o projeto.' });
   }
 });
 
