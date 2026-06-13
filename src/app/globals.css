@@ -1804,6 +1804,21 @@ input:focus, select:focus, textarea:focus {
   background-color: #dc2626;
 }
 
+.register-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.register-card-body {
+  padding: 0 2rem 2rem;
+}
+
+.register-photo-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
 .profile-hero-info {
   display: flex;
   flex-wrap: wrap;

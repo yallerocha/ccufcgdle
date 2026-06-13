@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Search, Users } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { PROJECT_OTHER_NAME } from '@/shared/validation';
 
 export interface ProjectEntry {
   id: string;
@@ -35,6 +36,12 @@ function displayMemberCount(
 
 function normalizeSearch(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function withOtherLast(projects: ProjectEntry[]): ProjectEntry[] {
+  const rest = projects.filter((p) => p.name !== PROJECT_OTHER_NAME);
+  const other = projects.filter((p) => p.name === PROJECT_OTHER_NAME);
+  return other.length ? [...rest, ...other] : rest;
 }
 
 export function ProjectPicker({
@@ -74,14 +81,28 @@ export function ProjectPicker({
     loadProjects();
   }, [loadProjects]);
 
+  // After the profile is saved, savedProjects catches up with selected and the
+  // optimistic count adjustment stops — reload the catalog so counts match the DB.
+  const savedKey = savedProjects.join('\0');
+  const prevSavedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevSavedKeyRef.current === null) {
+      prevSavedKeyRef.current = savedKey;
+      return;
+    }
+    if (prevSavedKeyRef.current === savedKey) return;
+    prevSavedKeyRef.current = savedKey;
+    void loadProjects();
+  }, [savedKey, loadProjects]);
+
   const filteredCatalog = useMemo(() => {
     const q = normalizeSearch(searchQuery.trim());
-    if (!q) return catalog;
+    if (!q) return withOtherLast(catalog);
     const matching = catalog.filter((p) => normalizeSearch(p.name).includes(q));
     const selectedHidden = catalog.filter(
       (p) => selected.includes(p.name) && !matching.some((m) => m.id === p.id)
     );
-    return [...selectedHidden, ...matching];
+    return withOtherLast([...selectedHidden, ...matching]);
   }, [catalog, searchQuery, selected]);
 
   const toggleProject = (name: string) => {

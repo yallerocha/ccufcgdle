@@ -353,14 +353,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
               <select value={isColab} onChange={(e) => setIsColab(e.target.value)}>{COLAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
             </div>
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="profile-field-label">
-                <Coffee size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.coffeeLabel')}
-              </label>
-              <select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
-            </div>
-          </div>
 
           <div className="profile-projects-section">
             <label className="profile-field-label">
@@ -375,6 +367,13 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             </label>
             <p className="profile-field-hint">{t('projects.singleHint')}</p>
             <ProjectPicker selected={projects} onChange={setProjects} savedProjects={user.projects?.slice(0, 1) ?? []} allowCreate />
+          </div>
+
+          <div className="form-group">
+            <label className="profile-field-label">
+              <Coffee size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.coffeeLabel')}
+            </label>
+            <select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
           </div>
 
           <div className="profile-save-bar">

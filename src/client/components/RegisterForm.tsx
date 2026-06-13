@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UserPlus, Camera } from 'lucide-react';
+import { UserPlus, Camera, Trash2, User as UserIcon, Mail, Lock, LockKeyhole, Briefcase, CalendarDays, Users, Coffee, Layers, FolderGit2 } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
 import { fileToResizedDataUrl } from '@/client/lib/image';
 import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
@@ -111,7 +111,38 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
 
   return (
     <div style={{ maxWidth: '600px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
-      <div className="card">
+      <div className="card register-card">
+        <div className="profile-hero">
+          <div className="profile-hero-banner lsd-gradient-bg" />
+          <div className="profile-hero-body">
+            <div className="profile-avatar-wrap">
+              {photoUrl ? (
+                <img src={photoUrl} alt={name || t('register.title')} className="profile-avatar" />
+              ) : (
+                <div className="profile-avatar profile-avatar-placeholder">
+                  {name.trim() ? name.trim().slice(0, 2).toUpperCase() : '?'}
+                </div>
+              )}
+              <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-register" />
+              <label htmlFor="photo-upload-register" className="profile-avatar-edit" title={t('photo.select')}>
+                <Camera size={15} />
+              </label>
+              {photoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setPhotoUrl('')}
+                  className="profile-avatar-edit profile-avatar-remove"
+                  title={t('photo.remove')}
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
+            </div>
+            <p className="register-photo-hint">{t('photo.hint')}</p>
+          </div>
+        </div>
+
+        <div className="register-card-body">
         <h2 className="card-title">
           <UserPlus size={22} style={{ color: 'var(--primary)' }} /> {t('register.title')}
         </h2>
@@ -123,7 +154,9 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>{t('register.nameLabel')}</label>
+            <label className="profile-field-label">
+              <UserIcon size={15} style={{ color: 'var(--primary)' }} /> {t('register.nameLabel')}
+            </label>
             <input type="text" placeholder={t('register.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} required />
             <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
               {t('register.nameHint')}
@@ -132,31 +165,41 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
 
           <div className="form-row">
             <div className="form-group">
-              <label>{t('register.emailLabel')}</label>
+              <label className="profile-field-label">
+                <Mail size={15} style={{ color: 'var(--primary)' }} /> {t('register.emailLabel')}
+              </label>
               <input type="email" placeholder={t('register.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} required />
               <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{t('register.emailHint')}</span>
             </div>
             <div className="form-group">
-              <label>{t('register.passwordLabel')}</label>
+              <label className="profile-field-label">
+                <Lock size={15} style={{ color: 'var(--primary)' }} /> {t('register.passwordLabel')}
+              </label>
               <PasswordInput placeholder={t('register.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
               <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{t('register.passwordHint')}</span>
             </div>
           </div>
 
           <div className="form-group">
-            <label>{t('register.confirmPasswordLabel')}</label>
+            <label className="profile-field-label">
+              <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('register.confirmPasswordLabel')}
+            </label>
             <PasswordInput placeholder={t('register.confirmPasswordPlaceholder')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} />
           </div>
 
           <div className="form-row" style={{ borderTop: '1px solid var(--border-color)', marginTop: '1rem', paddingTop: '1rem' }}>
             <div className="form-group">
-              <label>{t('register.genderLabel')}</label>
+              <label className="profile-field-label">
+                <UserIcon size={15} style={{ color: 'var(--primary)' }} /> {t('register.genderLabel')}
+              </label>
               <select value={gender} onChange={(e) => setGender(e.target.value)}>
                 {GENDER_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label>{t('register.roleLabel')}</label>
+              <label className="profile-field-label">
+                <Briefcase size={15} style={{ color: 'var(--primary)' }} /> {t('register.roleLabel')}
+              </label>
               <select value={role} onChange={(e) => setRole(e.target.value)}>
                 {ROLE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
@@ -165,54 +208,45 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
 
           <div className="form-row">
             <div className="form-group">
-              <label>{t('register.entryLabel')}</label>
+              <label className="profile-field-label">
+                <CalendarDays size={15} style={{ color: 'var(--primary)' }} /> {t('register.entryLabel')}
+              </label>
               <select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>
                 {ENTRY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label>{t('register.colabsLabel')}</label>
+              <label className="profile-field-label">
+                <Users size={15} style={{ color: 'var(--primary)' }} /> {t('register.colabsLabel')}
+              </label>
               <select value={isColab} onChange={(e) => setIsColab(e.target.value)}>
                 {COLAB_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="form-group">
-            <label>{t('register.areaLabel')}</label>
+          <div className="profile-projects-section">
+            <label className="profile-field-label">
+              <Layers size={15} style={{ color: 'var(--primary)' }} /> {t('register.areaLabel')}
+            </label>
             <AreaPicker selected={area} onChange={setArea} />
           </div>
 
-          <div className="form-group">
-            <label>{t('register.labLabel')}</label>
+          <div className="profile-projects-section">
+            <label className="profile-field-label">
+              <FolderGit2 size={15} style={{ color: 'var(--primary)' }} /> {t('register.labLabel')}
+            </label>
             <p className="profile-field-hint">{t('projects.singleHint')}</p>
             <ProjectPicker selected={projects} onChange={setProjects} savedProjects={[]} allowCreate={false} />
           </div>
 
           <div className="form-group">
-            <label>{t('register.coffeeLabel')}</label>
+            <label className="profile-field-label">
+              <Coffee size={15} style={{ color: 'var(--primary)' }} /> {t('register.coffeeLabel')}
+            </label>
             <select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>
               {COFFEE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>
-          </div>
-
-          <div className="form-group">
-            <label>{t('photo.label')}</label>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem' }}>
-              <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-register" />
-              <label htmlFor="photo-upload-register" className="btn btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Camera size={16} /> {t('photo.select')}
-              </label>
-              {photoUrl ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <img src={photoUrl} alt="Preview" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
-                  <button type="button" onClick={() => setPhotoUrl('')} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto', backgroundColor: '#ef4444', color: 'white', border: 'none' }}>{t('photo.remove')}</button>
-                </div>
-              ) : (
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{t('photo.none')}</span>
-              )}
-            </div>
-            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>{t('photo.hint')}</span>
           </div>
 
           <div style={{ marginTop: '2rem' }}>
@@ -224,6 +258,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
 
         <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem', textAlign: 'center' }}>
           <button onClick={onSwitchToLogin} className="btn btn-secondary" style={{ width: '100%' }}>{t('register.toLogin')}</button>
+        </div>
         </div>
       </div>
     </div>

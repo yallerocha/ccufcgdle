@@ -58,7 +58,10 @@ export const DEFAULT_PROJECT_NAMES = [
   'Observabilidade',
   'IoT',
   'Computação Verde',
+  'Outro',
 ] as const;
+
+export const PROJECT_OTHER_NAME = 'Outro' as const;
 
 /** @deprecated Use DEFAULT_PROJECT_NAMES — kept for imports that expect PROJECT_OPTIONS */
 export const PROJECT_OPTIONS = DEFAULT_PROJECT_NAMES;
