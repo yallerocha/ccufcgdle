@@ -17,8 +17,8 @@ model User {
   role             String           // "Professor", "Graduando", "Mestrando", "Doutorando", "Pesquisador", "Funcionário"
   entrySemester    String           // e.g. "2020.1", "2023.2", "Antes de 2018"
   isColab          String           // "Sim", "Não" — se a pessoa é do Colabs
-  area             String           // "Engenharia de Software", "Sistemas", "Ciência de Dados / IA", "Teoria", "Hardware", "Segurança", "Outra"
-  projects         String[]         // Projetos/linhas no LSD (uma pessoa pode estar em vários)
+  area             String[]         // Áreas de interesse (multivalor)
+  projects         String[]         // Um único projeto no LSD (armazenado como array de 1)
   likesCoffee      String           // "Sim", "Não", "Só energético"
   photoUrl         String?          // Base64 data URL or photo URL
 
@@ -30,7 +30,7 @@ model User {
   gameRole          String          @default("")
   gameEntrySemester String          @default("")
   gameIsColab       String          @default("")
-  gameArea          String          @default("")
+  gameArea          String[]        @default([])
   gameProjects      String[]        @default([])
   gameLikesCoffee   String          @default("")
   gamePhotoUrl      String?

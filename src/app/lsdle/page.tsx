@@ -463,22 +463,22 @@ export default function GamePage() {
                     {guess.fields?.entrySemester?.result === 'lower' && <span className="tile-arrow">↓</span>}
                   </div>
 
-                  {/* Area */}
-                  <div className={`tile ${guess.fields?.area?.result === 'correct' ? 'correct' : 'incorrect'}`}>
-                    <span className="tile-label">{t('home.tiles.area')}</span>
-                    <span className="tile-value">{guess.fields?.area?.value}</span>
-                  </div>
-
-                  {/* Projetos (multivalor: parcial = laranja quando há projeto em comum) */}
+                  {/* Area (multivalor: parcial = laranja quando há área em comum) */}
                   <div className={`tile ${
-                    guess.fields?.projects?.result === 'correct'
+                    guess.fields?.area?.result === 'correct'
                       ? 'correct'
-                      : guess.fields?.projects?.result === 'partial'
+                      : guess.fields?.area?.result === 'partial'
                       ? 'partial'
                       : 'incorrect'
                   }`}>
+                    <span className="tile-label">{t('home.tiles.area')}</span>
+                    <span className="tile-value tile-value-projects" title={guess.fields?.area?.value}>{guess.fields?.area?.value}</span>
+                  </div>
+
+                  {/* Projeto (valor único) */}
+                  <div className={`tile ${guess.fields?.projects?.result === 'correct' ? 'correct' : 'incorrect'}`}>
                     <span className="tile-label">{t('home.tiles.lab')}</span>
-                    <span className="tile-value tile-value-projects" title={guess.fields?.projects?.value}>{guess.fields?.projects?.value}</span>
+                    <span className="tile-value">{guess.fields?.projects?.value}</span>
                   </div>
 
                   {/* Colabs */}

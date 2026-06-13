@@ -33,9 +33,19 @@ export const AREA_OPTIONS = [
   'Engenharia de Software',
   'Sistemas Distribuídos / Redes',
   'Ciência de Dados / IA',
+  'Engenharia de Dados',
+  'Aprendizado de Máquina',
   'Teoria da Computação',
+  'Compiladores / Linguagens',
+  'Sistemas Operacionais',
+  'Banco de Dados',
   'Hardware / Embarcados',
+  'Internet das Coisas (IoT)',
+  'Computação em Nuvem',
   'Segurança da Informação',
+  'Interação Humano-Computador',
+  'Computação Gráfica / Visualização',
+  'Arquitetura de Computadores',
   'Outra',
 ] as const;
 
@@ -54,7 +64,8 @@ export const DEFAULT_PROJECT_NAMES = [
 export const PROJECT_OPTIONS = DEFAULT_PROJECT_NAMES;
 
 export const MAX_PROJECT_NAME_LENGTH = 60;
-export const MAX_PROJECTS_PER_USER = 8;
+export const MAX_PROJECTS_PER_USER = 1;
+export const MAX_AREAS_PER_USER = 8;
 
 export function normalizeProjectName(name: unknown): string | null {
   if (typeof name !== 'string') return null;
@@ -99,7 +110,7 @@ export interface CharacterFields {
   role: string;
   entrySemester: string;
   isColab: string;
-  area: string;
+  area: string[];
   projects: string[];
   likesCoffee: string;
   photoUrl?: string | null;
@@ -119,14 +130,18 @@ export function validateCharacterFields(
   if (!inList(input.role, ROLE_OPTIONS)) return 'Função inválida.';
   if (!inList(input.entrySemester, ENTRY_OPTIONS)) return 'Semestre de entrada inválido.';
   if (!inList(input.isColab, COLAB_OPTIONS)) return 'Valor inválido para Colabs.';
-  if (!inList(input.area, AREA_OPTIONS)) return 'Área inválida.';
   if (!inList(input.likesCoffee, COFFEE_OPTIONS)) return 'Valor inválido para café.';
 
-  if (!Array.isArray(input.projects) || input.projects.length === 0) {
-    return 'Selecione ao menos um projeto.';
+  if (!Array.isArray(input.area) || input.area.length === 0) {
+    return 'Selecione ao menos uma área de interesse.';
   }
-  if (input.projects.length > MAX_PROJECTS_PER_USER) {
-    return `Selecione no máximo ${MAX_PROJECTS_PER_USER} projetos.`;
+  if (input.area.length > MAX_AREAS_PER_USER) {
+    return `Selecione no máximo ${MAX_AREAS_PER_USER} áreas.`;
+  }
+  if (input.area.some((a) => !inList(a, AREA_OPTIONS))) return 'Área inválida.';
+
+  if (!Array.isArray(input.projects) || input.projects.length !== 1) {
+    return 'Selecione exatamente um projeto.';
   }
   const allowed = options?.allowedProjects;
   if (!allowed) {

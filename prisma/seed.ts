@@ -147,6 +147,8 @@ async function main() {
     const createdUser = await prisma.user.create({
       data: {
         ...user,
+        area: Array.isArray(user.area) ? user.area : [user.area],
+        projects: [user.projects[0]],
         passwordHash,
         lastLogin: new Date(),
         isActive: true,

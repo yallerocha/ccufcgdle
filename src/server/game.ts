@@ -151,10 +151,10 @@ export interface GuessFeedback {
       result: 'correct' | 'higher' | 'lower' | 'incorrect' 
     };
     isColab: { value: string; result: 'correct' | 'incorrect' };
-    area: { value: string; result: 'correct' | 'incorrect' };
     // Multivalor: 'correct' = mesmo conjunto, 'partial' = ao menos 1 em comum,
-    // 'incorrect' = nenhum projeto em comum.
-    projects: { value: string; result: 'correct' | 'partial' | 'incorrect' };
+    // 'incorrect' = nenhuma área em comum.
+    area: { value: string; result: 'correct' | 'partial' | 'incorrect' };
+    projects: { value: string; result: 'correct' | 'incorrect' };
     likesCoffee: { value: string; result: 'correct' | 'incorrect' };
   };
 }
@@ -177,18 +177,23 @@ export function compareCharacters(guess: User, target: User): GuessFeedback {
   const guessSemVal = parseSemester(guess.entrySemester);
   const targetSemVal = parseSemester(target.entrySemester);
 
-  // Compara conjuntos de projetos (uma pessoa pode ter vários).
-  const guessProjects = [...new Set(guess.projects)];
-  const targetSet = new Set(target.projects);
-  const shared = guessProjects.filter((p) => targetSet.has(p));
-  let projectsResult: 'correct' | 'partial' | 'incorrect';
-  if (shared.length === guessProjects.length && shared.length === targetSet.size) {
-    projectsResult = 'correct'; // mesmo conjunto exato
-  } else if (shared.length > 0) {
-    projectsResult = 'partial'; // pelo menos um projeto em comum
+  // Compara conjuntos de áreas (multivalor).
+  const guessAreas = [...new Set(guess.area)];
+  const targetAreaSet = new Set(target.area);
+  const sharedAreas = guessAreas.filter((a) => targetAreaSet.has(a));
+  let areaResult: 'correct' | 'partial' | 'incorrect';
+  if (sharedAreas.length === guessAreas.length && sharedAreas.length === targetAreaSet.size) {
+    areaResult = 'correct';
+  } else if (sharedAreas.length > 0) {
+    areaResult = 'partial';
   } else {
-    projectsResult = 'incorrect';
+    areaResult = 'incorrect';
   }
+
+  const guessProject = guess.projects[0] ?? '';
+  const targetProject = target.projects[0] ?? '';
+  const projectsResult: 'correct' | 'incorrect' =
+    guessProject !== '' && guessProject === targetProject ? 'correct' : 'incorrect';
 
   let entrySemResult: 'correct' | 'higher' | 'lower' | 'incorrect' = 'incorrect';
   if (guess.entrySemester === target.entrySemester) {
@@ -224,12 +229,12 @@ export function compareCharacters(guess: User, target: User): GuessFeedback {
         result: guess.isColab === target.isColab ? 'correct' : 'incorrect'
       },
       area: {
-        value: guess.area,
-        result: guess.area === target.area ? 'correct' : 'incorrect'
+        value: guess.area.join(', '),
+        result: areaResult,
       },
       projects: {
-        value: guess.projects.join(', '),
-        result: projectsResult
+        value: guessProject,
+        result: projectsResult,
       },
       likesCoffee: {
         value: guess.likesCoffee,

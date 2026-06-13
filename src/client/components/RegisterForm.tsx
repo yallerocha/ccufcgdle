@@ -7,6 +7,7 @@ import { apiFetch, setToken } from '@/client/lib/api';
 import { fileToResizedDataUrl } from '@/client/lib/image';
 import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
 import { PasswordInput } from '@/client/components/PasswordInput';
+import { AreaPicker } from '@/client/components/AreaPicker';
 import { ProjectPicker } from '@/client/components/ProjectPicker';
 import { Toast } from '@/client/components/Toast';
 
@@ -25,15 +26,6 @@ const ENTRY_OPTIONS = [
   '2026.1'
 ];
 const COLAB_OPTIONS = ['Sim', 'Não'];
-const AREA_OPTIONS = [
-  'Engenharia de Software',
-  'Sistemas Distribuídos / Redes',
-  'Ciência de Dados / IA',
-  'Teoria da Computação',
-  'Hardware / Embarcados',
-  'Segurança da Informação',
-  'Outra'
-];
 const COFFEE_OPTIONS = ['Sim', 'Não'];
 
 interface RegisterFormProps {
@@ -51,7 +43,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const [role, setRole] = useState(ROLE_OPTIONS[0]);
   const [entrySemester, setEntrySemester] = useState(ENTRY_OPTIONS[0]);
   const [isColab, setIsColab] = useState(COLAB_OPTIONS[0]);
-  const [area, setArea] = useState(AREA_OPTIONS[0]);
+  const [area, setArea] = useState<string[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
 
   const [likesCoffee, setLikesCoffee] = useState(COFFEE_OPTIONS[0]);
@@ -188,13 +180,12 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
 
           <div className="form-group">
             <label>{t('register.areaLabel')}</label>
-            <select value={area} onChange={(e) => setArea(e.target.value)}>
-              {AREA_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
+            <AreaPicker selected={area} onChange={setArea} />
           </div>
 
           <div className="form-group">
             <label>{t('register.labLabel')}</label>
+            <p className="profile-field-hint">{t('projects.singleHint')}</p>
             <ProjectPicker selected={projects} onChange={setProjects} savedProjects={[]} allowCreate={false} />
           </div>
 

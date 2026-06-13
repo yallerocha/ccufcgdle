@@ -11,7 +11,7 @@ export interface User {
   role: string;
   entrySemester: string;
   isColab: string;
-  area: string;
+  area: string[];
   projects: string[];
   likesCoffee: string;
   lastLogin: string;

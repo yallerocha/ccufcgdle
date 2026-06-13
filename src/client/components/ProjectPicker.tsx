@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Search, Users } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
-import { MAX_PROJECTS_PER_USER } from '@/shared/validation';
 
 export interface ProjectEntry {
   id: string;
@@ -86,13 +85,7 @@ export function ProjectPicker({
   }, [catalog, searchQuery, selected]);
 
   const toggleProject = (name: string) => {
-    onChange(
-      selected.includes(name)
-        ? selected.filter((p) => p !== name)
-        : selected.length >= MAX_PROJECTS_PER_USER
-          ? selected
-          : [...selected, name]
-    );
+    onChange(selected.includes(name) ? [] : [name]);
   };
 
   const handleAddProject = async () => {
@@ -113,8 +106,8 @@ export function ProjectPicker({
       const createdName = data.project?.name as string;
       setNewName('');
       await loadProjects();
-      if (createdName && !selected.includes(createdName) && selected.length < MAX_PROJECTS_PER_USER) {
-        onChange([...selected, createdName]);
+      if (createdName && !selected.includes(createdName)) {
+        onChange([createdName]);
       }
     } catch (err) {
       console.error('Error creating project:', err);
@@ -155,21 +148,26 @@ export function ProjectPicker({
       {filteredCatalog.length === 0 ? (
         <p className="project-search-empty">{t('projects.noResults')}</p>
       ) : (
-      <div className="checkbox-group">
+      <div className="project-list" role="listbox" aria-label={t('projects.searchPlaceholder')}>
         {filteredCatalog.map((project) => {
           const count = displayMemberCount(project, selected, savedProjects);
+          const isSelected = selected.includes(project.name);
           return (
           <label
             key={project.id}
-            className={`checkbox-chip project-chip ${selected.includes(project.name) ? 'selected' : ''}`}
+            role="option"
+            aria-selected={isSelected}
+            className={`project-list-item ${isSelected ? 'selected' : ''}`}
           >
             <input
-              type="checkbox"
-              checked={selected.includes(project.name)}
+              type="radio"
+              name="project-picker"
+              checked={isSelected}
               onChange={() => toggleProject(project.name)}
+              aria-label={project.name}
             />
-            <span className="project-chip-name">{project.name}</span>
-            <span className="project-chip-count" title={t('projects.members', { count })}>
+            <span className="project-list-name">{project.name}</span>
+            <span className="project-list-count" title={t('projects.members', { count })}>
               <Users size={12} aria-hidden="true" />
               {count}
             </span>
@@ -211,12 +209,6 @@ export function ProjectPicker({
       {!allowCreate && (
         <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', display: 'block', marginTop: '0.5rem' }}>
           {t('projects.registerHint')}
-        </span>
-      )}
-
-      {selected.length >= MAX_PROJECTS_PER_USER && (
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', display: 'block', marginTop: '0.35rem' }}>
-          {t('projects.maxSelected', { max: MAX_PROJECTS_PER_USER })}
         </span>
       )}
     </div>

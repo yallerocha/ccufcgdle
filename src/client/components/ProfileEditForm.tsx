@@ -3,15 +3,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Clock, Camera, Save, AlertTriangle, Settings2, Trash2, FolderGit2, KeyRound } from 'lucide-react';
+import { Clock, Camera, Save, AlertTriangle, Settings2, Trash2, FolderGit2, Layers, KeyRound, User as UserIcon, Briefcase, CalendarDays, Users, Coffee, Lock, LockKeyhole } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { User } from '@/client/context/AuthContext';
+import type { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
 import { isStrongPassword } from '@/shared/validation';
 import { apiFetch } from '@/client/lib/api';
 import { fileToResizedDataUrl } from '@/client/lib/image';
 import { Toast } from '@/client/components/Toast';
 import { PasswordInput } from '@/client/components/PasswordInput';
+import { AreaPicker } from '@/client/components/AreaPicker';
 import { ProjectPicker } from '@/client/components/ProjectPicker';
 
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
@@ -25,7 +26,6 @@ const ENTRY_OPTIONS = [
   '2026.1'
 ];
 const COLAB_OPTIONS = ['Sim', 'Não'];
-const AREA_OPTIONS = ['Engenharia de Software', 'Sistemas Distribuídos / Redes', 'Ciência de Dados / IA', 'Teoria da Computação', 'Hardware / Embarcados', 'Segurança da Informação', 'Outra'];
 const COFFEE_OPTIONS = ['Sim', 'Não'];
 
 interface ProfileEditFormProps {
@@ -39,8 +39,8 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [role, setRole] = useState(user.role);
   const [entrySemester, setEntrySemester] = useState(user.entrySemester);
   const [isColab, setIsColab] = useState(user.isColab);
-  const [area, setArea] = useState(user.area);
-  const [projects, setProjects] = useState<string[]>(user.projects ?? []);
+  const [area, setArea] = useState<string[]>(user.area ?? []);
+  const [projects, setProjects] = useState<string[]>(user.projects?.slice(0, 1) ?? []);
 
   const [likesCoffee, setLikesCoffee] = useState(user.likesCoffee);
   const [photoUrl, setPhotoUrl] = useState(user.photoUrl || '');
@@ -67,8 +67,8 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     setRole(user.role);
     setEntrySemester(user.entrySemester);
     setIsColab(user.isColab);
-    setArea(user.area);
-    setProjects(user.projects ?? []);
+    setArea(user.area ?? []);
+    setProjects(user.projects?.slice(0, 1) ?? []);
     setLikesCoffee(user.likesCoffee);
     setPhotoUrl(user.photoUrl || '');
   }, [user]);
@@ -79,7 +79,8 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     role !== user.role ||
     entrySemester !== user.entrySemester ||
     isColab !== user.isColab ||
-    area !== user.area ||
+    area.length !== (user.area?.length ?? 0) ||
+    area.some((a) => !(user.area ?? []).includes(a)) ||
     likesCoffee !== user.likesCoffee ||
     photoUrl !== (user.photoUrl || '') ||
     projects.length !== (user.projects?.length ?? 0) ||
@@ -261,23 +262,55 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-row">
-            <div className="form-group"><label>{t('profileEdit.genderLabel')}</label><select value={gender} onChange={(e) => setGender(e.target.value)}>{GENDER_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-            <div className="form-group"><label>{t('profileEdit.roleLabel')}</label><select value={role} onChange={(e) => setRole(e.target.value)}>{ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group">
+              <label className="profile-field-label">
+                <UserIcon size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.genderLabel')}
+              </label>
+              <select value={gender} onChange={(e) => setGender(e.target.value)}>{GENDER_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
+            </div>
+            <div className="form-group">
+              <label className="profile-field-label">
+                <Briefcase size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.roleLabel')}
+              </label>
+              <select value={role} onChange={(e) => setRole(e.target.value)}>{ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
+            </div>
           </div>
           <div className="form-row">
-            <div className="form-group"><label>{t('profileEdit.entryLabel')}</label><select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>{ENTRY_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-            <div className="form-group"><label>{t('profileEdit.colabsLabel')}</label><select value={isColab} onChange={(e) => setIsColab(e.target.value)}>{COLAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group">
+              <label className="profile-field-label">
+                <CalendarDays size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.entryLabel')}
+              </label>
+              <select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>{ENTRY_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
+            </div>
+            <div className="form-group">
+              <label className="profile-field-label">
+                <Users size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.colabsLabel')}
+              </label>
+              <select value={isColab} onChange={(e) => setIsColab(e.target.value)}>{COLAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
+            </div>
           </div>
           <div className="form-row">
-            <div className="form-group"><label>{t('profileEdit.areaLabel')}</label><select value={area} onChange={(e) => setArea(e.target.value)}>{AREA_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
-            <div className="form-group"><label>{t('profileEdit.coffeeLabel')}</label><select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select></div>
+            <div className="form-group">
+              <label className="profile-field-label">
+                <Coffee size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.coffeeLabel')}
+              </label>
+              <select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
+            </div>
           </div>
 
           <div className="profile-projects-section">
-            <label className="profile-projects-label">
+            <label className="profile-field-label">
+              <Layers size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.areaLabel')}
+            </label>
+            <AreaPicker selected={area} onChange={setArea} />
+          </div>
+
+          <div className="profile-projects-section">
+            <label className="profile-field-label">
               <FolderGit2 size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.labLabel')}
             </label>
-            <ProjectPicker selected={projects} onChange={setProjects} savedProjects={user.projects ?? []} allowCreate />
+            <p className="profile-field-hint">{t('projects.singleHint')}</p>
+            <ProjectPicker selected={projects} onChange={setProjects} savedProjects={user.projects?.slice(0, 1) ?? []} allowCreate />
           </div>
 
           <div className="profile-save-bar">
@@ -310,7 +343,9 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
         <form onSubmit={handlePasswordSubmit}>
           <div className="form-group">
-            <label htmlFor="profile-current-password">{t('profileEdit.currentPasswordLabel')}</label>
+            <label className="profile-field-label" htmlFor="profile-current-password">
+              <Lock size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.currentPasswordLabel')}
+            </label>
             <PasswordInput
               id="profile-current-password"
               value={currentPassword}
@@ -322,7 +357,9 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="profile-new-password">{t('profileEdit.newPasswordLabel')}</label>
+              <label className="profile-field-label" htmlFor="profile-new-password">
+                <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.newPasswordLabel')}
+              </label>
               <PasswordInput
                 id="profile-new-password"
                 value={newPassword}
@@ -334,7 +371,9 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
               />
             </div>
             <div className="form-group">
-              <label htmlFor="profile-confirm-password">{t('profileEdit.confirmPasswordLabel')}</label>
+              <label className="profile-field-label" htmlFor="profile-confirm-password">
+                <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.confirmPasswordLabel')}
+              </label>
               <PasswordInput
                 id="profile-confirm-password"
                 value={confirmPassword}
