@@ -60,6 +60,7 @@ export const pt = {
     attemptsUnit: 'tent.',
     mistakesUnit: 'erros',
     close: 'Fechar',
+    podiumBadge: '{{place}}º lugar no pódio',
   },
   ranking: {
     title: 'Ranking de Hoje',

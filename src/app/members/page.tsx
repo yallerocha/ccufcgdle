@@ -15,6 +15,8 @@ interface Member {
   photoUrl?: string | null;
 }
 
+const PODIUM_MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
 // Accent-insensitive lowercase form for name matching.
 function normalizeName(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -23,6 +25,7 @@ function normalizeName(s: string): string {
 export default function MembersPage() {
   const { t } = useTranslation();
   const [members, setMembers] = useState<Member[]>([]);
+  const [podiumRanks, setPodiumRanks] = useState<Map<string, number>>(() => new Map());
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -32,12 +35,26 @@ export default function MembersPage() {
     try {
       setLoading(true);
       setErrorMsg('');
-      const res = await apiFetch('/api/game/members');
-      const data = await res.json();
-      if (res.ok) {
-        setMembers(data.members || []);
+      const [membersRes, leaderboardRes] = await Promise.all([
+        apiFetch('/api/game/members'),
+        apiFetch('/api/game/leaderboard'),
+      ]);
+      const membersData = await membersRes.json();
+      if (membersRes.ok) {
+        setMembers(membersData.members || []);
       } else {
-        setErrorMsg(data.error || t('members.error'));
+        setErrorMsg(membersData.error || t('members.error'));
+      }
+
+      if (leaderboardRes.ok) {
+        const leaderboardData = await leaderboardRes.json();
+        const ranks = new Map<string, number>();
+        for (const entry of (leaderboardData.ranking || []).slice(0, 3)) {
+          ranks.set(entry.id, entry.rank);
+        }
+        setPodiumRanks(ranks);
+      } else {
+        setPodiumRanks(new Map());
       }
     } catch (err) {
       console.error('Error loading members:', err);
@@ -96,13 +113,24 @@ export default function MembersPage() {
             <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('members.noResults')}</p>
           ) : (
             <div className="members-grid">
-              {filtered.map((m) => (
+              {filtered.map((m) => {
+                const podiumPlace = podiumRanks.get(m.id);
+                return (
                 <button
                   key={m.id}
                   type="button"
                   className="card member-card member-card-button"
                   onClick={() => setSelectedId(m.id)}
                 >
+                  {podiumPlace != null && (
+                    <span
+                      className="member-podium-badge"
+                      title={t('members.podiumBadge', { place: podiumPlace })}
+                      aria-label={t('members.podiumBadge', { place: podiumPlace })}
+                    >
+                      {PODIUM_MEDALS[podiumPlace]}
+                    </span>
+                  )}
                   {m.photoUrl ? (
                     <img src={m.photoUrl} alt={m.name} className="member-photo" />
                   ) : (
@@ -112,7 +140,8 @@ export default function MembersPage() {
                   )}
                   <span className="member-name">{m.name}</span>
                 </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </>

@@ -64,6 +64,7 @@ export const en: Dictionary = {
     attemptsUnit: 'tries',
     mistakesUnit: 'misses',
     close: 'Close',
+    podiumBadge: '{{place}} place on the podium',
   },
   ranking: {
     title: "Today's Ranking",
