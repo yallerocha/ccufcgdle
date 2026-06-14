@@ -6,7 +6,7 @@ import { requireAuth } from '../middleware/auth';
 import { validateCharacterFields, isAllowedEmailDomain, isStrongPassword } from '../../shared/validation';
 import { getAllowedProjectNames } from '../../server/projects';
 import { isEmailVerified, issueVerificationToken, consumeVerificationToken, findUnverifiedUserByEmail } from '../../server/email-verification';
-import { isEmailVerificationRequired } from '../../server/email-verification-config';
+import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../../server/email-verification-config';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../../server/email';
 import {
   findVerifiedUserForPasswordReset,
@@ -42,8 +42,14 @@ function authSessionResponse(user: {
 
 // GET /api/auth/config — public auth settings for the client.
 router.get('/config', (_req, res) => {
-  res.json({ emailVerificationRequired: isEmailVerificationRequired() });
+  res.json({
+    emailVerificationRequired: isEmailVerificationRequired(),
+    passwordResetByEmailEnabled: isPasswordResetByEmailEnabled(),
+  });
 });
+
+const PASSWORD_RESET_DISABLED_MESSAGE =
+  'Recuperação de senha por email está desabilitada. Peça a um administrador uma senha temporária.';
 
 // POST /api/auth/login — validates credentials and returns { token, user }.
 router.post('/login', async (req, res) => {
@@ -322,6 +328,10 @@ router.post('/resend-verification', async (req, res) => {
 // POST /api/auth/forgot-password — sends a password reset link if the account exists.
 router.post('/forgot-password', async (req, res) => {
   try {
+    if (!isPasswordResetByEmailEnabled()) {
+      return res.status(403).json({ error: PASSWORD_RESET_DISABLED_MESSAGE });
+    }
+
     const { email } = req.body ?? {};
     if (!email || typeof email !== 'string') {
       return res.status(400).json({ error: 'Email é obrigatório.' });
@@ -347,6 +357,10 @@ router.post('/forgot-password', async (req, res) => {
 // GET /api/auth/reset-password?token=... — checks whether a reset link is still valid.
 router.get('/reset-password', async (req, res) => {
   try {
+    if (!isPasswordResetByEmailEnabled()) {
+      return res.status(403).json({ error: PASSWORD_RESET_DISABLED_MESSAGE });
+    }
+
     const token = typeof req.query.token === 'string' ? req.query.token : '';
     const result = await validatePasswordResetToken(token);
     if (!result) {
@@ -362,6 +376,10 @@ router.get('/reset-password', async (req, res) => {
 // POST /api/auth/reset-password — sets a new password using a valid reset token.
 router.post('/reset-password', async (req, res) => {
   try {
+    if (!isPasswordResetByEmailEnabled()) {
+      return res.status(403).json({ error: PASSWORD_RESET_DISABLED_MESSAGE });
+    }
+
     const { token, password, confirmPassword } = req.body ?? {};
 
     if (!token || !password || !confirmPassword) {

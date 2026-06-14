@@ -8,7 +8,7 @@ import termoRouter from './routes/termo';
 import forcaRouter from './routes/forca';
 import adminRouter from './routes/admin';
 import { ensureDefaultProjects, syncProjectsFromUsers } from '../server/projects';
-import { isEmailVerificationRequired } from '../server/email-verification-config';
+import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../server/email-verification-config';
 
 const app = express();
 
@@ -83,7 +83,11 @@ void bootstrapProjects();
 
 app.listen(PORT, () => {
   console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN || '*'})`);
+  const emailOn = isEmailVerificationRequired();
   console.log(
-    `[api] Email verification: ${isEmailVerificationRequired() ? 'required (Resend)' : 'disabled (auto-verify @ufcg)'}`
+    `[api] Email verification: ${emailOn ? 'required (Resend)' : 'disabled (auto-verify @ufcg)'}`
+  );
+  console.log(
+    `[api] Password reset by email: ${isPasswordResetByEmailEnabled() ? 'enabled' : 'disabled (admin temp password)'}`
   );
 });

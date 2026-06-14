@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { KeyRound, Lock, LockKeyhole, Loader2 } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
+import { useAuthConfig } from '@/client/lib/auth-config';
 import { useAuth } from '@/client/context/AuthContext';
 import { isStrongPassword } from '@/shared/validation';
 import { PasswordInput } from '@/client/components/PasswordInput';
@@ -16,6 +17,7 @@ export default function ResetPasswordClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUser } = useAuth();
+  const authConfig = useAuthConfig();
   const token = searchParams.get('token') ?? '';
 
   const [validating, setValidating] = useState(true);
@@ -27,6 +29,15 @@ export default function ResetPasswordClient() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!authConfig) return;
+
+    if (!authConfig.passwordResetByEmailEnabled) {
+      setValidating(false);
+      setTokenValid(false);
+      setErrorMsg(t('login.forgotHint'));
+      return;
+    }
+
     if (!token) {
       setValidating(false);
       setTokenValid(false);
@@ -55,7 +66,7 @@ export default function ResetPasswordClient() {
     return () => {
       cancelled = true;
     };
-  }, [token, t]);
+  }, [authConfig, token, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,9 +130,15 @@ export default function ResetPasswordClient() {
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
               {t('resetPassword.invalidToken')}
             </p>
-            <Link href="/forgot-password" className="btn btn-secondary" style={{ width: '100%', display: 'block', textAlign: 'center' }}>
-              {t('resetPassword.requestNew')}
-            </Link>
+            {authConfig?.passwordResetByEmailEnabled ? (
+              <Link href="/forgot-password" className="btn btn-secondary" style={{ width: '100%', display: 'block', textAlign: 'center' }}>
+                {t('resetPassword.requestNew')}
+              </Link>
+            ) : (
+              <Link href="/profile" className="btn btn-secondary" style={{ width: '100%', display: 'block', textAlign: 'center' }}>
+                {t('forgotPassword.backToLogin')}
+              </Link>
+            )}
           </>
         )}
 

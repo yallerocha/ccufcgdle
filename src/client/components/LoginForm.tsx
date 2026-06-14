@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { LogIn, UserPlus, Mail } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { useAuthConfig } from '@/client/lib/auth-config';
 import { PasswordInput } from '@/client/components/PasswordInput';
 import { Toast } from '@/client/components/Toast';
 
@@ -16,6 +17,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: LoginFormProps) {
   const { t } = useTranslation();
+  const authConfig = useAuthConfig();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -120,11 +122,17 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
             {submitting ? t('login.submitting') : t('login.submit')}
           </button>
 
-          <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>
-            <Link href="/forgot-password" style={{ color: 'var(--primary)' }}>
-              {t('login.forgotLink')}
-            </Link>
-          </p>
+          {authConfig && (
+            <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>
+              {authConfig.passwordResetByEmailEnabled ? (
+                <Link href="/forgot-password" style={{ color: 'var(--primary)' }}>
+                  {t('login.forgotLink')}
+                </Link>
+              ) : (
+                t('login.forgotHint')
+              )}
+            </p>
+          )}
         </form>
 
         <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', textAlign: 'center' }}>

@@ -8,3 +8,8 @@ export function isEmailVerificationRequired(): boolean {
   if (raw === 'true' || raw === '1' || raw === 'yes') return false;
   return true;
 }
+
+/** Password reset emails require the same Resend setup as verification emails. */
+export function isPasswordResetByEmailEnabled(): boolean {
+  return isEmailVerificationRequired();
+}

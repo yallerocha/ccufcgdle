@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { KeyRound, Mail, ArrowLeft } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { useAuthConfig } from '@/client/lib/auth-config';
 import { Toast } from '@/client/components/Toast';
 
 export function ForgotPasswordForm() {
   const { t } = useTranslation();
+  const authConfig = useAuthConfig();
   const [email, setEmail] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
@@ -39,6 +41,36 @@ export function ForgotPasswordForm() {
       setSubmitting(false);
     }
   };
+
+  if (!authConfig) {
+    return (
+      <div style={{ maxWidth: '450px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
+        <div className="card">
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            {t('resetPassword.validating')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authConfig.passwordResetByEmailEnabled) {
+    return (
+      <div style={{ maxWidth: '450px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
+        <div className="card">
+          <h2 className="card-title" style={{ justifyContent: 'center' }}>
+            <KeyRound size={22} style={{ color: 'var(--primary)' }} /> {t('forgotPassword.title')}
+          </h2>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+            {t('login.forgotHint')}
+          </p>
+          <Link href="/profile" className="btn btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+            <ArrowLeft size={16} /> {t('forgotPassword.backToLogin')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '450px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
