@@ -150,6 +150,14 @@ export async function getOrCreateDailyCharacter(dateStr?: string): Promise<User 
   }
 }
 
+/** Counts finalized days only — today's pick is excluded until the date rolls over. */
+export async function countPersonOfDayAppearances(characterId: string): Promise<number> {
+  const today = getLocalDateString();
+  return prisma.dailyCharacter.count({
+    where: { characterId, date: { lt: today } },
+  });
+}
+
 // Compare a guess user with the target user
 export interface GuessFeedback {
   correct: boolean;

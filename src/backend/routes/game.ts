@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../../server/db';
-import { getActiveUsers, getOrCreateDailyCharacter, compareCharacters, gameView } from '../../server/game';
+import { getActiveUsers, getOrCreateDailyCharacter, compareCharacters, gameView, countPersonOfDayAppearances } from '../../server/game';
 import { recordStreakSolve, getStreak, type StreakInfo } from '../../server/streak';
 import { computeLeaderboard } from '../../server/score';
 import { getLocalDateString } from '../../shared/utils';
@@ -118,7 +118,7 @@ router.get('/members/:id/stats', async (req, res) => {
 
     // Fun flavor counters tied to this person.
     const [timesPersonOfDay, timesForcaTarget] = await Promise.all([
-      prisma.dailyCharacter.count({ where: { characterId: id } }),
+      countPersonOfDayAppearances(id),
       prisma.forcaDaily.count({ where: { personName: member.name } }),
     ]);
 
