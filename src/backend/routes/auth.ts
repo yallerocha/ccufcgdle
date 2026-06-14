@@ -147,7 +147,7 @@ router.post('/register', async (req, res) => {
 
     if (!isAllowedEmailDomain(email)) {
       return res.status(400).json({
-        error: 'Apenas emails @ccc.ufcg.edu.br e @computacao.ufcg.edu.br podem se cadastrar.',
+        error: 'Apenas emails @ccc.ufcg.edu.br, @computacao.ufcg.edu.br e @lsd.ufcg.edu.br podem se cadastrar.',
       });
     }
 

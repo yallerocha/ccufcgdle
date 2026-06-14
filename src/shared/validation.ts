@@ -70,7 +70,7 @@ export function normalizeProjectName(name: unknown): string | null {
 export const COFFEE_OPTIONS = ['Sim', 'Não', 'Só energético'] as const;
 
 // Only members of the Computing programs at UFCG may register.
-export const ALLOWED_EMAIL_DOMAINS = ['ccc.ufcg.edu.br', 'computacao.ufcg.edu.br'] as const;
+export const ALLOWED_EMAIL_DOMAINS = ['ccc.ufcg.edu.br', 'computacao.ufcg.edu.br', 'lsd.ufcg.edu.br'] as const;
 
 export function isAllowedEmailDomain(email: string): boolean {
   if (typeof email !== 'string') return false;

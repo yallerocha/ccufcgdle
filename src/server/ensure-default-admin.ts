@@ -12,7 +12,7 @@ const prisma = new PrismaClient({ adapter });
 export const DEFAULT_ADMIN = {
   email: 'yalle.silva@lsd.ufcg.edu.br',
   password: 'Yalle@04112002',
-  name: 'Yalle.Silva',
+  name: 'Yalle Rocha',
   gender: 'Masculino',
   role: 'Graduando',
   entrySemester: '2021.2',
@@ -33,6 +33,7 @@ export async function ensureDefaultAdmin(): Promise<void> {
   await prisma.user.upsert({
     where: { email: DEFAULT_ADMIN.email },
     update: {
+      name: DEFAULT_ADMIN.name,
       isAdmin: true,
       emailVerifiedAt: now,
       passwordHash,
