@@ -71,7 +71,7 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content modal-wide" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-color-bar">
+        <div className="modal-color-bar modal-color-bar--top">
           <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
           <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
           <div style={{ backgroundColor: 'var(--lsd-purple)' }} />

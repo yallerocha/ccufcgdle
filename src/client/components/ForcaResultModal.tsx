@@ -62,15 +62,6 @@ export function ForcaResultModal({ show, won, word, wrong, maxWrong, personName,
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-color-bar">
-          <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-purple)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-magenta)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-red)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
-        </div>
-
         {won ? (
           <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
         ) : (
@@ -158,6 +149,14 @@ export function ForcaResultModal({ show, won, word, wrong, maxWrong, personName,
         <button onClick={onClose} className="btn btn-secondary" style={{ width: '100%' }}>
           {t('forca.modal.close')}
         </button>
+        <div className="modal-color-bar">
+          <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-purple)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-magenta)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-red)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
+        </div>
       </div>
     </div>,
     document.body

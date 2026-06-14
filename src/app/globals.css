@@ -777,12 +777,14 @@ input:focus, select:focus, textarea:focus {
   max-width: 760px;
 }
 
-/* LSD-colored bar across the very top of the victory modal, matching the one in
-   the footer. Negative margins cancel the modal padding so it reaches the edges;
-   the modal's rounded overflow clips its top corners. */
+/* LSD-colored bar — default at bottom (victory modals); use --top for header placement. */
 .modal-color-bar {
   display: flex;
   height: 8px;
+  margin: 1.5rem -2.5rem -2.5rem -2.5rem;
+}
+
+.modal-color-bar--top {
   margin: -2.5rem -2.5rem 1.5rem -2.5rem;
 }
 
@@ -1279,6 +1281,10 @@ input:focus, select:focus, textarea:focus {
   }
 
   .modal-color-bar {
+    margin: 1.5rem -1.5rem -1.5rem -1.5rem;
+  }
+
+  .modal-color-bar--top {
     margin: -1.5rem -1.5rem 1.5rem -1.5rem;
   }
 

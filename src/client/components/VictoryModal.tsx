@@ -447,16 +447,7 @@ export function VictoryModal({
   // transformed `main.fade-in` ancestor and can span the full viewport.
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className={`modal-content${useSplitLayout ? ' modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
-        {/* LSD color bar at the top, matching the footer's */}
-        <div className="modal-color-bar">
-          <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-purple)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-magenta)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-red)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
-        </div>
+        <div className={`modal-content${useSplitLayout ? ' modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
         <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
         <h2 className="modal-title">{t('victory.title')} <span className="modal-emoji">🎉</span></h2>
         <p className="modal-subtitle">
@@ -485,6 +476,14 @@ export function VictoryModal({
         )}
 
         {buttonsBlock}
+        <div className="modal-color-bar">
+          <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-purple)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-magenta)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-red)' }} />
+          <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
+        </div>
       </div>
 
       <Toast
