@@ -1832,9 +1832,66 @@ input:focus, select:focus, textarea:focus {
 }
 
 .register-photo-hint {
-  margin: 0.75rem 0 0;
-  font-size: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-dim);
+}
+
+.photo-crop-modal {
+  max-width: 360px;
+  overflow-x: hidden;
+}
+
+.photo-crop-workspace {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.photo-crop-viewport {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 3px solid var(--border-color);
+  background: var(--bg-input);
+  cursor: grab;
+  touch-action: none;
+  isolation: isolate;
+  contain: layout paint;
+}
+
+.photo-crop-viewport img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  user-select: none;
+  touch-action: none;
+  pointer-events: none;
+}
+
+.photo-crop-viewport:active {
+  cursor: grabbing;
+}
+
+.photo-crop-zoom-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.photo-crop-zoom-label input[type='range'] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
 }
 
 .verify-email-banner {

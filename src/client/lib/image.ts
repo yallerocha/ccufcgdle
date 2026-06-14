@@ -1,40 +1,71 @@
-// Client-side image resizing for profile photos. Photos are stored inline as
+// Client-side image resizing/cropping for profile photos. Photos are stored inline as
 // base64 data URLs, so downscaling at upload time keeps the database and every
-// list endpoint (members, autocomplete, rankings) light — a raw camera photo
-// can be 2MB+ while a 512px JPEG avatar is typically under 100KB.
+// list endpoint (members, autocomplete, rankings) light.
 
 const MAX_DIMENSION = 512;
 const JPEG_QUALITY = 0.85;
 
-export function fileToResizedDataUrl(file: File): Promise<string> {
+export function loadImageFromFile(file: File): Promise<{ image: HTMLImageElement; objectUrl: string }> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
     const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      try {
-        const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
-        const w = Math.max(1, Math.round(img.width * scale));
-        const h = Math.max(1, Math.round(img.height * scale));
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Canvas 2D context unavailable');
-        // JPEG has no alpha channel — flatten transparency onto white instead
-        // of the default black.
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
-      } catch (err) {
-        reject(err);
-      }
-    };
+    img.onload = () => resolve({ image: img, objectUrl });
     img.onerror = () => {
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(objectUrl);
       reject(new Error('Failed to load image'));
     };
-    img.src = url;
+    img.src = objectUrl;
+  });
+}
+
+/** Maps on-screen crop viewport coordinates to a square JPEG data URL. */
+export function squareCropToDataUrl(
+  image: HTMLImageElement,
+  displayScale: number,
+  panX: number,
+  panY: number,
+  viewportSize: number,
+  outputSize = MAX_DIMENSION,
+): string {
+  const cropX = Math.max(0, -panX / displayScale);
+  const cropY = Math.max(0, -panY / displayScale);
+  const cropSize = viewportSize / displayScale;
+
+  const maxX = Math.max(0, image.naturalWidth - cropSize);
+  const maxY = Math.max(0, image.naturalHeight - cropSize);
+  const x = Math.min(maxX, cropX);
+  const y = Math.min(maxY, cropY);
+  const size = Math.min(cropSize, image.naturalWidth - x, image.naturalHeight - y);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2D context unavailable');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, outputSize, outputSize);
+  ctx.drawImage(image, x, y, size, size, 0, 0, outputSize, outputSize);
+  return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+}
+
+/** Center-crop to square + resize (fallback when crop modal is skipped). */
+export function fileToResizedDataUrl(file: File): Promise<string> {
+  return loadImageFromFile(file).then(({ image, objectUrl }) => {
+    try {
+      const side = Math.min(image.naturalWidth, image.naturalHeight);
+      const cropX = (image.naturalWidth - side) / 2;
+      const cropY = (image.naturalHeight - side) / 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = MAX_DIMENSION;
+      canvas.height = MAX_DIMENSION;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas 2D context unavailable');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, MAX_DIMENSION, MAX_DIMENSION);
+      ctx.drawImage(image, cropX, cropY, side, side, 0, 0, MAX_DIMENSION, MAX_DIMENSION);
+      return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
   });
 }

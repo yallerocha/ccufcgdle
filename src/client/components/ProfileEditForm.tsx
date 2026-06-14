@@ -9,7 +9,7 @@ import type { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
 import { isStrongPassword } from '@/shared/validation';
 import { apiFetch } from '@/client/lib/api';
-import { fileToResizedDataUrl } from '@/client/lib/image';
+import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { Toast } from '@/client/components/Toast';
 import { PasswordInput } from '@/client/components/PasswordInput';
 import { AreaPicker } from '@/client/components/AreaPicker';
@@ -47,6 +47,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [photoMsg, setPhotoMsg] = useState('');
   const [photoMsgType, setPhotoMsgType] = useState<'success' | 'error'>('error');
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -169,31 +170,21 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     }
   };
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file || savingPhoto) return;
-    let nextUrl: string;
-    try {
-      nextUrl = await fileToResizedDataUrl(file);
-    } catch {
-      if (file.size > 2 * 1024 * 1024) {
-        notifyPhoto(t('photo.tooLarge'), 'error');
-        return;
-      }
-      nextUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error('read failed'));
-        reader.readAsDataURL(file);
-      }).catch(() => {
-        notifyPhoto(t('photo.saveError'), 'error');
-        return '';
-      });
-      if (!nextUrl) return;
+    if (file.size > 2 * 1024 * 1024) {
+      notifyPhoto(t('photo.tooLarge'), 'error');
+      return;
     }
+    setCropFile(file);
+  };
+
+  const handleCropConfirm = async (nextUrl: string) => {
+    setCropFile(null);
     setPhotoUrl(nextUrl);
     await savePhotoImmediately(nextUrl);
-    e.target.value = '';
   };
 
   const handlePhotoRemove = async () => {
@@ -475,6 +466,12 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         </div>,
         document.body
       )}
+
+      <PhotoCropModal
+        file={cropFile}
+        onConfirm={handleCropConfirm}
+        onClose={() => setCropFile(null)}
+      />
     </div>
   );
 }

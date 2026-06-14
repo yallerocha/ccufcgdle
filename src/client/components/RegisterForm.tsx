@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Camera, Trash2, User as UserIcon, Mail, Lock, LockKeyhole, Briefcase, CalendarDays, Users, Coffee, Layers, FolderGit2, MailCheck } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
-import { fileToResizedDataUrl } from '@/client/lib/image';
+import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
 import { PasswordInput } from '@/client/components/PasswordInput';
 import { AreaPicker } from '@/client/components/AreaPicker';
@@ -54,25 +54,22 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const [submitting, setSubmitting] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
   const [resending, setResending] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
-    try {
-      // Downscale at upload time so the stored photo (and every list that
-      // includes it) stays small.
-      setPhotoUrl(await fileToResizedDataUrl(file));
-    } catch {
-      // Resizing failed (unsupported format?) — fall back to the raw file,
-      // still subject to the original size limit.
-      if (file.size > 2 * 1024 * 1024) {
-        alert(t('photo.tooLarge'));
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => setPhotoUrl(reader.result as string);
-      reader.readAsDataURL(file);
+    if (file.size > 2 * 1024 * 1024) {
+      alert(t('photo.tooLarge'));
+      return;
     }
+    setCropFile(file);
+  };
+
+  const handleCropConfirm = (nextUrl: string) => {
+    setCropFile(null);
+    setPhotoUrl(nextUrl);
   };
 
   const handleResend = async () => {
@@ -312,6 +309,12 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
         </div>
         </div>
       </div>
+
+      <PhotoCropModal
+        file={cropFile}
+        onConfirm={handleCropConfirm}
+        onClose={() => setCropFile(null)}
+      />
     </div>
   );
 }
