@@ -77,7 +77,8 @@ export const pt = {
     attempts_other: '{{count}} tentativas',
   },
   footer: {
-    text: 'LSD Game Hub © 2026. Este site não possui vínculo oficial com o Laboratório de Sistemas Distribuídos (LSD/UFCG). Trata-se de um projeto desenvolvido de forma independente, por iniciativa pessoal e fins recreativos.',
+    line1: 'LSD Game Hub © 2026. Este site não possui vínculo oficial com o Laboratório de Sistemas Distribuídos (LSD/UFCG).',
+    line2: 'Trata-se de um projeto desenvolvido de forma independente, por iniciativa pessoal e fins recreativos.',
   },
   hub: {
     tagline: 'Bem-vindo ao LSD Game Hub. Escolha um dos jogos abaixo para começar a jogar com os membros do laboratório!',

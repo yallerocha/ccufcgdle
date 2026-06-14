@@ -81,7 +81,8 @@ export const en: Dictionary = {
     attempts_other: '{{count}} attempts',
   },
   footer: {
-    text: 'LSD Game Hub © 2026. This website is not officially affiliated with the Distributed Systems Laboratory (LSD/UFCG). It is an independently developed project, created on a personal basis for recreational purposes.',
+    line1: 'LSD Game Hub © 2026. This website is not officially affiliated with the Distributed Systems Laboratory (LSD/UFCG).',
+    line2: 'It is an independently developed project, created on a personal basis for recreational purposes.',
   },
   hub: {
     tagline: 'Welcome to the LSD Game Hub. Pick a game below to start playing with your lab mates!',

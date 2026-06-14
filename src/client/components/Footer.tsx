@@ -26,7 +26,11 @@ export default function Footer() {
       </div>
       
       <div style={{ padding: '2rem 0', fontSize: '0.9rem' }}>
-        <p>{t('footer.text')}</p>
+        <p>
+          {t('footer.line1')}
+          <br />
+          {t('footer.line2')}
+        </p>
       </div>
     </footer>
   );
