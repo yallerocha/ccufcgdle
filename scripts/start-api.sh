@@ -18,6 +18,9 @@ else
   echo "[api] Skipping seed (set SEED_DATABASE=true in .env for local Docker only)."
 fi
 
+echo "[api] Syncing project catalog..."
+npx tsx src/server/bootstrap-projects.ts
+
 if [ "${ENSURE_DEFAULT_ADMIN:-true}" != "false" ]; then
   echo "[api] Ensuring default admin account..."
   npx tsx src/server/ensure-default-admin.ts

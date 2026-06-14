@@ -465,6 +465,7 @@ export const en: Dictionary = {
     projectsCreating: 'Creating...',
     projectsCreateSuccess: 'Project created successfully!',
     projectsCreateError: 'Could not create the project.',
+    projectsLoadError: 'Could not load the project catalog. Try refreshing the page.',
     projectsEmpty: 'No projects in the catalog.',
     projectsColName: 'Project',
     projectsColMembers: 'Members',

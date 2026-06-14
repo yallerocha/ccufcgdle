@@ -114,3 +114,10 @@ export async function syncProjectsFromUsers(): Promise<void> {
     });
   }
 }
+
+/** Idempotent startup sync: defaults + any names already used by users. Never deletes custom entries. */
+export async function bootstrapProjectCatalog(): Promise<number> {
+  await ensureDefaultProjects();
+  await syncProjectsFromUsers();
+  return prisma.project.count();
+}

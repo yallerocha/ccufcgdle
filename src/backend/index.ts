@@ -7,7 +7,7 @@ import gameRouter from './routes/game';
 import termoRouter from './routes/termo';
 import forcaRouter from './routes/forca';
 import adminRouter from './routes/admin';
-import { ensureDefaultProjects, syncProjectsFromUsers } from '../server/projects';
+import { bootstrapProjectCatalog } from '../server/projects';
 import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../server/email-verification-config';
 
 const app = express();
@@ -70,24 +70,25 @@ app.use('/api/termo', termoRouter);
 app.use('/api/forca', forcaRouter);
 app.use('/api/admin', adminRouter);
 
-async function bootstrapProjects() {
+async function start() {
   try {
-    await ensureDefaultProjects();
-    await syncProjectsFromUsers();
+    const count = await bootstrapProjectCatalog();
+    console.log(`[api] Project catalog ready (${count} entries).`);
   } catch (err) {
     console.error('[api] Failed to sync project catalog:', err);
+    process.exit(1);
   }
+
+  app.listen(PORT, () => {
+    console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN || '*'})`);
+    const emailOn = isEmailVerificationRequired();
+    console.log(
+      `[api] Email verification: ${emailOn ? 'required (Resend)' : 'disabled (auto-verify @ufcg)'}`
+    );
+    console.log(
+      `[api] Password reset by email: ${isPasswordResetByEmailEnabled() ? 'enabled' : 'disabled (admin temp password)'}`
+    );
+  });
 }
 
-void bootstrapProjects();
-
-app.listen(PORT, () => {
-  console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN || '*'})`);
-  const emailOn = isEmailVerificationRequired();
-  console.log(
-    `[api] Email verification: ${emailOn ? 'required (Resend)' : 'disabled (auto-verify @ufcg)'}`
-  );
-  console.log(
-    `[api] Password reset by email: ${isPasswordResetByEmailEnabled() ? 'enabled' : 'disabled (admin temp password)'}`
-  );
-});
+void start();

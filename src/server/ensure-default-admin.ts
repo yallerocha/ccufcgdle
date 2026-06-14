@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
-import { DEFAULT_PROJECT_NAMES } from '../shared/validation.js';
+import { PROJECT_OTHER_NAME } from '../shared/validation.js';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -18,7 +18,7 @@ export const DEFAULT_ADMIN = {
   entrySemester: '2021.2',
   isColab: 'Não',
   area: ['Sistemas Distribuídos / Redes'],
-  projects: ['Computação em Nuvem'],
+  projects: [PROJECT_OTHER_NAME],
   likesCoffee: 'Não',
 } as const;
 
@@ -27,14 +27,6 @@ export const DEFAULT_ADMIN = {
  * Idempotent — safe to run on every API startup.
  */
 export async function ensureDefaultAdmin(): Promise<void> {
-  for (const name of DEFAULT_PROJECT_NAMES) {
-    await prisma.project.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    });
-  }
-
   const passwordHash = await bcrypt.hash(DEFAULT_ADMIN.password, 10);
   const now = new Date();
 

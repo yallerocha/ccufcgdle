@@ -461,6 +461,7 @@ export const pt = {
     projectsCreating: 'Criando...',
     projectsCreateSuccess: 'Projeto criado com sucesso!',
     projectsCreateError: 'Erro ao criar o projeto.',
+    projectsLoadError: 'Não foi possível carregar o catálogo de projetos. Tente recarregar a página.',
     projectsEmpty: 'Nenhum projeto no catálogo.',
     projectsColName: 'Projeto',
     projectsColMembers: 'Membros',

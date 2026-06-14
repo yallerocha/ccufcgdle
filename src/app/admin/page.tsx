@@ -92,14 +92,26 @@ export default function AdminPage() {
     }
   };
 
-  const loadProjects = async () => {
+  const loadProjects = async (attempt = 0) => {
     try {
       const res = await apiFetch('/api/admin/projects');
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (attempt < 4) {
+          await new Promise((r) => setTimeout(r, 1000));
+          return loadProjects(attempt + 1);
+        }
+        setErrorMsg(t('admin.projectsLoadError'));
+        return;
+      }
       const data = await res.json();
       if (data.projects) setProjects(data.projects);
     } catch (err) {
       console.error('Error loading projects:', err);
+      if (attempt < 4) {
+        await new Promise((r) => setTimeout(r, 1000));
+        return loadProjects(attempt + 1);
+      }
+      setErrorMsg(t('admin.projectsLoadError'));
     }
   };
 
