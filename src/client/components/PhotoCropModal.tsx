@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Crop, X, Check } from 'lucide-react';
 import { squareCropToDataUrl, loadImageFromFile } from '@/client/lib/image';
+import { ModalColorBar } from '@/client/components/ModalColorBar';
 
 const CROP_SIZE = 280;
 const MIN_ZOOM = 1;
@@ -170,7 +171,8 @@ export function PhotoCropModal({ file, onConfirm, onClose }: PhotoCropModalProps
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content photo-crop-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content photo-crop-modal modal-has-bottom-bar" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-body">
         <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
           <Crop size={22} style={{ color: 'var(--primary)' }} /> {t('photo.cropTitle')}
         </h2>
@@ -223,6 +225,8 @@ export function PhotoCropModal({ file, onConfirm, onClose }: PhotoCropModalProps
             <X size={18} /> {t('photo.cropCancel')}
           </button>
         </div>
+        </div>
+        <ModalColorBar />
       </div>
     </div>,
     document.body,

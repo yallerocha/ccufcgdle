@@ -9,6 +9,7 @@ import { apiFetch } from '@/client/lib/api';
 import { fileToResizedDataUrl } from '@/client/lib/image';
 import { Toast } from '@/client/components/Toast';
 import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
+import { ModalColorBar } from '@/client/components/ModalColorBar';
 import { MAX_DAILY_MESSAGE_LENGTH } from '@/shared/validation';
 
 interface RankingEntry {
@@ -447,7 +448,8 @@ export function VictoryModal({
   // transformed `main.fade-in` ancestor and can span the full viewport.
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-        <div className={`modal-content${useSplitLayout ? ' modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className={`modal-content modal-has-bottom-bar${useSplitLayout ? ' modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-body">
         <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
         <h2 className="modal-title">{t('victory.title')} <span className="modal-emoji">🎉</span></h2>
         <p className="modal-subtitle">
@@ -476,14 +478,8 @@ export function VictoryModal({
         )}
 
         {buttonsBlock}
-        <div className="modal-color-bar">
-          <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-purple)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-magenta)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-red)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
         </div>
+        <ModalColorBar />
       </div>
 
       <Toast

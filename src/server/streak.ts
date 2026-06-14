@@ -56,3 +56,76 @@ export async function getStreak(playerId: string, game: GameId): Promise<StreakI
   const stillActive = row.lastDate === today || row.lastDate === getPreviousDateString(today);
   return { current: stillActive ? row.current : 0, best: row.best };
 }
+
+export interface StreakWeekDay {
+  date: string;
+  /** 0 = Monday … 6 = Sunday */
+  weekday: number;
+  completed: boolean;
+  isToday: boolean;
+}
+
+export interface StreakWeekInfo {
+  streak: StreakInfo;
+  week: StreakWeekDay[];
+}
+
+/** Monday–Sunday of the current week in America/Recife. */
+function getCurrentWeekDateStrings(): string[] {
+  const todayStr = getLocalDateString();
+  const [y, m, d] = todayStr.split('-').map(Number);
+  const anchor = new Date(Date.UTC(y, m - 1, d));
+  const dow = anchor.getUTCDay();
+  const daysFromMonday = dow === 0 ? 6 : dow - 1;
+  const monday = new Date(anchor);
+  monday.setUTCDate(anchor.getUTCDate() - daysFromMonday);
+
+  const out: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const dt = new Date(monday);
+    dt.setUTCDate(monday.getUTCDate() + i);
+    const yyyy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getUTCDate()).padStart(2, '0');
+    out.push(`${yyyy}-${mm}-${dd}`);
+  }
+  return out;
+}
+
+async function getCompletedDates(
+  playerId: string,
+  game: GameId,
+  dates: string[],
+): Promise<Set<string>> {
+  const where = { playerId, date: { in: dates } };
+  let rows: { date: string }[];
+  switch (game) {
+    case 'lsdle':
+      rows = await prisma.gameResult.findMany({ where, select: { date: true } });
+      break;
+    case 'termo':
+      rows = await prisma.termoResult.findMany({ where, select: { date: true } });
+      break;
+    case 'forca':
+      rows = await prisma.forcaResult.findMany({ where, select: { date: true } });
+      break;
+  }
+  return new Set(rows.map((r) => r.date));
+}
+
+export async function getStreakWeek(playerId: string, game: GameId): Promise<StreakWeekInfo> {
+  const today = getLocalDateString();
+  const weekDates = getCurrentWeekDateStrings();
+  const completed = await getCompletedDates(playerId, game, weekDates);
+  const streak = await getStreak(playerId, game);
+
+  return {
+    streak,
+    week: weekDates.map((date, weekday) => ({
+      date,
+      weekday,
+      completed: completed.has(date),
+      isToday: date === today,
+    })),
+  };
+}

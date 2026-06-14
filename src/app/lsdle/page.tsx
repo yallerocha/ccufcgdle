@@ -15,6 +15,7 @@ import type { StreakInfo } from '@/client/components/StreakBadge';
 import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
 import { Logo } from '@/client/components/Logo';
+import { GameStreakButton } from '@/client/components/GameStreakButton';
 
 interface CharacterOption {
   id: string;
@@ -292,7 +293,7 @@ export default function GamePage() {
         />
         <h1 className="lsd-gradient-text" style={{ paddingBottom: '0.2rem', display: 'none' }}>LSDLE</h1>
         <p>{t('home.tagline')}</p>
-        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+        <div className="hero-actions">
           <button
             onClick={() => setShowRules(!showRules)}
             className="btn btn-secondary"
@@ -301,6 +302,8 @@ export default function GamePage() {
             <HelpCircle size={16} />
             {showRules ? t('home.hideRules') : t('home.showRules')}
           </button>
+
+          <GameStreakButton streakEndpoint="/api/game/streak" refreshKey={isWon} />
 
           <Link
             href="/lsdle/ranking"

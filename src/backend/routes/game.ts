@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { getActiveUsers, getOrCreateDailyCharacter, compareCharacters, gameView, countPersonOfDayAppearances } from '../../server/game';
-import { recordStreakSolve, getStreak, type StreakInfo } from '../../server/streak';
+import { recordStreakSolve, getStreak, getStreakWeek, type StreakInfo } from '../../server/streak';
 import { computeLeaderboard } from '../../server/score';
 import { getLocalDateString } from '../../shared/utils';
 import { validateDailyMessage } from '../../shared/validation';
@@ -222,6 +222,17 @@ router.post('/guess', withAuth, async (req, res) => {
   } catch (error) {
     console.error('Error handling guess:', error);
     return res.status(500).json({ error: 'Erro interno ao processar o palpite.' });
+  }
+});
+
+// GET /api/game/streak — current streak + this week's completion calendar.
+router.get('/streak', requireAuth, async (req, res) => {
+  try {
+    const data = await getStreakWeek(req.auth!.userId, 'lsdle');
+    return res.json(data);
+  } catch (error) {
+    console.error('Error loading lsdle streak:', error);
+    return res.status(500).json({ error: 'Erro ao carregar a sequência.' });
   }
 });
 

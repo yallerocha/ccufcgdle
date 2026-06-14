@@ -13,6 +13,7 @@ import { ForcaResultModal } from '@/client/components/ForcaResultModal';
 import type { StreakInfo } from '@/client/components/StreakBadge';
 import { apiFetch } from '@/client/lib/api';
 import { Logo } from '@/client/components/Logo';
+import { GameStreakButton } from '@/client/components/GameStreakButton';
 
 type Status = 'playing' | 'won' | 'lost';
 
@@ -240,11 +241,12 @@ export default function ForcaPage() {
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Logo alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
         <p>{t('forca.tagline')}</p>
-        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+        <div className="hero-actions">
           <button onClick={() => setShowRules(!showRules)} className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
             <HelpCircle size={16} />
             {showRules ? t('forca.hideRules') : t('forca.showRules')}
           </button>
+          <GameStreakButton streakEndpoint="/api/forca/streak" refreshKey={status} />
           <Link href="/forca/ranking" className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}>
             <Trophy size={16} style={{ color: 'var(--color-partial)' }} />
             {t('forca.viewRanking')}

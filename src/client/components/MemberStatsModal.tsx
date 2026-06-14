@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Trophy, Flame, Crown, Skull, Gamepad2, Type, Ban, Clock, Target } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { ModalColorBar } from '@/client/components/ModalColorBar';
 
 interface GameStats {
   wins: number;
@@ -70,16 +71,8 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-wide" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-color-bar modal-color-bar--top">
-          <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-purple)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-magenta)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-red)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
-        </div>
-
+      <div className="modal-content modal-wide modal-has-bottom-bar" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-body">
         {loading ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('members.statsLoading')}</p>
         ) : error || !data ? (
@@ -155,6 +148,8 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
             </button>
           </>
         )}
+        </div>
+        <ModalColorBar />
       </div>
     </div>,
     document.body

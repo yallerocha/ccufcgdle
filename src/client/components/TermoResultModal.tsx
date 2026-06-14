@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Trophy, Frown, Clock } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
+import { ModalColorBar } from '@/client/components/ModalColorBar';
 
 interface RankingEntry {
   rank: number;
@@ -69,7 +70,8 @@ export function TermoResultModal({
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content modal-has-bottom-bar" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-body">
         {won ? (
           <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
         ) : (
@@ -154,14 +156,8 @@ export function TermoResultModal({
         <button onClick={onClose} className="btn btn-secondary" style={{ width: '100%' }}>
           {t('termo.modal.close')}
         </button>
-        <div className="modal-color-bar">
-          <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-purple)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-magenta)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-red)' }} />
-          <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
         </div>
+        <ModalColorBar />
       </div>
     </div>,
     document.body

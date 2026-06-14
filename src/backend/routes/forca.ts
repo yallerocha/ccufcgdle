@@ -3,7 +3,7 @@ import { prisma } from '../../server/db';
 import { getLocalDateString } from '../../shared/utils';
 import { normalize } from '../../server/termo';
 import { MAX_WRONG, getOrCreateDailyWord, countWrong, isSolved } from '../../server/forca';
-import { recordStreakSolve, getStreak, type StreakInfo } from '../../server/streak';
+import { recordStreakSolve, getStreak, getStreakWeek, type StreakInfo } from '../../server/streak';
 import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
@@ -133,6 +133,17 @@ router.post('/guess', withAuth, async (req, res) => {
   } catch (error) {
     console.error('Error handling forca guess:', error);
     return res.status(500).json({ error: 'Erro interno ao processar o palpite.' });
+  }
+});
+
+// GET /api/forca/streak — current streak + this week's completion calendar.
+router.get('/streak', requireAuth, async (req, res) => {
+  try {
+    const data = await getStreakWeek(req.auth!.userId, 'forca');
+    return res.json(data);
+  } catch (error) {
+    console.error('Error loading forca streak:', error);
+    return res.status(500).json({ error: 'Erro ao carregar a sequência.' });
   }
 });
 

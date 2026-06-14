@@ -10,7 +10,7 @@ import {
   evaluateGuess,
   getOrCreateDailyWord,
 } from '../../server/termo';
-import { recordStreakSolve, getStreak, type StreakInfo } from '../../server/streak';
+import { recordStreakSolve, getStreak, getStreakWeek, type StreakInfo } from '../../server/streak';
 import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
@@ -108,6 +108,17 @@ router.post('/guess', withAuth, async (req, res) => {
   } catch (error) {
     console.error('Error handling termo guess:', error);
     return res.status(500).json({ error: 'Erro interno ao processar o palpite.' });
+  }
+});
+
+// GET /api/termo/streak — current streak + this week's completion calendar.
+router.get('/streak', requireAuth, async (req, res) => {
+  try {
+    const data = await getStreakWeek(req.auth!.userId, 'termo');
+    return res.json(data);
+  } catch (error) {
+    console.error('Error loading termo streak:', error);
+    return res.status(500).json({ error: 'Erro ao carregar a sequência.' });
   }
 });
 

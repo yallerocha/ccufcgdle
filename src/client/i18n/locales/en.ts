@@ -136,6 +136,11 @@ export const en: Dictionary = {
   streak: {
     label: 'Streak',
     best: 'Best',
+    openButton: 'Streak',
+    weekTitle: 'This week',
+    loading: 'Loading...',
+    loginLink: 'Sign in',
+    weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     days_one: '{{count}} day',
     days_other: '{{count}} days',
     loginHint: 'Sign in to keep your daily streak.',

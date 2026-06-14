@@ -132,6 +132,11 @@ export const pt = {
   streak: {
     label: 'Sequência',
     best: 'Melhor',
+    openButton: 'Sequência',
+    weekTitle: 'Esta semana',
+    loading: 'Carregando...',
+    loginLink: 'Entrar',
+    weekdays: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
     days_one: '{{count}} dia',
     days_other: '{{count}} dias',
     loginHint: 'Faça login para manter sua sequência diária.',
