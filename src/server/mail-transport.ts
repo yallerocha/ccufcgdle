@@ -32,13 +32,22 @@ export function getMailTransport(): Transporter | null {
   const port = Number(process.env.SMTP_PORT || 587);
   const secure = process.env.SMTP_SECURE === 'true' || port === 465;
   const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS;
+  const pass = process.env.SMTP_PASS?.trim();
+  const isLocalSmtp =
+    host === 'mailpit' || host === 'localhost' || host === '127.0.0.1';
+
+  if (!isLocalSmtp && (!user || !pass)) {
+    throw new Error(
+      'SMTP_USER e SMTP_PASS são obrigatórios para enviar email (use senha de app no Gmail).',
+    );
+  }
 
   cachedTransport = nodemailer.createTransport({
     host,
     port,
     secure,
-    auth: user ? { user, pass: pass ?? '' } : undefined,
+    auth: user && pass ? { user, pass } : undefined,
+    requireTLS: !secure && port === 587 && !isLocalSmtp,
   });
 
   return cachedTransport;
