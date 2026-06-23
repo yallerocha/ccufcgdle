@@ -17,31 +17,37 @@ export const THEME_BG_COLORS: Record<Theme, string> = {
   dark: '#0a0a0c',
 };
 
-/** CSS color-scheme with `only` — stops in-app browsers (e.g. WhatsApp) from auto-inverting. */
-export function themeColorScheme(theme: Theme): string {
-  return theme === 'light' ? 'only light' : 'only dark';
+/** Single active scheme — must match data-theme (not "light dark", which follows the OS). */
+export function themeColorScheme(theme: Theme): Theme {
+  return theme;
+}
+
+function syncColorSchemeMeta(theme: Theme) {
+  const meta = document.querySelector('meta[name="color-scheme"]');
+  if (meta) meta.setAttribute('content', theme);
 }
 
 /** Apply theme on the client (toggle, hydration sync). */
 export function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.dataset.theme = theme;
-  root.style.colorScheme = themeColorScheme(theme);
+  root.style.colorScheme = theme;
   root.style.backgroundColor = THEME_BG_COLORS[theme];
   if (document.body) {
     document.body.style.backgroundColor = THEME_BG_COLORS[theme];
   }
 
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', THEME_META_COLORS[theme]);
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeColorMeta) themeColorMeta.setAttribute('content', THEME_META_COLORS[theme]);
+  syncColorSchemeMeta(theme);
 
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
     document.cookie = `${THEME_COOKIE}=${theme};path=/;max-age=31536000;SameSite=Lax`;
   } catch {
-    /* private mode / restricted WebView */
+    /* private mode / restricted storage */
   }
 }
 
 /** Blocking inline script (layout <head>) — must stay self-contained. */
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var K='theme';var html=document.documentElement;var ls=localStorage.getItem(K);var stored=(ls==='light'||ls==='dark')?ls:null;var attr=html.getAttribute('data-theme');var fromAttr=(attr==='light'||attr==='dark')?attr:null;var theme=stored||fromAttr||'dark';var scheme=theme==='light'?'only light':'only dark';var bg=theme==='light'?'#fafafa':'#0a0a0c';html.setAttribute('data-theme',theme);html.style.colorScheme=scheme;html.style.backgroundColor=bg;var meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',bg);document.cookie=K+'='+theme+';path=/;max-age=31536000;SameSite=Lax';function paintBody(){if(document.body)document.body.style.backgroundColor=bg;}if(document.body)paintBody();else document.addEventListener('DOMContentLoaded',paintBody);}catch(e){var html=document.documentElement;html.setAttribute('data-theme','dark');html.style.colorScheme='only dark';html.style.backgroundColor='#0a0a0c';}})();`;
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var K='theme';var html=document.documentElement;var ls=localStorage.getItem(K);var stored=(ls==='light'||ls==='dark')?ls:null;var attr=html.getAttribute('data-theme');var fromAttr=(attr==='light'||attr==='dark')?attr:null;var theme=stored||fromAttr||'dark';var bg=theme==='light'?'#fafafa':'#0a0a0c';html.setAttribute('data-theme',theme);html.style.colorScheme=theme;html.style.backgroundColor=bg;var tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.setAttribute('content',bg);var cs=document.querySelector('meta[name="color-scheme"]');if(cs)cs.setAttribute('content',theme);document.cookie=K+'='+theme+';path=/;max-age=31536000;SameSite=Lax';function paintBody(){if(document.body)document.body.style.backgroundColor=bg;}if(document.body)paintBody();else document.addEventListener('DOMContentLoaded',paintBody);}catch(e){var h=document.documentElement;h.setAttribute('data-theme','dark');h.style.colorScheme='dark';h.style.backgroundColor='#0a0a0c';}})();`;
