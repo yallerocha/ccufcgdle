@@ -139,6 +139,7 @@ export default function Navbar() {
                   <X size={22} />
                 </button>
               </div>
+              <div className="nav-menu-drawer-color-bar lsd-gradient-bg" aria-hidden="true" />
               <div className="nav-menu-links">{navLinksMain}</div>
               {logoutButton && (
                 <div className="nav-menu-footer">{logoutButton}</div>
