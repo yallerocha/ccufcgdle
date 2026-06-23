@@ -7,6 +7,7 @@ export default function Footer() {
   const { t } = useTranslation();
   return (
     <footer
+      className="site-footer"
       style={{
         textAlign: 'center',
         color: 'var(--footer-text)',
@@ -25,7 +26,7 @@ export default function Footer() {
         <div style={{ flex: 1, backgroundColor: 'var(--lsd-orange)' }}></div>
       </div>
       
-      <div style={{ padding: '2rem 0', fontSize: '0.9rem' }}>
+      <div className="site-footer-content">
         <p>
           {t('footer.line1')}
           <br />
