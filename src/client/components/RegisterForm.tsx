@@ -132,7 +132,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
     }
   };
 
-  const showGoogle = authConfig?.googleOAuthEnabled;
+  const showGoogle = Boolean(authConfig?.googleOAuthEnabled && authConfig?.googleClientId);
 
   if (pendingEmail) {
     return (
@@ -203,6 +203,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
         {showGoogle && (
           <div style={{ marginBottom: '1.25rem' }}>
             <GoogleSignInButton
+              clientId={authConfig!.googleClientId!}
               onSuccess={handleGoogleSuccess}
               onError={() => setErrorMsg(t('login.googleError'))}
               disabled={submitting || googleSubmitting}

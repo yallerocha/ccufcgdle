@@ -5,8 +5,13 @@ import { MAX_PHOTO_BYTES } from '../shared/validation';
 let oauthClient: OAuth2Client | null = null;
 
 export function isGoogleOAuthEnabled(): boolean {
+  return Boolean(getGoogleClientId());
+}
+
+export function getGoogleClientId(): string | undefined {
   const id = process.env.GOOGLE_CLIENT_ID?.trim();
-  return Boolean(id && !id.startsWith('GOCSPX-'));
+  if (!id || id.startsWith('GOCSPX-')) return undefined;
+  return id;
 }
 
 function assertValidGoogleClientId(clientId: string): void {

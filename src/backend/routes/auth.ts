@@ -16,6 +16,7 @@ import {
 } from '../../server/password-reset';
 import {
   isGoogleOAuthEnabled,
+  getGoogleClientId,
   verifyGoogleIdToken,
   fetchGooglePhotoAsDataUrl,
   generateUniqueNickname,
@@ -42,10 +43,12 @@ function authSessionResponse(user: User) {
 
 // GET /api/auth/config — public auth settings for the client.
 router.get('/config', (_req, res) => {
+  const googleClientId = getGoogleClientId();
   res.json({
     emailVerificationRequired: isEmailVerificationRequired(),
     passwordResetByEmailEnabled: isPasswordResetByEmailEnabled(),
-    googleOAuthEnabled: isGoogleOAuthEnabled(),
+    googleOAuthEnabled: Boolean(googleClientId),
+    googleClientId,
   });
 });
 

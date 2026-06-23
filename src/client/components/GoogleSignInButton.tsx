@@ -4,14 +4,13 @@ import React from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 
 interface GoogleSignInButtonProps {
+  clientId: string;
   onSuccess: (credential: string) => void;
   onError?: () => void;
   disabled?: boolean;
 }
 
-export function GoogleSignInButton({ onSuccess, onError, disabled }: GoogleSignInButtonProps) {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
-
+export function GoogleSignInButton({ clientId, onSuccess, onError, disabled }: GoogleSignInButtonProps) {
   if (!clientId) return null;
 
   return (

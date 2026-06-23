@@ -7,6 +7,7 @@ export interface AuthConfig {
   emailVerificationRequired: boolean;
   passwordResetByEmailEnabled: boolean;
   googleOAuthEnabled: boolean;
+  googleClientId?: string;
 }
 
 let cached: AuthConfig | null = null;
@@ -24,6 +25,10 @@ export function fetchAuthConfig(): Promise<AuthConfig> {
             data.passwordResetByEmailEnabled ?? data.emailVerificationRequired,
           ),
           googleOAuthEnabled: Boolean(data.googleOAuthEnabled),
+          googleClientId:
+            typeof data.googleClientId === 'string' && data.googleClientId.trim()
+              ? data.googleClientId.trim()
+              : undefined,
         };
         return cached;
       })

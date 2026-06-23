@@ -97,7 +97,7 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
     }
   };
 
-  const showGoogle = authConfig?.googleOAuthEnabled;
+  const showGoogle = Boolean(authConfig?.googleOAuthEnabled && authConfig?.googleClientId);
 
   return (
     <div style={{ maxWidth: '450px', margin: '4rem auto 0 auto', width: '100%' }} className="fade-in">
@@ -156,6 +156,7 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
                 <span>{t('login.orContinueWith')}</span>
               </div>
               <GoogleSignInButton
+                clientId={authConfig!.googleClientId!}
                 onSuccess={handleGoogleSuccess}
                 onError={() => setErrorMsg(t('login.googleError'))}
                 disabled={submitting || googleSubmitting}
