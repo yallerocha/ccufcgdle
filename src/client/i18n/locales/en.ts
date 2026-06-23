@@ -252,6 +252,7 @@ export const en: Dictionary = {
       noResults: 'No active person found.',
     },
     viewStats: 'View Victory Stats',
+    scrollHint: '← Scroll horizontally to see more →',
     errors: {
       loadGame: 'Failed to load game data.',
       guess: 'Failed to process guess.',

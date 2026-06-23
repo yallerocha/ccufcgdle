@@ -248,6 +248,7 @@ export const pt = {
       noResults: 'Nenhuma pessoa ativa encontrada.',
     },
     viewStats: 'Ver Estatísticas de Vitória',
+    scrollHint: '← Deslize horizontalmente para ver mais →',
     errors: {
       loadGame: 'Erro ao carregar dados do jogo.',
       guess: 'Erro ao processar palpite.',

@@ -34,8 +34,8 @@ export default function LanguageToggle() {
       title={next === 'en' ? 'English' : 'Português'}
       suppressHydrationWarning
     >
-      <Languages size={16} />
-      <span>{(mounted ? current : 'pt').toUpperCase()}</span>
+      <Languages size={16} aria-hidden />
+      <span className="lang-toggle-label">{(mounted ? current : 'pt').toUpperCase()}</span>
     </button>
   );
 }

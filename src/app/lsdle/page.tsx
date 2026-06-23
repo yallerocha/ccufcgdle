@@ -435,8 +435,11 @@ export default function GamePage() {
           {/* Guesses Board */}
           {guesses.length > 0 && (
             <div className="game-board fade-in">
-              {/* Header Row */}
-              <div className="grid-row grid-header">
+              <p className="game-board-scroll-hint">{t('home.scrollHint')}</p>
+              <div className="game-board-scroll">
+                <div className="game-board-inner">
+                  {/* Header Row */}
+                  <div className="grid-row grid-header">
                 <div className="grid-header-cell">
                   <span>{t('home.headers.name')}</span>
                   <InfoTooltip text={t('home.headerTips.name')} />
@@ -550,6 +553,8 @@ export default function GamePage() {
                   </div>
                 </div>
               ))}
+                </div>
+              </div>
             </div>
           )}
 
