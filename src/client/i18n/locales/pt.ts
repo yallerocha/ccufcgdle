@@ -31,7 +31,6 @@ export const pt = {
     thPlayer: 'Jogador',
     thWins: 'Vitórias',
     thPoints: 'Pontos',
-    scrollHint: '← Deslize horizontalmente para ver mais →',
     howTitle: 'Como pontua?',
     howBody: 'Cada rodada vencida vale 10 pontos, mais um bônus por eficiência (menos tentativas/erros = mais pontos), somado entre LSDLE, Termo e Forca.',
   },

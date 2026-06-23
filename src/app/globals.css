@@ -2431,23 +2431,9 @@ input:focus, select:focus, textarea:focus {
   padding: 1rem 1.5rem;
 }
 
-.podium-ranking-scroll-hint {
-  display: none;
-}
-
 @media (max-width: 768px) {
   .podium-ranking-card {
     padding: 1rem;
-  }
-
-  .podium-ranking-scroll-hint {
-    display: block;
-    margin: 0 0 0.65rem;
-    text-align: center;
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: var(--text-dim);
-    letter-spacing: 0.01em;
   }
 
   .podium-ranking-scroll {

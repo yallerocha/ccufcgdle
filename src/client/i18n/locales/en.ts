@@ -35,7 +35,6 @@ export const en: Dictionary = {
     thPlayer: 'Player',
     thWins: 'Wins',
     thPoints: 'Points',
-    scrollHint: '← Scroll horizontally to see more →',
     howTitle: 'How scoring works',
     howBody: 'Each round won is worth 10 points, plus an efficiency bonus (fewer tries/mistakes = more points), summed across LSDLE, Termo and Forca.',
   },

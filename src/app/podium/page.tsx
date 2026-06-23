@@ -132,7 +132,6 @@ export default function PodiumPage() {
           {/* Remaining players */}
           {rest.length > 0 && (
             <div className="card podium-ranking-card">
-              <p className="podium-ranking-scroll-hint">{t('podium.scrollHint')}</p>
               <div className="admin-table-container podium-ranking-scroll">
                 <table className="admin-table podium-ranking-table">
                   <thead>
