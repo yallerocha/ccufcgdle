@@ -8,6 +8,7 @@ import { getLocalDateString } from '@/shared/utils';
 import type { GuessFeedback } from '@/server/game';
 import { HelpCircle, Search, Trophy, Info } from 'lucide-react';
 import { VictoryModal } from '@/client/components/VictoryModal';
+import { LsdleGameProfileCarousel, lsdleProfileDismissKey } from '@/client/components/LsdleGameProfileCarousel';
 import { InfoTooltip } from '@/client/components/InfoTooltip';
 import { BackLink } from '@/client/components/BackLink';
 import { LoadingState } from '@/client/components/LoadingState';
@@ -16,6 +17,7 @@ import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
 import { Logo } from '@/client/components/Logo';
 import { GameStreakButton } from '@/client/components/GameStreakButton';
+import { isProfileComplete } from '@/shared/validation';
 
 interface CharacterOption {
   id: string;
@@ -38,7 +40,7 @@ function refreshGuessPhotos(guesses: GuessFeedback[], characters: CharacterOptio
 
 export default function GamePage() {
   const { t } = useTranslation();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const [characters, setCharacters] = useState<CharacterOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -56,6 +58,7 @@ export default function GamePage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showRules, setShowRules] = useState(false);
+  const [showProfileCarousel, setShowProfileCarousel] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const todayStr = getLocalDateString();
@@ -158,6 +161,19 @@ export default function GamePage() {
     // account.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayStr, user?.id, authLoading]);
+
+  useEffect(() => {
+    if (authLoading || loading || !user) {
+      setShowProfileCarousel(false);
+      return;
+    }
+    if (isProfileComplete(user)) {
+      setShowProfileCarousel(false);
+      return;
+    }
+    const dismissed = localStorage.getItem(lsdleProfileDismissKey(user.id));
+    setShowProfileCarousel(!dismissed);
+  }, [user, authLoading, loading]);
 
   // Click outside listener for dropdown
   useEffect(() => {
@@ -556,6 +572,21 @@ export default function GamePage() {
             onClose={() => setErrorMsg('')}
           />
         </div>
+      )}
+
+      {showProfileCarousel && user && (
+        <LsdleGameProfileCarousel
+          user={user}
+          onComplete={async () => {
+            localStorage.removeItem(lsdleProfileDismissKey(user.id));
+            setShowProfileCarousel(false);
+            await refreshUser();
+          }}
+          onSkip={() => {
+            localStorage.setItem(lsdleProfileDismissKey(user.id), '1');
+            setShowProfileCarousel(false);
+          }}
+        />
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../../server/db';
 import { signToken } from '../../server/auth';
 import { requireAuth } from '../middleware/auth';
-import { validateCharacterFields, isAllowedEmailDomain, isStrongPassword } from '../../shared/validation';
+import { validateCharacterFields, validateCharacterFieldValues, validatePhoto, isAllowedEmailDomain, isStrongPassword } from '../../shared/validation';
 import { getAllowedProjectNames } from '../../server/projects';
 import { isEmailVerified, issueVerificationToken, consumeVerificationToken, findUnverifiedUserByEmail } from '../../server/email-verification';
 import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../../server/email-verification-config';
@@ -27,7 +27,7 @@ function authSessionResponse(user: {
   email: string;
   name: string;
   isAdmin: boolean;
-  passwordHash: string;
+  passwordHash: string | null;
   [key: string]: unknown;
 }) {
   const token = signToken({
@@ -122,18 +122,11 @@ router.post('/register', async (req, res) => {
       email,
       password,
       name,
-      gender,
-      role,
-      entrySemester,
-      isColab,
-      area,
-      projects,
-      likesCoffee,
       photoUrl,
     } = req.body ?? {};
 
-    if (!email || !password || !name || !gender || !role || !entrySemester || !isColab || !area || !likesCoffee) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' });
     }
 
     if (typeof name !== 'string' || name.length < 3 || name.length > 25) {
@@ -157,13 +150,9 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    const allowedProjects = await getAllowedProjectNames();
-    const fieldError = validateCharacterFields(
-      { gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl },
-      { allowedProjects }
-    );
-    if (fieldError) {
-      return res.status(400).json({ error: fieldError });
+    const photoError = validatePhoto(photoUrl);
+    if (photoError) {
+      return res.status(400).json({ error: photoError });
     }
 
     const existingUser = await prisma.user.findFirst({
@@ -213,14 +202,14 @@ router.post('/register', async (req, res) => {
         email: email.toLowerCase(),
         passwordHash,
         name,
-        gender,
-        role,
-        entrySemester,
-        isColab,
-        area,
-        projects,
-        likesCoffee,
-        photoUrl,
+        gender: '',
+        role: '',
+        entrySemester: '',
+        isColab: '',
+        area: [],
+        projects: [],
+        likesCoffee: '',
+        photoUrl: photoUrl || null,
         lastLogin: new Date(),
         isActive: true,
         emailVerifiedAt: verifyOnRegister ? null : new Date(),
@@ -409,7 +398,7 @@ router.post('/reset-password', async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
 
-    const sameAsCurrent = await bcrypt.compare(password, user.passwordHash);
+    const sameAsCurrent = await bcrypt.compare(password, user.passwordHash ?? DUMMY_PASSWORD_HASH);
     if (sameAsCurrent) {
       return res.status(400).json({ error: 'A nova senha deve ser diferente da atual.' });
     }
@@ -482,25 +471,39 @@ router.put('/me', requireAuth, async (req, res) => {
       projects,
       likesCoffee,
       photoUrl,
+      complete,
     } = req.body ?? {};
 
-    // A photo identical to the one already stored is never re-validated:
-    // legacy photos saved before the format validation existed must not block
-    // unrelated profile updates.
     const current = await prisma.user.findUnique({
       where: { id: req.auth!.userId },
-      select: { photoUrl: true },
     });
-    const photoUnchanged = (photoUrl || '') === (current?.photoUrl || '');
+    if (!current) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const photoUnchanged = photoUrl !== undefined && (photoUrl || '') === (current.photoUrl || '');
+
+    const merged = {
+      gender: typeof gender === 'string' ? gender : current.gender,
+      role: typeof role === 'string' ? role : current.role,
+      entrySemester: typeof entrySemester === 'string' ? entrySemester : current.entrySemester,
+      isColab: typeof isColab === 'string' ? isColab : current.isColab,
+      area: Array.isArray(area) ? area : current.area,
+      projects: Array.isArray(projects) ? projects : current.projects,
+      likesCoffee: typeof likesCoffee === 'string' ? likesCoffee : current.likesCoffee,
+      photoUrl: photoUrl !== undefined ? photoUrl : current.photoUrl,
+    };
 
     const allowedProjects = await getAllowedProjectNames();
-    const fieldError = validateCharacterFields(
-      {
-        gender, role, entrySemester, isColab, area, projects, likesCoffee,
-        photoUrl: photoUnchanged ? null : photoUrl,
-      },
-      { allowedProjects }
-    );
+    const fieldError = complete
+      ? validateCharacterFields(
+          { ...merged, photoUrl: photoUnchanged ? null : merged.photoUrl },
+          { allowedProjects },
+        )
+      : validateCharacterFieldValues(
+          { ...merged, photoUrl: photoUnchanged ? null : merged.photoUrl },
+          { allowedProjects },
+        );
     if (fieldError) {
       return res.status(400).json({ error: fieldError });
     }
@@ -508,14 +511,14 @@ router.put('/me', requireAuth, async (req, res) => {
     const updatedUser = await prisma.user.update({
       where: { id: req.auth!.userId },
       data: {
-        gender,
-        role,
-        entrySemester,
-        isColab,
-        area,
-        projects,
-        likesCoffee,
-        photoUrl,
+        gender: merged.gender,
+        role: merged.role,
+        entrySemester: merged.entrySemester,
+        isColab: merged.isColab,
+        area: merged.area,
+        projects: merged.projects,
+        likesCoffee: merged.likesCoffee,
+        ...(photoUrl !== undefined ? { photoUrl: merged.photoUrl } : {}),
         lastLogin: new Date(),
       },
     });
@@ -559,12 +562,12 @@ router.put('/me/password', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
 
-    const currentMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    const currentMatch = await bcrypt.compare(currentPassword, user.passwordHash ?? DUMMY_PASSWORD_HASH);
     if (!currentMatch) {
       return res.status(401).json({ error: 'Senha atual incorreta.' });
     }
 
-    const sameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash);
+    const sameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash ?? DUMMY_PASSWORD_HASH);
     if (sameAsCurrent) {
       return res.status(400).json({ error: 'A nova senha deve ser diferente da atual.' });
     }

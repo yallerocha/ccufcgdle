@@ -400,6 +400,16 @@ input, select, textarea {
   outline: none;
 }
 
+select {
+  padding-right: 2.5rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1rem;
+  cursor: pointer;
+}
+
 input:focus, select:focus, textarea:focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
@@ -565,7 +575,7 @@ input:focus, select:focus, textarea:focus {
 .info-tooltip-bubble {
   position: fixed;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 1200;
   max-width: 240px;
   width: max-content;
   padding: 0.55rem 0.75rem;
@@ -2198,6 +2208,24 @@ input:focus, select:focus, textarea:focus {
   background-color: var(--bg-board);
 }
 
+.profile-field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.profile-field-label-row .profile-field-label {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-field-label-row .info-tooltip-trigger {
+  flex-shrink: 0;
+}
+
 .profile-field-label,
 .profile-projects-label {
   display: flex;
@@ -2385,4 +2413,88 @@ input:focus, select:focus, textarea:focus {
   .profile-hero-name {
     font-size: 1.3rem;
   }
+}
+
+/* LSDLE game profile onboarding carousel */
+.lsdle-profile-overlay {
+  z-index: 1100;
+}
+
+.lsdle-profile-modal.modal-content {
+  --lsdle-profile-width: min(560px, 94vw);
+  --lsdle-profile-height: min(660px, 92vh);
+  width: var(--lsdle-profile-width);
+  max-width: var(--lsdle-profile-width);
+  height: var(--lsdle-profile-height);
+  max-height: var(--lsdle-profile-height);
+  padding: 1.5rem 1.75rem 0;
+}
+
+.lsdle-profile-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  text-align: left;
+}
+
+.lsdle-profile-step {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.lsdle-profile-modal .modal-title {
+  font-size: 1.45rem;
+  text-align: center;
+}
+
+.lsdle-profile-modal .modal-subtitle {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.lsdle-profile-progress {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
+}
+
+.lsdle-profile-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border-color);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.lsdle-profile-dot--active {
+  background: var(--primary);
+  transform: scale(1.15);
+}
+
+.lsdle-profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.lsdle-profile-nav {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.lsdle-profile-nav-btn {
+  flex: 1;
+  justify-content: center;
 }

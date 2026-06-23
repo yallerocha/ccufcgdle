@@ -36,7 +36,7 @@ export default function VerifyEmailClient() {
           await refreshUser();
           setStatus('success');
           setMessage(data.message || t('verifyEmail.success'));
-          setTimeout(() => router.replace('/profile'), 2500);
+          setTimeout(() => router.replace('/'), 2500);
         } else {
           setStatus('error');
           setMessage(data.error || t('verifyEmail.error'));

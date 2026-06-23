@@ -151,6 +151,70 @@ export function validateCharacterFields(
   return null;
 }
 
+export type ProfileCharacterFields = Pick<
+  CharacterFields,
+  'gender' | 'role' | 'entrySemester' | 'isColab' | 'area' | 'projects' | 'likesCoffee'
+>;
+
+/** True when all character fields required to appear in LSDLE are filled. */
+export function isProfileComplete(input: ProfileCharacterFields): boolean {
+  const inList = (value: string, list: readonly string[]) => list.includes(value);
+
+  if (!inList(input.gender, GENDER_OPTIONS)) return false;
+  if (!inList(input.role, ROLE_OPTIONS)) return false;
+  if (!inList(input.entrySemester, ENTRY_OPTIONS)) return false;
+  if (!inList(input.isColab, COLAB_OPTIONS)) return false;
+  if (!inList(input.likesCoffee, COFFEE_OPTIONS)) return false;
+  if (!Array.isArray(input.area) || input.area.length === 0 || input.area.length > MAX_AREAS_PER_USER) {
+    return false;
+  }
+  if (input.area.some((a) => !inList(a, AREA_OPTIONS))) return false;
+  if (!Array.isArray(input.projects) || input.projects.length !== MAX_PROJECTS_PER_USER) return false;
+  if (typeof input.projects[0] !== 'string' || normalizeProjectName(input.projects[0]) === null) return false;
+  return true;
+}
+
+/** Validates field formats without requiring every attribute to be filled (partial saves). */
+export function validateCharacterFieldValues(
+  input: CharacterFields,
+  options?: { allowedProjects?: ReadonlySet<string> }
+): string | null {
+  const inList = (value: unknown, list: readonly string[]) =>
+    typeof value === 'string' && value !== '' && list.includes(value);
+
+  if (input.gender && !inList(input.gender, GENDER_OPTIONS)) return 'Gênero inválido.';
+  if (input.role && !inList(input.role, ROLE_OPTIONS)) return 'Função inválida.';
+  if (input.entrySemester && !inList(input.entrySemester, ENTRY_OPTIONS)) return 'Semestre de entrada inválido.';
+  if (input.isColab && !inList(input.isColab, COLAB_OPTIONS)) return 'Valor inválido para Colabs.';
+  if (input.likesCoffee && !inList(input.likesCoffee, COFFEE_OPTIONS)) return 'Valor inválido para café.';
+
+  if (Array.isArray(input.area) && input.area.length > 0) {
+    if (input.area.length > MAX_AREAS_PER_USER) {
+      return `Selecione no máximo ${MAX_AREAS_PER_USER} áreas.`;
+    }
+    if (input.area.some((a) => !inList(a, AREA_OPTIONS))) return 'Área inválida.';
+  }
+
+  if (Array.isArray(input.projects) && input.projects.length > 0) {
+    if (input.projects.length > MAX_PROJECTS_PER_USER) {
+      return 'Selecione no máximo um projeto.';
+    }
+    const allowed = options?.allowedProjects;
+    if (!allowed) {
+      if (input.projects.some((p) => typeof p !== 'string' || !(DEFAULT_PROJECT_NAMES as readonly string[]).includes(p))) {
+        return 'Projeto inválido.';
+      }
+    } else if (input.projects.some((p) => typeof p !== 'string' || !allowed.has(p))) {
+      return 'Projeto inválido.';
+    }
+  }
+
+  const photoError = validatePhoto(input.photoUrl);
+  if (photoError) return photoError;
+
+  return null;
+}
+
 // Max length of the message the person of the day may leave for the players who
 // guess them.
 export const MAX_DAILY_MESSAGE_LENGTH = 120;

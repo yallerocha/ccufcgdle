@@ -1,6 +1,7 @@
 import { prisma } from './db';
 import { User } from '@prisma/client';
 import { INACTIVITY_DAYS, getLocalDateString } from '@/shared/utils';
+import { isProfileComplete } from '@/shared/validation';
 
 // Promotes each user's editable attributes into their daily game snapshot
 // (game* fields) at most once per day. Because a profile edit never touches the
@@ -73,7 +74,20 @@ export async function getActiveUsers(): Promise<User[]> {
     }
   });
   // Expose the daily snapshot, not the live (possibly just-edited) attributes.
-  return users.map(gameView);
+  // Only members with a complete game profile can be guessed or picked as daily character.
+  return users
+    .map(gameView)
+    .filter((u) =>
+      isProfileComplete({
+        gender: u.gender,
+        role: u.role,
+        entrySemester: u.entrySemester,
+        isColab: u.isColab,
+        area: u.area,
+        projects: u.projects,
+        likesCoffee: u.likesCoffee,
+      }),
+    );
 }
 
 export async function getOrCreateDailyCharacter(dateStr?: string): Promise<User | null> {

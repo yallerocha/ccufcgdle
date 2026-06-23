@@ -12,6 +12,8 @@ interface PasswordInputProps {
   minLength?: number;
   autoComplete?: string;
   id?: string;
+  onFocus?: React.FocusEventHandler<HTMLInputElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
 }
 
 // Password field with a show/hide ("eye") toggle.
@@ -23,6 +25,8 @@ export function PasswordInput({
   minLength,
   autoComplete,
   id,
+  onFocus,
+  onBlur,
 }: PasswordInputProps) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
@@ -39,6 +43,8 @@ export function PasswordInput({
         required={required}
         minLength={minLength}
         autoComplete={autoComplete}
+        onFocus={onFocus}
+        onBlur={onBlur}
         style={{ paddingRight: '2.75rem', width: '100%' }}
       />
       <button

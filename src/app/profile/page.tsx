@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { BackLink } from '@/client/components/BackLink';
@@ -10,6 +11,7 @@ import { RegisterForm } from '@/client/components/RegisterForm';
 import { ProfileEditForm } from '@/client/components/ProfileEditForm';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { t } = useTranslation();
   const { user, loading, login, refreshUser } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
@@ -32,7 +34,10 @@ export default function ProfilePage() {
   } else {
     content = (
       <RegisterForm
-        onRegisterSuccess={() => refreshUser()}
+        onRegisterSuccess={async () => {
+          await refreshUser();
+          router.replace('/');
+        }}
         onSwitchToLogin={() => setIsRegistering(false)}
       />
     );
