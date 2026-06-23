@@ -30,10 +30,31 @@ const PODIUM_COLOR: Record<number, string> = {
 };
 
 function Avatar({ entry, size }: { entry: Entry; size: number }) {
+  const style: React.CSSProperties = {
+    width: size,
+    height: size,
+    minWidth: size,
+    flexShrink: 0,
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '3px solid var(--primary)',
+    boxSizing: 'border-box',
+  };
+
   return entry.photoUrl ? (
-    <img src={entry.photoUrl} alt={entry.name} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} />
+    <img src={entry.photoUrl} alt={entry.name} style={style} />
   ) : (
-    <div style={{ width: size, height: size, borderRadius: '50%', backgroundColor: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, border: '3px solid var(--primary)', fontSize: size * 0.32 }}>
+    <div
+      style={{
+        ...style,
+        backgroundColor: 'var(--bg-input)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 700,
+        fontSize: size * 0.32,
+      }}
+    >
       {entry.name.slice(0, 2).toUpperCase()}
     </div>
   );
@@ -128,9 +149,9 @@ export default function PodiumPage() {
                         <tr key={entry.id} style={{ cursor: 'pointer', ...(isMe ? { backgroundColor: 'rgba(69, 98, 193, 0.08)' } : {}) }} onClick={() => setSelectedId(entry.id)}>
                           <td style={{ fontWeight: 700, textAlign: 'center' }}>{entry.rank}</td>
                           <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <div className="ranking-player-cell">
                               <Avatar entry={entry} size={28} />
-                              <span style={{ fontWeight: 600 }}>{entry.name}</span>
+                              <span className="ranking-player-name">{entry.name}</span>
                             </div>
                           </td>
                           <td style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{entry.wins}</td>
