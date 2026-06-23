@@ -28,10 +28,9 @@ function displayMemberCount(
 ): number {
   const wasSaved = savedProjects.includes(project.name);
   const isSelected = selected.includes(project.name);
-  let count = project.memberCount;
-  if (isSelected && !wasSaved) count += 1;
-  if (!isSelected && wasSaved) count -= 1;
-  return Math.max(0, count);
+  if (wasSaved === isSelected) return project.memberCount;
+  if (isSelected) return project.memberCount + 1;
+  return Math.max(0, project.memberCount - 1);
 }
 
 function normalizeSearch(s: string): string {

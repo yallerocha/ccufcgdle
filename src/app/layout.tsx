@@ -4,6 +4,7 @@ import { AuthProvider } from "@/client/context/AuthContext";
 import Navbar from "@/client/components/Navbar";
 import I18nProvider from "@/client/i18n/I18nProvider";
 import Footer from "@/client/components/Footer";
+import { AppGoogleOAuthProvider } from "@/client/providers/AppGoogleOAuthProvider";
 
 export const metadata: Metadata = {
   title: "LSDLE - Jogo do LSD da UFCG",
@@ -26,15 +27,17 @@ export default function RootLayout({
       </head>
       <body>
         <I18nProvider>
-          <AuthProvider>
-            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-              <Navbar />
-              <main className="container fade-in" style={{ flex: 1, paddingBottom: '3rem', display: 'flex', flexDirection: 'column' }}>
-                {children}
-              </main>
-              <Footer />
-            </div>
-          </AuthProvider>
+          <AppGoogleOAuthProvider>
+            <AuthProvider>
+              <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                <Navbar />
+                <main className="container fade-in" style={{ flex: 1, paddingBottom: '3rem', display: 'flex', flexDirection: 'column' }}>
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </AuthProvider>
+          </AppGoogleOAuthProvider>
         </I18nProvider>
       </body>
     </html>

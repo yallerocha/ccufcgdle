@@ -19,12 +19,15 @@ export interface User {
   isAdmin: boolean;
   createdAt: string;
   photoUrl?: string | null;
+  hasPassword?: boolean;
+  usesGoogle?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; code?: string; email?: string }>;
+  loginWithGoogle: (credential: string) => Promise<{ success: boolean; error?: string; code?: string; email?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -81,6 +84,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async (credential: string) => {
+    try {
+      const response = await apiFetch('/api/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ credential }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        if (data.token) setToken(data.token);
+        setUser(data.user);
+        return { success: true };
+      }
+      return {
+        success: false,
+        error: data.error || 'Erro ao entrar com Google.',
+        code: data.code,
+        email: data.email,
+      };
+    } catch {
+      return { success: false, error: 'Erro de conexão com o servidor.' };
+    }
+  };
+
   const logout = async () => {
     // Stateless bearer auth: just drop the token client-side.
     clearToken();
@@ -88,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

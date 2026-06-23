@@ -8,6 +8,8 @@ import { apiFetch } from '@/client/lib/api';
 import { useAuthConfig } from '@/client/lib/auth-config';
 import { PasswordInput } from '@/client/components/PasswordInput';
 import { Toast } from '@/client/components/Toast';
+import { GoogleSignInButton } from '@/client/components/GoogleSignInButton';
+import { useAuth } from '@/client/context/AuthContext';
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -17,6 +19,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: LoginFormProps) {
   const { t } = useTranslation();
+  const { loginWithGoogle } = useAuth();
   const authConfig = useAuthConfig();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,6 +27,7 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
   const [infoMsg, setInfoMsg] = useState('');
   const [pendingEmail, setPendingEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
 
   const handleResend = async () => {
@@ -70,6 +74,30 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
       setSubmitting(false);
     }
   };
+
+  const handleGoogleSuccess = async (credential: string) => {
+    setErrorMsg('');
+    setInfoMsg('');
+    setPendingEmail('');
+    setGoogleSubmitting(true);
+    try {
+      const res = await loginWithGoogle(credential);
+      if (res.success) {
+        onLoginSuccess();
+      } else if (res.code === 'EMAIL_NOT_VERIFIED') {
+        setPendingEmail(res.email || '');
+        setErrorMsg(res.error || t('login.error'));
+      } else {
+        setErrorMsg(res.error || t('login.googleError'));
+      }
+    } catch {
+      setErrorMsg(t('login.errorConn'));
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  };
+
+  const showGoogle = authConfig?.googleOAuthEnabled;
 
   return (
     <div style={{ maxWidth: '450px', margin: '4rem auto 0 auto', width: '100%' }} className="fade-in">
@@ -118,9 +146,22 @@ export function LoginForm({ onLoginSuccess, onSwitchToRegister, loginFn }: Login
             />
           </div>
 
-          <button type="submit" disabled={submitting} className="btn" style={{ width: '100%' }}>
+          <button type="submit" disabled={submitting || googleSubmitting} className="btn" style={{ width: '100%' }}>
             {submitting ? t('login.submitting') : t('login.submit')}
           </button>
+
+          {showGoogle && (
+            <>
+              <div className="auth-divider">
+                <span>{t('login.orContinueWith')}</span>
+              </div>
+              <GoogleSignInButton
+                onSuccess={handleGoogleSuccess}
+                onError={() => setErrorMsg(t('login.googleError'))}
+                disabled={submitting || googleSubmitting}
+              />
+            </>
+          )}
 
           {authConfig && (
             <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>

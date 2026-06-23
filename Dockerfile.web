@@ -22,6 +22,8 @@ COPY . .
 # will call must be provided here as a build arg.
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 # Prisma Client is only needed to satisfy type-checking during `next build`
 # (the frontend never connects to the database at runtime).

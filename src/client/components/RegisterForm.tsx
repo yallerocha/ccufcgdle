@@ -8,6 +8,9 @@ import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
 import { PasswordInput } from '@/client/components/PasswordInput';
 import { Toast } from '@/client/components/Toast';
+import { GoogleSignInButton } from '@/client/components/GoogleSignInButton';
+import { useAuth } from '@/client/context/AuthContext';
+import { useAuthConfig } from '@/client/lib/auth-config';
 
 interface RegisterFormProps {
   onRegisterSuccess: () => void;
@@ -16,6 +19,8 @@ interface RegisterFormProps {
 
 export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFormProps) {
   const { t } = useTranslation();
+  const { loginWithGoogle } = useAuth();
+  const authConfig = useAuthConfig();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +30,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
   const [resending, setResending] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
@@ -108,6 +114,26 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
     }
   };
 
+  const handleGoogleSuccess = async (credential: string) => {
+    setErrorMsg('');
+    setInfoMsg('');
+    setGoogleSubmitting(true);
+    try {
+      const res = await loginWithGoogle(credential);
+      if (res.success) {
+        onRegisterSuccess();
+      } else {
+        setErrorMsg(res.error || t('login.googleError'));
+      }
+    } catch {
+      setErrorMsg(t('register.errorConn'));
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  };
+
+  const showGoogle = authConfig?.googleOAuthEnabled;
+
   if (pendingEmail) {
     return (
       <div style={{ maxWidth: '600px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
@@ -174,6 +200,19 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
 
         <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
 
+        {showGoogle && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            <GoogleSignInButton
+              onSuccess={handleGoogleSuccess}
+              onError={() => setErrorMsg(t('login.googleError'))}
+              disabled={submitting || googleSubmitting}
+            />
+            <div className="auth-divider" style={{ marginTop: '1.25rem' }}>
+              <span>{t('register.orWithEmail')}</span>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="profile-field-label">
@@ -238,7 +277,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
           </div>
 
           <div style={{ marginTop: '2rem' }}>
-            <button type="submit" disabled={submitting} className="btn" style={{ width: '100%' }}>
+            <button type="submit" disabled={submitting || googleSubmitting} className="btn" style={{ width: '100%' }}>
               {submitting ? t('register.submitting') : t('register.submit')}
             </button>
           </div>

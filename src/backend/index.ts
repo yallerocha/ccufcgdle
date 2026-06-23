@@ -60,6 +60,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api', apiLimiter);
 app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/google', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/resend-verification', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
@@ -89,6 +90,9 @@ async function start() {
     );
     console.log(
       `[api] Password reset by email: ${isPasswordResetByEmailEnabled() ? 'enabled' : 'disabled'}`
+    );
+    console.log(
+      `[api] Google OAuth: ${process.env.GOOGLE_CLIENT_ID?.trim() ? 'enabled' : 'disabled'}`
     );
   });
 }

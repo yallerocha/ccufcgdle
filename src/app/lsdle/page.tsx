@@ -582,9 +582,10 @@ export default function GamePage() {
             setShowProfileCarousel(false);
             await refreshUser();
           }}
-          onSkip={() => {
+          onSkip={async () => {
             localStorage.setItem(lsdleProfileDismissKey(user.id), '1');
             setShowProfileCarousel(false);
+            await refreshUser();
           }}
         />
       )}

@@ -6,6 +6,7 @@ import { apiFetch } from '@/client/lib/api';
 export interface AuthConfig {
   emailVerificationRequired: boolean;
   passwordResetByEmailEnabled: boolean;
+  googleOAuthEnabled: boolean;
 }
 
 let cached: AuthConfig | null = null;
@@ -22,6 +23,7 @@ export function fetchAuthConfig(): Promise<AuthConfig> {
           passwordResetByEmailEnabled: Boolean(
             data.passwordResetByEmailEnabled ?? data.emailVerificationRequired,
           ),
+          googleOAuthEnabled: Boolean(data.googleOAuthEnabled),
         };
         return cached;
       })

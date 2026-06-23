@@ -380,7 +380,8 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         </form>
       </div>
 
-      {/* Password change — separate form so it doesn't mix with attribute dirty state */}
+      {/* Password change — hidden for Google-only accounts */}
+      {(user.hasPassword ?? true) && (
       <div className="card">
         <h2 className="card-title">
           <KeyRound size={22} style={{ color: 'var(--primary)' }} /> {t('profileEdit.passwordTitle')}
@@ -446,6 +447,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
           </div>
         </form>
       </div>
+      )}
 
       {/* Unsaved-changes confirmation */}
       {mounted && pendingHref && createPortal(

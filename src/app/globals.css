@@ -2155,6 +2155,30 @@ input:focus, select:focus, textarea:focus {
   margin: 0;
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.google-signin-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -2422,11 +2446,10 @@ input:focus, select:focus, textarea:focus {
 
 .lsdle-profile-modal.modal-content {
   --lsdle-profile-width: min(560px, 94vw);
-  --lsdle-profile-height: min(660px, 92vh);
   width: var(--lsdle-profile-width);
   max-width: var(--lsdle-profile-width);
-  height: var(--lsdle-profile-height);
-  max-height: var(--lsdle-profile-height);
+  height: auto;
+  max-height: 92vh;
   padding: 1.5rem 1.75rem 0;
 }
 
@@ -2436,16 +2459,31 @@ input:focus, select:focus, textarea:focus {
   flex: 1 1 auto;
   min-height: 0;
   text-align: left;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .lsdle-profile-step {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  width: 100%;
+}
+
+/* Etapa de projeto: mais altura para a lista de projetos */
+.lsdle-profile-modal--step-4 {
+  min-height: min(720px, 90vh);
+}
+
+.lsdle-profile-modal--step-4 .lsdle-profile-step {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  width: 100%;
+}
+
+.lsdle-profile-modal--step-4 .project-picker .project-list {
+  max-height: min(22rem, 42vh);
 }
 
 .lsdle-profile-modal .modal-title {
@@ -2462,9 +2500,12 @@ input:focus, select:focus, textarea:focus {
 .lsdle-profile-progress {
   display: flex;
   justify-content: center;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.45rem;
   margin-bottom: 1.25rem;
   flex-shrink: 0;
+  padding: 6px 0;
+  overflow: visible;
 }
 
 .lsdle-profile-dot {
@@ -2472,12 +2513,14 @@ input:focus, select:focus, textarea:focus {
   height: 8px;
   border-radius: 999px;
   background: var(--border-color);
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.2s ease, width 0.2s ease, height 0.2s ease;
+  flex-shrink: 0;
 }
 
 .lsdle-profile-dot--active {
   background: var(--primary);
-  transform: scale(1.15);
+  width: 10px;
+  height: 10px;
 }
 
 .lsdle-profile-actions {

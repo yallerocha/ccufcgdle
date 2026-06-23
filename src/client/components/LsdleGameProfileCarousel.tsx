@@ -67,13 +67,38 @@ export function LsdleGameProfileCarousel({ user, onComplete, onSkip }: LsdleGame
   const [entrySemester, setEntrySemester] = useState(user.entrySemester || ENTRY_OPTIONS[0]);
   const [isColab, setIsColab] = useState(user.isColab || COLAB_OPTIONS[0]);
   const [area, setArea] = useState<string[]>(user.area ?? []);
-  const [projects, setProjects] = useState<string[]>(user.projects?.slice(0, 1) ?? []);
+  const initialSavedProjects = user.projects?.slice(0, 1) ?? [];
+  const [projects, setProjects] = useState<string[]>(initialSavedProjects);
+  const [savedProjects, setSavedProjects] = useState<string[]>(initialSavedProjects);
   const [likesCoffee, setLikesCoffee] = useState(user.likesCoffee || COFFEE_OPTIONS[0]);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [done, setDone] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  // Keep savedProjects in sync with the server so member counts are not double-counted
+  // after a partial save (API count already includes the user, savedProjects must too).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch('/api/auth/me');
+        const data = await res.json();
+        if (cancelled || !data.user) return;
+        const serverSaved = data.user.projects?.slice(0, 1) ?? [];
+        setSavedProjects(serverSaved);
+        if (serverSaved.length > 0) {
+          setProjects(serverSaved);
+        }
+      } catch {
+        /* keep local state */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
 
   const payload = useMemo(
     () => ({ gender, role, entrySemester, isColab, area, projects, likesCoffee }),
@@ -117,6 +142,8 @@ export function LsdleGameProfileCarousel({ user, onComplete, onSkip }: LsdleGame
         setErrorMsg(data.error || t('lsdleProfile.errorSave'));
         return false;
       }
+      const serverSaved = data.user?.projects?.slice(0, 1) ?? [];
+      setSavedProjects(serverSaved);
       return true;
     } catch {
       setErrorMsg(t('lsdleProfile.errorSave'));
@@ -169,7 +196,10 @@ export function LsdleGameProfileCarousel({ user, onComplete, onSkip }: LsdleGame
 
   return createPortal(
     <div className="modal-overlay lsdle-profile-overlay">
-      <div className="modal-content modal-has-bottom-bar lsdle-profile-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal-content modal-has-bottom-bar lsdle-profile-modal lsdle-profile-modal--step-${step}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-body">
           <div className="lsdle-profile-progress" aria-hidden="true">
             {Array.from({ length: progressSteps }, (_, i) => (
@@ -267,7 +297,7 @@ export function LsdleGameProfileCarousel({ user, onComplete, onSkip }: LsdleGame
                 tip={t('lsdleProfile.fieldTips.project')}
               />
               <p className="profile-field-hint">{t('projects.singleHint')}</p>
-              <ProjectPicker selected={projects} onChange={setProjects} savedProjects={user.projects?.slice(0, 1) ?? []} allowCreate />
+              <ProjectPicker selected={projects} onChange={setProjects} savedProjects={savedProjects} allowCreate />
             </>
           )}
 

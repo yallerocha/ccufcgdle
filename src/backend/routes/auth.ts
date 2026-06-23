@@ -14,6 +14,14 @@ import {
   validatePasswordResetToken,
   consumePasswordResetToken,
 } from '../../server/password-reset';
+import {
+  isGoogleOAuthEnabled,
+  verifyGoogleIdToken,
+  fetchGooglePhotoAsDataUrl,
+  generateUniqueNickname,
+} from '../../server/google-auth';
+import { toPublicUser } from '../../server/user-public';
+import type { User } from '@prisma/client';
 
 const router = Router();
 
@@ -22,22 +30,14 @@ const router = Router();
 // or not the account exists, preventing email enumeration via timing.
 const DUMMY_PASSWORD_HASH = '$2b$12$Q1lo.kalr7biqRwg.KHaN.UdNf15sfLrxvHYPjuFBZkC/h3isj40e';
 
-function authSessionResponse(user: {
-  id: string;
-  email: string;
-  name: string;
-  isAdmin: boolean;
-  passwordHash: string | null;
-  [key: string]: unknown;
-}) {
+function authSessionResponse(user: User) {
   const token = signToken({
     userId: user.id,
     email: user.email,
     name: user.name,
     isAdmin: user.isAdmin,
   });
-  const { passwordHash: _, ...userWithoutPassword } = user;
-  return { token, user: userWithoutPassword };
+  return { token, user: toPublicUser(user) };
 }
 
 // GET /api/auth/config — public auth settings for the client.
@@ -45,6 +45,7 @@ router.get('/config', (_req, res) => {
   res.json({
     emailVerificationRequired: isEmailVerificationRequired(),
     passwordResetByEmailEnabled: isPasswordResetByEmailEnabled(),
+    googleOAuthEnabled: isGoogleOAuthEnabled(),
   });
 });
 
@@ -68,6 +69,12 @@ router.post('/login', async (req, res) => {
     // absent) so the timing doesn't reveal whether the email is registered.
     const passwordMatch = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
     if (!user || !passwordMatch) {
+      if (user && !user.passwordHash && user.googleId) {
+        return res.status(401).json({
+          error: 'Esta conta usa login com Google.',
+          code: 'GOOGLE_ACCOUNT',
+        });
+      }
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
@@ -95,23 +102,113 @@ router.post('/login', async (req, res) => {
       },
     });
 
-    const token = signToken({
-      userId: updatedUser.id,
-      email: updatedUser.email,
-      name: updatedUser.name,
-      isAdmin: updatedUser.isAdmin,
-    });
-
-    const { passwordHash: _, ...userWithoutPassword } = updatedUser;
+    const session = authSessionResponse(updatedUser);
 
     return res.json({
       message: 'Login realizado com sucesso!',
-      token,
-      user: userWithoutPassword,
+      ...session,
     });
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({ error: 'Erro interno ao realizar login.' });
+  }
+});
+
+// POST /api/auth/google — verifies a Google ID token and returns { token, user }.
+router.post('/google', async (req, res) => {
+  try {
+    if (!isGoogleOAuthEnabled()) {
+      return res.status(503).json({ error: 'Login com Google não está configurado.' });
+    }
+
+    const { credential } = req.body ?? {};
+    if (!credential || typeof credential !== 'string') {
+      return res.status(400).json({ error: 'Token do Google é obrigatório.' });
+    }
+
+    const profile = await verifyGoogleIdToken(credential);
+    if (!profile) {
+      return res.status(401).json({ error: 'Token do Google inválido ou expirado.' });
+    }
+
+    if (!isAllowedEmailDomain(profile.email)) {
+      return res.status(403).json({
+        error: 'Apenas emails @ccc.ufcg.edu.br, @computacao.ufcg.edu.br e @lsd.ufcg.edu.br podem entrar.',
+      });
+    }
+
+    const photoDataUrl = profile.picture ? await fetchGooglePhotoAsDataUrl(profile.picture) : null;
+
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [{ googleId: profile.googleId }, { email: profile.email }],
+      },
+    });
+
+    if (user) {
+      if (user.googleId && user.googleId !== profile.googleId) {
+        return res.status(409).json({ error: 'Este email já está vinculado a outra conta Google.' });
+      }
+
+      const updates: {
+        googleId?: string;
+        photoUrl?: string;
+        emailVerifiedAt?: Date;
+        lastLogin: Date;
+        isActive: boolean;
+      } = {
+        lastLogin: new Date(),
+        isActive: true,
+      };
+
+      if (!user.googleId) updates.googleId = profile.googleId;
+      if (!user.photoUrl && photoDataUrl) updates.photoUrl = photoDataUrl;
+      if (!user.emailVerifiedAt && (profile.emailVerified || !isEmailVerificationRequired())) {
+        updates.emailVerifiedAt = new Date();
+      }
+
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: updates,
+      });
+    } else {
+      const name = await generateUniqueNickname(profile.email, profile.name);
+      user = await prisma.user.create({
+        data: {
+          email: profile.email,
+          googleId: profile.googleId,
+          name,
+          gender: '',
+          role: '',
+          entrySemester: '',
+          isColab: '',
+          area: [],
+          projects: [],
+          likesCoffee: '',
+          photoUrl: photoDataUrl,
+          lastLogin: new Date(),
+          isActive: true,
+          emailVerifiedAt: profile.emailVerified || !isEmailVerificationRequired() ? new Date() : null,
+        },
+      });
+    }
+
+    if (!isEmailVerified(user) && isEmailVerificationRequired()) {
+      return res.status(403).json({
+        error: 'Confirme seu email antes de entrar.',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+      });
+    }
+
+    const session = authSessionResponse(user);
+    return res.json({
+      message: 'Login com Google realizado com sucesso!',
+      ...session,
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    return res.status(500).json({ error: 'Erro interno ao entrar com Google.' });
   }
 });
 
@@ -268,11 +365,10 @@ router.get('/verify-email', async (req, res) => {
       isAdmin: user.isAdmin,
     });
 
-    const { passwordHash: _, ...userWithoutPassword } = user;
     return res.json({
       message: 'Email confirmado com sucesso!',
       token: jwt,
-      user: userWithoutPassword,
+      user: toPublicUser(user),
     });
   } catch (error) {
     console.error('Email verification error:', error);
@@ -417,12 +513,14 @@ router.post('/reset-password', async (req, res) => {
     });
 
     const fullUser = await prisma.user.findUnique({ where: { id: user.id } });
-    const { passwordHash: _, ...userWithoutPassword } = fullUser!;
+    if (!fullUser) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
 
     return res.json({
       message: 'Senha redefinida com sucesso!',
       token: jwt,
-      user: userWithoutPassword,
+      user: toPublicUser(fullUser),
     });
   } catch (error) {
     console.error('Reset password error:', error);
@@ -451,8 +549,7 @@ router.get('/me', requireAuth, async (req, res) => {
       });
     }
 
-    const { passwordHash: _, ...userWithoutPassword } = user;
-    return res.json({ user: userWithoutPassword });
+    return res.json({ user: toPublicUser(user) });
   } catch (error) {
     console.error('Error fetching current user:', error);
     return res.json({ user: null });
@@ -523,10 +620,9 @@ router.put('/me', requireAuth, async (req, res) => {
       },
     });
 
-    const { passwordHash: _, ...userWithoutPassword } = updatedUser;
     return res.json({
       message: 'Perfil atualizado com sucesso!',
-      user: userWithoutPassword,
+      user: toPublicUser(updatedUser),
     });
   } catch (error) {
     console.error('Error updating user profile:', error);
@@ -562,12 +658,16 @@ router.put('/me/password', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
 
-    const currentMatch = await bcrypt.compare(currentPassword, user.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user.passwordHash) {
+      return res.status(400).json({ error: 'Contas que usam apenas Google não têm senha local para alterar.' });
+    }
+
+    const currentMatch = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!currentMatch) {
       return res.status(401).json({ error: 'Senha atual incorreta.' });
     }
 
-    const sameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash ?? DUMMY_PASSWORD_HASH);
+    const sameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash);
     if (sameAsCurrent) {
       return res.status(400).json({ error: 'A nova senha deve ser diferente da atual.' });
     }
