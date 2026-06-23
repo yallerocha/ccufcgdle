@@ -30,6 +30,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
+        <meta name="color-scheme" content="dark" suppressHydrationWarning />
+        <meta name="theme-color" content="#0a0a0c" suppressHydrationWarning />
         <script
           dangerouslySetInnerHTML={{
             __html: THEME_BOOTSTRAP_SCRIPT,
