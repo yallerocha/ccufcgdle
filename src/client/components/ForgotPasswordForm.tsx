@@ -44,7 +44,7 @@ export function ForgotPasswordForm() {
 
   if (!authConfig) {
     return (
-      <div style={{ maxWidth: '450px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
+      <div style={{ maxWidth: '450px', margin: '0 auto', width: '100%' }} className="fade-in">
         <div className="card">
           <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
             {t('resetPassword.validating')}
@@ -56,7 +56,7 @@ export function ForgotPasswordForm() {
 
   if (!authConfig.passwordResetByEmailEnabled) {
     return (
-      <div style={{ maxWidth: '450px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
+      <div style={{ maxWidth: '450px', margin: '0 auto', width: '100%' }} className="fade-in">
         <div className="card">
           <h2 className="card-title" style={{ justifyContent: 'center' }}>
             <KeyRound size={22} style={{ color: 'var(--primary)' }} /> {t('forgotPassword.title')}
@@ -73,7 +73,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <div style={{ maxWidth: '450px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
+    <div style={{ maxWidth: '450px', margin: '0 auto', width: '100%' }} className="fade-in">
       <div className="card">
         <h2 className="card-title" style={{ justifyContent: 'center' }}>
           <KeyRound size={22} style={{ color: 'var(--primary)' }} /> {t('forgotPassword.title')}

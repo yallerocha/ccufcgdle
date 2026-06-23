@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <>
-      <BackLink href="/profile" label={t('forgotPassword.backToLogin')} style={{ maxWidth: '450px', margin: '2rem auto 0.5rem auto' }} />
+      <BackLink href="/profile" label={t('forgotPassword.backToLogin')} style={{ margin: '2rem 0 0.5rem 0' }} />
       <ForgotPasswordForm />
     </>
   );
