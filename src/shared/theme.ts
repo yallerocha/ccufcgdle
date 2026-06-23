@@ -12,6 +12,16 @@ export const THEME_META_COLORS: Record<Theme, string> = {
   dark: '#0a0a0c',
 };
 
+/**
+ * Bare `light` still allows Chrome Android / Samsung / WebView to algorithmically
+ * darken the page when the OS is dark. `only light` forbids that override.
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme
+ */
+export const THEME_COLOR_SCHEME: Record<Theme, string> = {
+  light: 'only light',
+  dark: 'dark',
+};
+
 /** CSS custom properties applied inline so mobile browsers cannot miss html[data-theme] rules. */
 export const THEME_CSS_VARS: Record<Theme, Record<string, string>> = {
   dark: {
@@ -60,6 +70,16 @@ export const THEME_CSS_VARS: Record<Theme, Record<string, string>> = {
   },
 };
 
+/**
+ * Minimal theme CSS inlined in <head> before globals.css (which must not use @import
+ * at the top — it blocks the entire stylesheet on mobile until fonts load).
+ */
+export const THEME_CRITICAL_CSS = `
+html,body{margin:0;min-height:100%}
+html[data-theme="dark"],html:not([data-theme="light"]){color-scheme:dark;background-color:#0a0a0c;color:#f8fafc}
+html[data-theme="light"],html.theme-light{color-scheme:light;color-scheme:only light;background-color:#fff;color:#18181b;forced-color-adjust:none}
+`.trim();
+
 export function applyThemeCssVariables(theme: Theme) {
   const root = document.documentElement;
   const vars = THEME_CSS_VARS[theme];
@@ -101,16 +121,17 @@ function ensureMeta(name: string, content: string) {
 /** Apply theme on the client (toggle, hydration sync). */
 export function applyTheme(theme: Theme) {
   const root = document.documentElement;
+  const scheme = THEME_COLOR_SCHEME[theme];
 
   root.setAttribute('data-theme', theme);
   root.classList.remove('theme-light', 'theme-dark');
   root.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
-  root.style.colorScheme = theme;
+  root.style.colorScheme = scheme;
 
   applyThemeCssVariables(theme);
 
   ensureMeta('theme-color', THEME_META_COLORS[theme]);
-  ensureMeta('color-scheme', theme);
+  ensureMeta('color-scheme', scheme);
 
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -124,8 +145,12 @@ function buildBootstrapApplyVars(): string {
   return `function applyVars(theme){var V=${JSON.stringify(THEME_CSS_VARS)};var vars=V[theme];for(var k in vars){if(Object.prototype.hasOwnProperty.call(vars,k))html.style.setProperty(k,vars[k]);}}`;
 }
 
+function buildBootstrapSchemes(): string {
+  return JSON.stringify(THEME_COLOR_SCHEME);
+}
+
 /**
  * Blocking inline script (layout <head>, first child).
  * Must stay self-contained — runs before paint and before React hydration.
  */
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var K='theme',html=document.documentElement,stored=null,cookie=null,theme='dark';try{var ls=localStorage.getItem(K);stored=(ls==='light'||ls==='dark')?ls:null;}catch(e1){}var cm=document.cookie.match(/(?:^|;\\s*)theme=(light|dark)/);if(cm)cookie=cm[1];theme=stored||cookie||'dark';${buildBootstrapApplyVars()};html.setAttribute('data-theme',theme);html.classList.remove('theme-light','theme-dark');html.classList.add(theme==='light'?'theme-light':'theme-dark');html.style.colorScheme=theme;applyVars(theme);function meta(n,v){var el=document.querySelector('meta[name="'+n+'"]');if(!el){el=document.createElement('meta');el.setAttribute('name',n);document.head.appendChild(el);}el.setAttribute('content',v);}meta('theme-color',theme==='light'?'#ffffff':'#0a0a0c');meta('color-scheme',theme);document.cookie=K+'='+theme+';path=/;max-age=31536000;SameSite=Lax';}catch(e2){html=document.documentElement;html.setAttribute('data-theme','dark');html.classList.add('theme-dark');html.style.colorScheme='dark';}})();`;
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var K='theme',html=document.documentElement,stored=null,cookie=null,theme='dark',SC=${buildBootstrapSchemes()};try{var ls=localStorage.getItem(K);stored=(ls==='light'||ls==='dark')?ls:null;}catch(e1){}var cm=document.cookie.match(/(?:^|;\\s*)theme=(light|dark)/);if(cm)cookie=cm[1];theme=stored||cookie||'dark';${buildBootstrapApplyVars()};var scheme=SC[theme]||'dark';html.setAttribute('data-theme',theme);html.classList.remove('theme-light','theme-dark');html.classList.add(theme==='light'?'theme-light':'theme-dark');html.style.colorScheme=scheme;applyVars(theme);function meta(n,v){var el=document.querySelector('meta[name="'+n+'"]');if(!el){el=document.createElement('meta');el.setAttribute('name',n);document.head.appendChild(el);}el.setAttribute('content',v);}meta('theme-color',theme==='light'?'#ffffff':'#0a0a0c');meta('color-scheme',scheme);document.cookie=K+'='+theme+';path=/;max-age=31536000;SameSite=Lax';}catch(e2){var h=document.documentElement;h.setAttribute('data-theme','dark');h.classList.add('theme-dark');h.style.colorScheme='dark';}})();`;

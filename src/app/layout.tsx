@@ -6,7 +6,7 @@ import I18nProvider from "@/client/i18n/I18nProvider";
 import Footer from "@/client/components/Footer";
 import { AppGoogleOAuthProvider } from "@/client/providers/AppGoogleOAuthProvider";
 import ThemeBootstrap from "@/client/components/ThemeBootstrap";
-import { THEME_BOOTSTRAP_SCRIPT } from "@/shared/theme";
+import { THEME_BOOTSTRAP_SCRIPT, THEME_CRITICAL_CSS } from "@/shared/theme";
 
 export const metadata: Metadata = {
   title: "LSDLE - Jogo do LSD da UFCG",
@@ -18,6 +18,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
 };
+
+const FONTS_URL =
+  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap';
 
 export default function RootLayout({
   children,
@@ -32,6 +35,10 @@ export default function RootLayout({
             __html: THEME_BOOTSTRAP_SCRIPT,
           }}
         />
+        <style dangerouslySetInnerHTML={{ __html: THEME_CRITICAL_CSS }} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href={FONTS_URL} />
       </head>
       <body suppressHydrationWarning>
         <ThemeBootstrap />
