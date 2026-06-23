@@ -131,9 +131,10 @@ export default function PodiumPage() {
 
           {/* Remaining players */}
           {rest.length > 0 && (
-            <div className="card" style={{ maxWidth: '700px', margin: '1.5rem auto 0 auto', padding: '1rem 1.5rem' }}>
-              <div className="admin-table-container">
-                <table className="admin-table">
+            <div className="card podium-ranking-card">
+              <p className="podium-ranking-scroll-hint">{t('podium.scrollHint')}</p>
+              <div className="admin-table-container podium-ranking-scroll">
+                <table className="admin-table podium-ranking-table">
                   <thead>
                     <tr>
                       <th style={{ width: '3rem' }}>{t('podium.thRank')}</th>

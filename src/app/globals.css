@@ -2425,6 +2425,82 @@ input:focus, select:focus, textarea:focus {
   color: rgba(0, 0, 0, 0.45);
 }
 
+.podium-ranking-card {
+  max-width: 700px;
+  margin: 1.5rem auto 0 auto;
+  padding: 1rem 1.5rem;
+}
+
+.podium-ranking-scroll-hint {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .podium-ranking-card {
+    padding: 1rem;
+  }
+
+  .podium-ranking-scroll-hint {
+    display: block;
+    margin: 0 0 0.65rem;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    letter-spacing: 0.01em;
+  }
+
+  .podium-ranking-scroll {
+    margin: 0 -0.5rem;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+  }
+
+  .podium-ranking-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .podium-ranking-scroll::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 999px;
+  }
+
+  .podium-ranking-table {
+    min-width: 22rem;
+  }
+
+  .podium-ranking-table th:nth-child(1),
+  .podium-ranking-table td:nth-child(1) {
+    width: 3rem;
+    white-space: nowrap;
+  }
+
+  .podium-ranking-table th:nth-child(2),
+  .podium-ranking-table td:nth-child(2) {
+    min-width: 9.5rem;
+  }
+
+  .podium-ranking-table th:nth-child(3),
+  .podium-ranking-table td:nth-child(3),
+  .podium-ranking-table th:nth-child(4),
+  .podium-ranking-table td:nth-child(4) {
+    white-space: nowrap;
+  }
+
+  .podium-ranking-table .ranking-player-name {
+    white-space: nowrap;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
+    line-height: 1.25;
+  }
+}
+
 @media (max-width: 520px) {
   .podium { gap: 0.4rem; }
   .podium-name { font-size: 0.78rem; }
