@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import type { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
 import { isStrongPassword } from '@/shared/validation';
-import { apiFetch } from '@/client/lib/api';
+import { apiFetch, setToken } from '@/client/lib/api';
 import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { Toast } from '@/client/components/Toast';
 import { PasswordInput } from '@/client/components/PasswordInput';
@@ -35,6 +35,7 @@ interface ProfileEditFormProps {
 
 export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const { t } = useTranslation();
+  const [name, setName] = useState(user.name);
   const [gender, setGender] = useState(user.gender);
   const [role, setRole] = useState(user.role);
   const [entrySemester, setEntrySemester] = useState(user.entrySemester);
@@ -67,6 +68,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
+    setName(user.name);
     setGender(user.gender);
     setRole(user.role);
     setEntrySemester(user.entrySemester);
@@ -79,6 +81,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
   // True when the form differs from the saved user (so we know to warn on exit).
   const isDirty =
+    name !== user.name ||
     gender !== user.gender ||
     role !== user.role ||
     entrySemester !== user.entrySemester ||
@@ -199,12 +202,16 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     try {
       const res = await apiFetch('/api/auth/me', {
         method: 'PUT',
-        body: JSON.stringify({ gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl })
+        body: JSON.stringify({ name: name.trim(), gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl })
       });
       const data = await res.json();
       setSubmitting(false);
-      if (res.ok) { setSuccessMsg(t('profileEdit.success')); dirtyRef.current = false; refreshUser(); }
-      else { setErrorMsg(data.error || t('profileEdit.error')); }
+      if (res.ok) {
+        if (data.token) setToken(data.token);
+        setSuccessMsg(t('profileEdit.success'));
+        dirtyRef.current = false;
+        refreshUser();
+      } else { setErrorMsg(data.error || t('profileEdit.error')); }
     } catch (err) { setSubmitting(false); setErrorMsg(t('profileEdit.errorConn')); }
   };
 
@@ -258,10 +265,10 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         <div className="profile-hero-body">
           <div className="profile-avatar-wrap">
             {photoUrl ? (
-              <img src={photoUrl} alt={user.name} className="profile-avatar" />
+              <img src={photoUrl} alt={name} className="profile-avatar" />
             ) : (
               <div className="profile-avatar profile-avatar-placeholder">
-                {user.name.slice(0, 2).toUpperCase()}
+                {name.trim() ? name.trim().slice(0, 2).toUpperCase() : '?'}
               </div>
             )}
             <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} id="photo-upload-edit" disabled={savingPhoto} />
@@ -288,12 +295,12 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
           />
 
           <div className="profile-hero-info">
-            <h2 className="profile-hero-name">{user.name}</h2>
+            <h2 className="profile-hero-name">{name}</h2>
             <span className="badge badge-active">{t('profileEdit.activeBadge')}</span>
           </div>
 
           <p className="profile-hero-status">
-            {t('profileEdit.statusBody', { name: user.name, days: INACTIVITY_DAYS })}
+            {t('profileEdit.statusBody', { name, days: INACTIVITY_DAYS })}
           </p>
 
         </div>
@@ -316,6 +323,23 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         />
 
         <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="profile-field-label" htmlFor="profile-name">
+              <UserIcon size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.nameLabel')}
+            </label>
+            <input
+              id="profile-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('profileEdit.namePlaceholder')}
+              minLength={3}
+              maxLength={25}
+              required
+            />
+            <span className="profile-field-hint">{t('profileEdit.nameHint')}</span>
+          </div>
+
           <div className="form-row">
             <div className="form-group">
               <label className="profile-field-label">

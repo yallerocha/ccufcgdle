@@ -259,6 +259,7 @@ body {
 .nav-link {
   color: var(--text-muted);
   text-decoration: none;
+  font-family: var(--font-sans);
   font-weight: 500;
   transition: all 0.2s ease;
   font-size: 0.95rem;
@@ -266,6 +267,18 @@ body {
   align-items: center;
   gap: 0.4rem;
   white-space: nowrap;
+}
+
+button.nav-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  line-height: inherit;
+  letter-spacing: inherit;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .nav-link:hover, .nav-link.active {

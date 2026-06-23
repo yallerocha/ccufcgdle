@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../../server/db';
 import { signToken } from '../../server/auth';
 import { requireAuth } from '../middleware/auth';
-import { validateCharacterFields, validateCharacterFieldValues, validatePhoto, isAllowedEmailDomain, isStrongPassword } from '../../shared/validation';
+import { validateCharacterFields, validateCharacterFieldValues, validatePhoto, isAllowedEmailDomain, isStrongPassword, validateDisplayName, formatAllowedEmailDomains } from '../../shared/validation';
 import { getAllowedProjectNames } from '../../server/projects';
 import { isEmailVerified, issueVerificationToken, consumeVerificationToken, findUnverifiedUserByEmail } from '../../server/email-verification';
 import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../../server/email-verification-config';
@@ -133,7 +133,7 @@ router.post('/google', async (req, res) => {
 
     if (!isAllowedEmailDomain(profile.email)) {
       return res.status(403).json({
-        error: 'Apenas emails @ccc.ufcg.edu.br, @computacao.ufcg.edu.br e @lsd.ufcg.edu.br podem entrar.',
+        error: `Apenas emails ${formatAllowedEmailDomains()} podem entrar.`,
       });
     }
 
@@ -226,8 +226,9 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' });
     }
 
-    if (typeof name !== 'string' || name.length < 3 || name.length > 25) {
-      return res.status(400).json({ error: 'O nome/apelido deve ter entre 3 e 25 caracteres.' });
+    const nameError = validateDisplayName(name);
+    if (nameError) {
+      return res.status(400).json({ error: nameError });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -237,7 +238,7 @@ router.post('/register', async (req, res) => {
 
     if (!isAllowedEmailDomain(email)) {
       return res.status(400).json({
-        error: 'Apenas emails @ccc.ufcg.edu.br, @computacao.ufcg.edu.br e @lsd.ufcg.edu.br podem se cadastrar.',
+        error: `Apenas emails ${formatAllowedEmailDomains()} podem se cadastrar.`,
       });
     }
 
@@ -560,6 +561,7 @@ router.get('/me', requireAuth, async (req, res) => {
 router.put('/me', requireAuth, async (req, res) => {
   try {
     const {
+      name,
       gender,
       role,
       entrySemester,
@@ -576,6 +578,28 @@ router.put('/me', requireAuth, async (req, res) => {
     });
     if (!current) {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    let nextName = current.name;
+    if (name !== undefined) {
+      const nameError = validateDisplayName(name);
+      if (nameError) {
+        return res.status(400).json({ error: nameError });
+      }
+      const trimmed = name.trim();
+      if (trimmed.toLowerCase() !== current.name.toLowerCase()) {
+        const taken = await prisma.user.findFirst({
+          where: {
+            name: { equals: trimmed, mode: 'insensitive' },
+            id: { not: current.id },
+          },
+          select: { id: true },
+        });
+        if (taken) {
+          return res.status(400).json({ error: 'Este nome/apelido já está em uso.' });
+        }
+      }
+      nextName = trimmed;
     }
 
     const photoUnchanged = photoUrl !== undefined && (photoUrl || '') === (current.photoUrl || '');
@@ -608,6 +632,7 @@ router.put('/me', requireAuth, async (req, res) => {
     const updatedUser = await prisma.user.update({
       where: { id: req.auth!.userId },
       data: {
+        name: nextName,
         gender: merged.gender,
         role: merged.role,
         entrySemester: merged.entrySemester,
@@ -620,9 +645,13 @@ router.put('/me', requireAuth, async (req, res) => {
       },
     });
 
+    const nameChanged = nextName !== current.name;
+    const session = nameChanged ? authSessionResponse(updatedUser) : null;
+
     return res.json({
       message: 'Perfil atualizado com sucesso!',
       user: toPublicUser(updatedUser),
+      ...(session ? { token: session.token } : {}),
     });
   } catch (error) {
     console.error('Error updating user profile:', error);

@@ -46,7 +46,7 @@ export default function Navbar() {
                   <ShieldCheck size={18} /> <span className="nav-link-label">{t('nav.admin')}</span>
                 </Link>
               )}
-              <button onClick={logout} className="nav-link" title={t('nav.logout')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+              <button type="button" onClick={logout} className="nav-link" title={t('nav.logout')}>
                 <LogOut size={18} /> <span className="nav-link-label">{t('nav.logout')}</span>
               </button>
             </>
