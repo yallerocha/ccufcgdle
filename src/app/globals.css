@@ -56,7 +56,7 @@
   --tile-incorrect-text: var(--text-muted);
 
   --border-radius: 12px;
-  color-scheme: dark;
+  color-scheme: only dark;
 }
 
 /* Theme-aware logos (see Logo.tsx) */
@@ -114,7 +114,7 @@
   --tile-incorrect-bg: #e4e4e7;
   --tile-incorrect-text: #52525b;
 
-  color-scheme: light;
+  color-scheme: only light;
 }
 
 /* LSD Specific Classes */
@@ -144,6 +144,12 @@ html {
      pages (with scrollbar) center their content identically — otherwise the
      centered .container shifts a few pixels between pages. */
   scrollbar-gutter: stable;
+  background-color: var(--bg-main);
+  color-scheme: only dark;
+}
+
+html[data-theme="light"] {
+  color-scheme: only light;
 }
 
 body {

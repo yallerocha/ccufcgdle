@@ -1,10 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { AuthProvider } from "@/client/context/AuthContext";
 import Navbar from "@/client/components/Navbar";
 import I18nProvider from "@/client/i18n/I18nProvider";
 import Footer from "@/client/components/Footer";
 import { AppGoogleOAuthProvider } from "@/client/providers/AppGoogleOAuthProvider";
+import ThemeBootstrap from "@/client/components/ThemeBootstrap";
+import {
+  isTheme,
+  THEME_BG_COLORS,
+  THEME_COOKIE,
+  THEME_META_COLORS,
+  themeColorScheme,
+  THEME_BOOTSTRAP_SCRIPT,
+  type Theme,
+} from "@/shared/theme";
 
 export const metadata: Metadata = {
   title: "LSDLE - Jogo do LSD da UFCG",
@@ -17,22 +28,36 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const cookieTheme = cookieStore.get(THEME_COOKIE)?.value;
+  const theme: Theme = isTheme(cookieTheme) ? cookieTheme : 'dark';
+
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html
+      lang="pt-BR"
+      data-theme={theme}
+      suppressHydrationWarning
+      style={{
+        colorScheme: themeColorScheme(theme),
+        backgroundColor: THEME_BG_COLORS[theme],
+      }}
+    >
       <head>
-        <meta name="theme-color" content="#0a0a0c" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" content={THEME_META_COLORS[theme]} />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var theme=(t==='light'||t==='dark')?t:'dark';document.documentElement.dataset.theme=theme;var meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',theme==='light'?'#fafafa':'#0a0a0c');}catch(e){document.documentElement.dataset.theme='dark';}})();`,
+            __html: THEME_BOOTSTRAP_SCRIPT,
           }}
         />
       </head>
-      <body>
+      <body style={{ backgroundColor: THEME_BG_COLORS[theme] }}>
+        <ThemeBootstrap />
         <I18nProvider>
           <AppGoogleOAuthProvider>
             <AuthProvider>

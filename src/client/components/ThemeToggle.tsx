@@ -2,8 +2,7 @@
 
 import React, { useSyncExternalStore } from 'react';
 import { Sun, Moon } from 'lucide-react';
-
-type Theme = 'dark' | 'light';
+import { applyTheme, type Theme } from '@/shared/theme';
 
 function getTheme(): Theme {
   if (typeof document === 'undefined') return 'dark';
@@ -25,14 +24,7 @@ export default function ThemeToggle() {
 
   const toggle = () => {
     const next: Theme = getTheme() === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next;
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', next === 'light' ? '#fafafa' : '#0a0a0c');
-    try {
-      localStorage.setItem('theme', next);
-    } catch {
-      /* ignore storage errors (private mode, etc.) */
-    }
+    applyTheme(next);
   };
 
   return (
