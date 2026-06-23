@@ -2,11 +2,11 @@
 
 import React, { useSyncExternalStore } from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { applyTheme, type Theme } from '@/shared/theme';
+import { applyTheme, readClientTheme, type Theme } from '@/shared/theme';
 
 function getTheme(): Theme {
   if (typeof document === 'undefined') return 'dark';
-  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
 }
 
 function subscribeToTheme(onStoreChange: () => void) {
@@ -23,7 +23,7 @@ export default function ThemeToggle() {
   const isLight = theme === 'light';
 
   const toggle = () => {
-    const next: Theme = getTheme() === 'dark' ? 'light' : 'dark';
+    const next: Theme = readClientTheme() === 'dark' ? 'light' : 'dark';
     applyTheme(next);
   };
 
