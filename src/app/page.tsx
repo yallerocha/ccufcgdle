@@ -40,8 +40,8 @@ interface GameCardProps {
 
 function GameCard({ href, icon, title, description, playedToday, playedLabel }: GameCardProps) {
   return (
-    <Link href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div className="card ranking-preview-card" style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '2rem' }}>
+    <Link href={href} className="hub-game-card-link">
+      <div className="card ranking-preview-card hub-game-card">
         {playedToday && (
           <span className="badge badge-active" style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }}>
             <CheckCircle2 size={13} /> {playedLabel}
@@ -67,8 +67,8 @@ export default function HubPage() {
   }, [user?.id, authLoading]);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem 1rem' }} className="fade-in">
-      <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem' }}>
+    <div className="hub-page fade-in">
+      <section className="hero hub-hero">
         <Logo
           alt="LSD Logo"
           style={{ width: '180px', maxWidth: '100%', marginBottom: '1rem' }}
@@ -79,7 +79,7 @@ export default function HubPage() {
         </p>
       </section>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', width: '100%', maxWidth: '900px' }}>
+      <div className="hub-grid">
         <GameCard
           href="/lsdle"
           icon={<Gamepad2 size={48} style={{ color: 'var(--lsd-magenta)', marginBottom: '1rem' }} />}

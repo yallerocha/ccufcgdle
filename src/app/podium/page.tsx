@@ -75,7 +75,7 @@ export default function PodiumPage() {
       <BackLink href="/" label={t('nav.backToHub')} />
 
       <div className="hero" style={{ padding: '1rem 0 1.5rem 0' }}>
-        <h1 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontSize: '2.2rem', fontWeight: 800 }}>
+        <h1 className="page-heading">
           <Trophy size={30} style={{ color: 'var(--color-partial)' }} /> {t('podium.title')}
         </h1>
         <p>{t('podium.subtitle')}</p>

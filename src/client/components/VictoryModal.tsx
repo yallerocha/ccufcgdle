@@ -258,7 +258,7 @@ export function VictoryModal({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
         <input type="file" accept="image/*" onChange={handleMessageImage} style={{ display: 'none' }} id="daily-msg-image" />
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
           <label
             htmlFor="daily-msg-image"
             className="btn"

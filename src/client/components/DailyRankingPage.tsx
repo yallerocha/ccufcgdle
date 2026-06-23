@@ -76,7 +76,7 @@ export function DailyRankingPage({ endpoint, backHref, subtitle, metricHeader }:
       <BackLink href={backHref} label={t('ranking.backToGame')} />
 
       <div className="hero" style={{ padding: '1rem 0 2rem 0' }}>
-        <h1 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontSize: '2.2rem', fontWeight: 800 }}>
+        <h1 className="page-heading">
           <Trophy size={30} style={{ color: 'var(--color-partial)' }} /> {t('ranking.title')}
         </h1>
         <p>{subtitle}</p>
@@ -88,7 +88,7 @@ export function DailyRankingPage({ endpoint, backHref, subtitle, metricHeader }:
         </div>
       )}
 
-      <div className="card" style={{ maxWidth: '700px', margin: '0 auto', padding: '1.5rem 2rem' }}>
+      <div className="card ranking-page-card" style={{ maxWidth: '700px', margin: '0 auto' }}>
         {loading ? (
           <LoadingState message={t('ranking.loading')} />
         ) : errorMsg ? (

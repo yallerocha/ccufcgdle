@@ -124,7 +124,7 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
                 const played = g.wins > 0;
                 return (
                   <div key={key} className="member-game-row">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '6rem' }}>
+                    <div className="member-game-row-label">
                       <Icon size={18} style={{ color }} />
                       <span style={{ fontWeight: 700 }}>{label}</span>
                     </div>

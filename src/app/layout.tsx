@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/client/context/AuthContext";
 import Navbar from "@/client/components/Navbar";
@@ -9,6 +9,12 @@ import { AppGoogleOAuthProvider } from "@/client/providers/AppGoogleOAuthProvide
 export const metadata: Metadata = {
   title: "LSDLE - Jogo do LSD da UFCG",
   description: "Adivinhe a pessoa do dia do Laboratório de Sistemas Distribuídos (LSD) da UFCG baseado em suas informações e preferências! Cadastre-se para participar.",
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({

@@ -356,7 +356,7 @@ export default function GamePage() {
 
       {/* Main Game Interface */}
       {characters.length === 0 ? (
-        <div className="alert alert-info card" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'center', flexDirection: 'column', gap: '1rem', padding: '3rem' }}>
+        <div className="alert alert-info card game-empty-card" style={{ maxWidth: '600px', margin: '2rem auto', textAlign: 'center', flexDirection: 'column', gap: '1rem' }}>
           <Info size={48} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{t('home.empty.title')}</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
