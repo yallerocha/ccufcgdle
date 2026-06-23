@@ -16,6 +16,9 @@ export const en: Dictionary = {
     logout: 'Log out',
     joinLogin: 'Sign in',
     backToHub: 'Back to Hub',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    menuTitle: 'Menu',
     sub: 'LSD-UFCG',
   },
   podium: {

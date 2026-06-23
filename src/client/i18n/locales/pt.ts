@@ -12,6 +12,9 @@ export const pt = {
     logout: 'Sair',
     joinLogin: 'Entrar',
     backToHub: 'Voltar ao Hub',
+    openMenu: 'Abrir menu',
+    closeMenu: 'Fechar menu',
+    menuTitle: 'Menu',
     sub: 'LSD-UFCG',
   },
   podium: {
