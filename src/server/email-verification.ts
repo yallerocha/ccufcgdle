@@ -45,13 +45,18 @@ export async function consumeVerificationToken(rawToken: string): Promise<{ user
     return null;
   }
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: row.userId },
-      data: { emailVerifiedAt: new Date(), isActive: true, lastLogin: new Date() },
-    }),
-    prisma.emailVerificationToken.deleteMany({ where: { userId: row.userId } }),
-  ]);
+  const existing = await prisma.user.findUnique({
+    where: { id: row.userId },
+    select: { emailVerifiedAt: true },
+  });
+  if (existing?.emailVerifiedAt) {
+    return { userId: row.userId };
+  }
+
+  await prisma.user.update({
+    where: { id: row.userId },
+    data: { emailVerifiedAt: new Date(), isActive: true, lastLogin: new Date() },
+  });
 
   return { userId: row.userId };
 }

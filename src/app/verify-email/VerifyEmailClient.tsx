@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { MailCheck, Loader2 } from 'lucide-react';
@@ -16,6 +16,7 @@ export default function VerifyEmailClient() {
   const { refreshUser } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const verifyStartedRef = useRef(false);
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -24,6 +25,9 @@ export default function VerifyEmailClient() {
       setMessage(t('verifyEmail.missingToken'));
       return;
     }
+
+    if (verifyStartedRef.current) return;
+    verifyStartedRef.current = true;
 
     let cancelled = false;
     (async () => {
@@ -52,7 +56,9 @@ export default function VerifyEmailClient() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, t, refreshUser, router]);
+    // Run once per page load — refreshUser/router in deps caused a second verify call.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, t]);
 
   return (
     <div style={{ maxWidth: '520px', margin: '3rem auto', width: '100%' }} className="fade-in">

@@ -1,5 +1,4 @@
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'LSD Game Hub <onboarding@resend.dev>';
+import { getEmailFrom, getMailTransport } from './mail-transport';
 
 function appBaseUrl(): string {
   const url = process.env.APP_URL || process.env.CORS_ORIGIN?.split(',')[0]?.trim();
@@ -8,28 +7,28 @@ function appBaseUrl(): string {
   throw new Error('APP_URL is not defined.');
 }
 
-async function sendHtmlEmail(to: string, subject: string, html: string, devLabel: string, link: string): Promise<void> {
-  if (RESEND_API_KEY) {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: [to],
+async function sendHtmlEmail(
+  to: string,
+  subject: string,
+  html: string,
+  devLabel: string,
+  link: string,
+): Promise<void> {
+  const transport = getMailTransport();
+
+  if (transport) {
+    try {
+      await transport.sendMail({
+        from: getEmailFrom(),
+        to,
         subject,
         html,
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      console.error('[email] Resend error:', res.status, body);
+      });
+      return;
+    } catch (err) {
+      console.error('[email] SMTP error:', err);
       throw new Error('Falha ao enviar email.');
     }
-    return;
   }
 
   if (process.env.NODE_ENV !== 'production') {
@@ -37,14 +36,14 @@ async function sendHtmlEmail(to: string, subject: string, html: string, devLabel
     return;
   }
 
-  throw new Error('RESEND_API_KEY is not configured.');
+  throw new Error('SMTP is not configured (set SMTP_HOST or SMTP_URL).');
 }
 
 function verificationEmailHtml(name: string, link: string): string {
   return `
     <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; color: #1e293b;">
       <h1 style="font-size: 1.25rem; color: #4562c1;">LSD Game Hub</h1>
-      <p>Olá, <strong>${name}</strong>!</p>
+      <p>Olá, <strong>${escapeHtml(name)}</strong>!</p>
       <p>Confirme seu email para ativar sua conta no LSD Game Hub:</p>
       <p style="margin: 1.5rem 0;">
         <a href="${link}" style="background: #4562c1; color: #fff; padding: 0.75rem 1.25rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
@@ -64,7 +63,7 @@ function passwordResetEmailHtml(name: string, link: string): string {
   return `
     <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; color: #1e293b;">
       <h1 style="font-size: 1.25rem; color: #4562c1;">LSD Game Hub</h1>
-      <p>Olá, <strong>${name}</strong>!</p>
+      <p>Olá, <strong>${escapeHtml(name)}</strong>!</p>
       <p>Recebemos um pedido para redefinir a senha da sua conta. Se foi você, clique no botão abaixo:</p>
       <p style="margin: 1.5rem 0;">
         <a href="${link}" style="background: #4562c1; color: #fff; padding: 0.75rem 1.25rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
@@ -80,6 +79,14 @@ function passwordResetEmailHtml(name: string, link: string): string {
   `.trim();
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export async function sendVerificationEmail(to: string, name: string, token: string): Promise<void> {
   const link = `${appBaseUrl()}/verify-email?token=${encodeURIComponent(token)}`;
   await sendHtmlEmail(
@@ -87,7 +94,7 @@ export async function sendVerificationEmail(to: string, name: string, token: str
     'Confirme seu email — LSD Game Hub',
     verificationEmailHtml(name, link),
     'Verification link',
-    link
+    link,
   );
 }
 
@@ -98,6 +105,6 @@ export async function sendPasswordResetEmail(to: string, name: string, token: st
     'Redefinir senha — LSD Game Hub',
     passwordResetEmailHtml(name, link),
     'Password reset link',
-    link
+    link,
   );
 }

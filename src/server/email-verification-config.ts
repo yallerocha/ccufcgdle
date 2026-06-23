@@ -1,7 +1,9 @@
+import { isSmtpConfigured } from './mail-transport';
+
 /**
- * When SKIP_EMAIL_VERIFICATION=true, new @ufcg registrations are marked verified
- * immediately (no Resend email). Login also auto-verifies legacy pending accounts.
- * Default: real email verification is required (Resend + verified domain in production).
+ * When SKIP_EMAIL_VERIFICATION=true, new registrations are marked verified
+ * immediately (no SMTP email). Login also auto-verifies legacy pending accounts.
+ * Default: real email verification is required (Nodemailer + SMTP in production).
  */
 export function isEmailVerificationRequired(): boolean {
   const raw = process.env.SKIP_EMAIL_VERIFICATION?.trim().toLowerCase();
@@ -9,7 +11,8 @@ export function isEmailVerificationRequired(): boolean {
   return true;
 }
 
-/** Password reset emails require the same Resend setup as verification emails. */
+/** Password reset emails use the same SMTP setup as verification emails. */
 export function isPasswordResetByEmailEnabled(): boolean {
-  return isEmailVerificationRequired();
+  if (!isEmailVerificationRequired()) return false;
+  return isSmtpConfigured();
 }

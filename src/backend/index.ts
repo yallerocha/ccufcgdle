@@ -9,6 +9,7 @@ import forcaRouter from './routes/forca';
 import adminRouter from './routes/admin';
 import { bootstrapProjectCatalog } from '../server/projects';
 import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../server/email-verification-config';
+import { isSmtpConfigured } from '../server/mail-transport';
 
 const app = express();
 
@@ -82,11 +83,12 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN || '*'})`);
     const emailOn = isEmailVerificationRequired();
+    const smtpOn = isSmtpConfigured();
     console.log(
-      `[api] Email verification: ${emailOn ? 'required (Resend)' : 'disabled (auto-verify @ufcg)'}`
+      `[api] Email verification: ${emailOn ? (smtpOn ? 'required (SMTP)' : 'required (dev: links in console)') : 'disabled (SKIP_EMAIL_VERIFICATION)'}`
     );
     console.log(
-      `[api] Password reset by email: ${isPasswordResetByEmailEnabled() ? 'enabled' : 'disabled (admin temp password)'}`
+      `[api] Password reset by email: ${isPasswordResetByEmailEnabled() ? 'enabled' : 'disabled'}`
     );
   });
 }
