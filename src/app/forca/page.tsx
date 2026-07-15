@@ -72,6 +72,7 @@ export default function ForcaPage() {
 
   const [wordLength, setWordLength] = useState(0);
   const [maxWrong, setMaxWrong] = useState(6);
+  const [theme, setTheme] = useState('');
   const [dailyKey, setDailyKey] = useState<number | null>(null);
   const [personName, setPersonName] = useState<string | null>(null);
   const [personPhoto, setPersonPhoto] = useState<string | null>(null);
@@ -108,6 +109,7 @@ export default function ForcaPage() {
         const wl: number = data.wordLength ?? 0;
         setWordLength(wl);
         setMaxWrong(data.maxWrong ?? 6);
+        setTheme(data.theme ?? '');
         setDailyKey(currentDailyKey);
         setPersonName(data.personName ?? null);
         setPersonPhoto(data.personPhoto ?? null);
@@ -265,6 +267,14 @@ export default function ForcaPage() {
             <li>{t('forca.rules.saved')}</li>
           </ul>
         </div>
+      )}
+
+      {theme && (
+        <p className="forca-theme" style={{ textAlign: 'center', margin: '0 auto 0.5rem auto' }}>
+          <span className="badge" style={{ fontSize: '0.85rem', padding: '0.35rem 0.9rem' }}>
+            {t('forca.themeLabel')}: <strong style={{ color: 'var(--primary)' }}>{theme}</strong>
+          </span>
+        </p>
       )}
 
       {personName && (

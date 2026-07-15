@@ -6,6 +6,8 @@ import authRouter from './routes/auth';
 import gameRouter from './routes/game';
 import termoRouter from './routes/termo';
 import forcaRouter from './routes/forca';
+import quizRouter from './routes/quiz';
+import codeRouter from './routes/code';
 import adminRouter from './routes/admin';
 import { bootstrapProjectCatalog } from '../server/projects';
 import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../server/email-verification-config';
@@ -55,6 +57,16 @@ const apiLimiter = rateLimit({
   message: { error: 'Muitas requisições. Tente novamente em instantes.' },
 });
 
+// Code submissions actually execute (sandboxed, time-boxed) JavaScript on the
+// server, so they get a much tighter budget than the rest of the API.
+const codeRunLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas execuções seguidas. Aguarde um instante e tente de novo.' },
+});
+
 // Lightweight healthcheck for containers/orchestration.
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
@@ -66,10 +78,14 @@ app.use('/api/auth/resend-verification', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 app.use('/api/auth/reset-password', authLimiter);
 
+app.use('/api/code/submit', codeRunLimiter);
+
 app.use('/api/auth', authRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/termo', termoRouter);
 app.use('/api/forca', forcaRouter);
+app.use('/api/quiz', quizRouter);
+app.use('/api/code', codeRouter);
 app.use('/api/admin', adminRouter);
 
 async function start() {

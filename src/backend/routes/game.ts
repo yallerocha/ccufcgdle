@@ -110,11 +110,37 @@ router.get('/members/:id/stats', async (req, res) => {
       };
     };
 
-    const [lsdle, termo, forca] = await Promise.all([
+    const [lsdle, termo, forca, code] = await Promise.all([
       perGame(prisma.gameResult, 'lsdle'),
       perGame(prisma.termoResult, 'termo'),
       perGame(prisma.forcaResult, 'forca'),
+      perGame(prisma.codeResult, 'code'),
     ]);
+
+    // Quiz results score by correct answers (more is better), so its stats are
+    // aggregated separately from the attempts-based games above.
+    const quizAgg = await prisma.quizResult.aggregate({
+      where: { playerId: id },
+      _count: { _all: true },
+      _avg: { correct: true },
+      _max: { correct: true },
+    });
+    const quizFastest = await prisma.quizResult.findFirst({
+      where: { playerId: id },
+      orderBy: [{ durationMs: 'asc' }],
+      select: { durationMs: true },
+    });
+    const quizStreak = await prisma.gameStreak.findUnique({
+      where: { playerId_game: { playerId: id, game: 'quiz' } },
+      select: { best: true },
+    });
+    const quiz = {
+      wins: quizAgg._count._all,
+      avgAttempts: quizAgg._avg.correct,
+      bestAttempts: quizAgg._max.correct,
+      fastestMs: quizFastest?.durationMs ?? null,
+      streakBest: quizStreak?.best ?? 0,
+    };
 
     // Fun flavor counters tied to this person.
     const [timesPersonOfDay, timesForcaTarget] = await Promise.all([
@@ -122,13 +148,19 @@ router.get('/members/:id/stats', async (req, res) => {
       prisma.forcaDaily.count({ where: { personName: member.name } }),
     ]);
 
-    const totalWins = lsdle.wins + termo.wins + forca.wins;
-    const bestStreak = Math.max(lsdle.streakBest, termo.streakBest, forca.streakBest);
+    const totalWins = lsdle.wins + termo.wins + forca.wins + quiz.wins + code.wins;
+    const bestStreak = Math.max(
+      lsdle.streakBest,
+      termo.streakBest,
+      forca.streakBest,
+      quiz.streakBest,
+      code.streakBest,
+    );
 
     return res.json({
       member,
       totals: { wins: totalWins, bestStreak, timesPersonOfDay, timesForcaTarget },
-      games: { lsdle, termo, forca },
+      games: { lsdle, termo, forca, quiz, code },
     });
   } catch (error) {
     console.error('Error in member stats API:', error);

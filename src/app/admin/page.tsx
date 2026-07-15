@@ -527,14 +527,14 @@ export default function AdminPage() {
                 value={termoWord}
                 onChange={(e) => setTermoWord(e.target.value)}
                 placeholder={t('admin.termoWordPlaceholder')}
-                maxLength={5}
+                maxLength={8}
                 style={{ height: '42px', padding: '0 1rem', textTransform: 'uppercase' }}
               />
             </div>
 
             <button
               onClick={() => handleForceTermo(false)}
-              disabled={submitting || termoWord.trim().length < 5}
+              disabled={submitting || termoWord.trim().length < 4}
               className="btn"
               style={{ height: '42px' }}
             >

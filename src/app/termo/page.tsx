@@ -326,8 +326,8 @@ export default function TermoPage() {
         </div>
       )}
 
-      {/* Board */}
-      <div className="termo-board fade-in">
+      {/* Board — --termo-cols lets the CSS shrink cells for longer words */}
+      <div className="termo-board fade-in" style={{ '--termo-cols': wordLength } as React.CSSProperties}>
         {Array.from({ length: maxAttempts }).map((_, r) => {
           const isCurrentRow = r === guesses.length && status === 'playing';
           const submitted = r < guesses.length;

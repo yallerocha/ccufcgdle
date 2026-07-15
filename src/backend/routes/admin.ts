@@ -6,14 +6,15 @@ import { getLocalDateString } from '../../shared/utils';
 import { getOrCreateDailyCharacter, getActiveUsers } from '../../server/game';
 import {
   normalize,
-  isValidGuess,
   displayFor,
   randomWord as termoRandomWord,
-  WORD_LENGTH,
+  MIN_WORD_LENGTH,
+  MAX_WORD_LENGTH,
 } from '../../server/termo';
 import {
   randomWord as forcaRandomWord,
   displayFor as forcaDisplayFor,
+  themeFor as forcaThemeFor,
   isPoolWord as isForcaPoolWord,
 } from '../../server/forca';
 import { requireAdmin } from '../middleware/auth';
@@ -229,11 +230,11 @@ router.post('/termo-force-daily', async (req, res) => {
 
     if (typeof word === 'string' && word.trim() !== '') {
       const norm = normalize(word);
-      if (norm.length !== WORD_LENGTH) {
-        return res.status(400).json({ error: `A palavra deve ter ${WORD_LENGTH} letras.` });
-      }
-      if (!isValidGuess(norm)) {
-        return res.status(422).json({ error: 'Palavra não está na lista do jogo.' });
+      // No dictionary for computing terms: any word within the length range works.
+      if (norm.length < MIN_WORD_LENGTH || norm.length > MAX_WORD_LENGTH) {
+        return res.status(400).json({
+          error: `A palavra deve ter entre ${MIN_WORD_LENGTH} e ${MAX_WORD_LENGTH} letras.`,
+        });
       }
       const created = await prisma.termoDaily.create({
         data: { date: today, word: norm, display: displayFor(norm) },
@@ -288,6 +289,7 @@ router.post('/forca-force-daily', async (req, res) => {
           date: today,
           word: norm,
           display: forcaDisplayFor(norm),
+          theme: forcaThemeFor(norm),
           personName: person?.name ?? null,
           personPhoto: person?.photoUrl ?? null,
         },
@@ -305,6 +307,7 @@ router.post('/forca-force-daily', async (req, res) => {
           date: today,
           word: rw.word,
           display: rw.display,
+          theme: rw.theme,
           personName: person?.name ?? null,
           personPhoto: person?.photoUrl ?? null,
         },

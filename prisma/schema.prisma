@@ -52,6 +52,10 @@ model User {
   termoProgress    TermoProgress[]
   forcaResults     ForcaResult[]
   forcaProgress    ForcaProgress[]
+  quizResults      QuizResult[]
+  quizProgress     QuizProgress[]
+  codeResults      CodeResult[]
+  codeProgress     CodeProgress[]
   streaks          GameStreak[]
   createdProjects  Project[]
   emailVerificationTokens EmailVerificationToken[]
@@ -204,6 +208,7 @@ model ForcaDaily {
   date        String   @unique // Format: "YYYY-MM-DD"
   word        String   // normalized solution
   display     String   // accented form to reveal
+  theme       String   @default("") // category hint shown to the player (e.g. "Redes de computadores")
   // The registered person you're "saving" by guessing the word (flavor only —
   // unrelated to the answer). Snapshot of name + photo at selection time.
   personName  String?
@@ -235,6 +240,94 @@ model ForcaResult {
   playerId   String
   player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
   attempts   Int      // number of wrong guesses
+  durationMs Int
+  createdAt  DateTime @default(now())
+
+  @@unique([date, playerId])
+  @@index([date, attempts, durationMs])
+}
+
+// ── QUIZ (POSCOMP-style daily quiz) ──────────────────────────────────────────
+// Self-contained, like Termo/Forca: own daily question set, progress and ranking.
+
+// The question set for a given day: ids from the server-side question bank
+// (src/server/quiz-questions.ts), in presentation order, comma-separated.
+model QuizDaily {
+  id          Int      @id @default(autoincrement())
+  date        String   @unique // Format: "YYYY-MM-DD"
+  questionIds String   // e.g. "mat-03,fun-01,fun-07,tec-02,tec-09"
+  createdAt   DateTime @default(now())
+}
+
+// Server-authoritative play state. `answers` is a JSON array of
+// { i: questionIndex, choice, correct } — each question can only be answered
+// once, and the score is always derived here, never from the client.
+model QuizProgress {
+  id            Int       @id @default(autoincrement())
+  date          String    // Format: "YYYY-MM-DD"
+  playerId      String
+  player        User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  answers       String    @default("[]")
+  firstAnswerAt DateTime  @default(now())
+  finished      Boolean   @default(false)
+  finishedAt    DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([date, playerId])
+}
+
+// One Quiz result per logged-in player per day, recorded when the last question
+// is answered. Ranking: more correct answers first, then shorter durationMs.
+model QuizResult {
+  id         Int      @id @default(autoincrement())
+  date       String   // Format: "YYYY-MM-DD"
+  playerId   String
+  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  correct    Int
+  total      Int
+  durationMs Int
+  createdAt  DateTime @default(now())
+
+  @@unique([date, playerId])
+  @@index([date, correct, durationMs])
+}
+
+// ── CODE (daily coding challenge) ────────────────────────────────────────────
+// Self-contained: own daily challenge, progress and ranking.
+
+// The challenge for a given day: an id from the server-side challenge bank
+// (src/server/code-challenges.ts).
+model CodeDaily {
+  id          Int      @id @default(autoincrement())
+  date        String   @unique // Format: "YYYY-MM-DD"
+  challengeId String
+  createdAt   DateTime @default(now())
+}
+
+// Server-authoritative play state: each code submission increments `attempts`,
+// so the ranking (fewest submissions to pass) comes from real runs.
+model CodeProgress {
+  id           Int       @id @default(autoincrement())
+  date         String    // Format: "YYYY-MM-DD"
+  playerId     String
+  player       User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  attempts     Int       @default(0)
+  firstTryAt   DateTime  @default(now())
+  solved       Boolean   @default(false)
+  solvedAt     DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([date, playerId])
+}
+
+// One Code result per logged-in player per day, recorded when every test
+// passes. Ranking: fewer submissions first; ties broken by shorter durationMs.
+model CodeResult {
+  id         Int      @id @default(autoincrement())
+  date       String   // Format: "YYYY-MM-DD"
+  playerId   String
+  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  attempts   Int      // number of submissions until all tests passed
   durationMs Int
   createdAt  DateTime @default(now())
 

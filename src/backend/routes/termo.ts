@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { getLocalDateString } from '../../shared/utils';
 import {
-  WORD_LENGTH,
   MAX_ATTEMPTS,
   normalize,
   isValidGuess,
@@ -19,13 +18,14 @@ const router = Router();
 // client uses to detect an admin reset (changes without revealing the word).
 router.get('/daily', async (_req, res) => {
   try {
-    await getOrCreateDailyWord();
+    // The board size follows the day's solution (computing terms vary in length).
+    const { word } = await getOrCreateDailyWord();
     const daily = await prisma.termoDaily.findUnique({
       where: { date: getLocalDateString() },
       select: { id: true },
     });
     return res.json({
-      wordLength: WORD_LENGTH,
+      wordLength: word.length,
       maxAttempts: MAX_ATTEMPTS,
       dailyKey: daily?.id ?? null,
     });
@@ -35,22 +35,19 @@ router.get('/daily', async (_req, res) => {
   }
 });
 
-// POST /api/termo/guess — validates a 5-letter word, returns per-letter feedback
-// and (for logged-in players) tracks attempts/timing so the ranking is recorded
-// from real play, never from client-supplied numbers.
+// POST /api/termo/guess — validates a word of the day's length, returns
+// per-letter feedback and (for logged-in players) tracks attempts/timing so the
+// ranking is recorded from real play, never from client-supplied numbers.
 router.post('/guess', withAuth, async (req, res) => {
   try {
     const raw = typeof req.body?.guess === 'string' ? req.body.guess : '';
     const guess = normalize(raw);
 
-    if (guess.length !== WORD_LENGTH) {
-      return res.status(400).json({ error: `A palavra deve ter ${WORD_LENGTH} letras.` });
-    }
-    if (!isValidGuess(guess)) {
-      return res.status(422).json({ error: 'Palavra não está na lista.' });
-    }
-
     const { word: solution, display } = await getOrCreateDailyWord();
+
+    if (!isValidGuess(guess, solution.length)) {
+      return res.status(400).json({ error: `A palavra deve ter ${solution.length} letras.` });
+    }
     const results = evaluateGuess(guess, solution);
     const solved = guess === solution;
 

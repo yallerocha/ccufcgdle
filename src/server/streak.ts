@@ -1,7 +1,7 @@
 import { prisma } from './db';
 import { getLocalDateString, getPreviousDateString } from '@/shared/utils';
 
-export type GameId = 'lsdle' | 'termo' | 'forca';
+export type GameId = 'lsdle' | 'termo' | 'forca' | 'quiz' | 'code';
 
 export interface StreakInfo {
   current: number;
@@ -108,6 +108,12 @@ async function getCompletedDates(
       break;
     case 'forca':
       rows = await prisma.forcaResult.findMany({ where, select: { date: true } });
+      break;
+    case 'quiz':
+      rows = await prisma.quizResult.findMany({ where, select: { date: true } });
+      break;
+    case 'code':
+      rows = await prisma.codeResult.findMany({ where, select: { date: true } });
       break;
   }
   return new Set(rows.map((r) => r.date));

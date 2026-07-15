@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Flame, Crown, Skull, Gamepad2, Type, Ban, Clock, Target } from 'lucide-react';
+import { Trophy, Flame, Crown, Skull, Gamepad2, Type, Ban, Clock, Target, GraduationCap, TerminalSquare } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 import { ModalColorBar } from '@/client/components/ModalColorBar';
 
@@ -18,7 +18,7 @@ interface GameStats {
 interface MemberStats {
   member: { id: string; name: string; photoUrl?: string | null; createdAt: string };
   totals: { wins: number; bestStreak: number; timesPersonOfDay: number; timesForcaTarget: number };
-  games: { lsdle: GameStats; termo: GameStats; forca: GameStats };
+  games: { lsdle: GameStats; termo: GameStats; forca: GameStats; quiz?: GameStats; code?: GameStats };
 }
 
 function formatDuration(ms: number | null): string {
@@ -60,9 +60,11 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
   if (!memberId || !mounted) return null;
 
   const games = [
-    { key: 'lsdle', label: 'LSDLE', icon: Gamepad2, color: 'var(--lsd-magenta)', unit: t('members.attemptsUnit') },
+    { key: 'quiz', label: 'QUIZ', icon: GraduationCap, color: 'var(--lsd-orange)', unit: t('members.correctUnit') },
+    { key: 'code', label: 'CODE', icon: TerminalSquare, color: 'var(--color-correct)', unit: t('members.submissionsUnit') },
     { key: 'termo', label: 'TERMO', icon: Type, color: 'var(--lsd-teal)', unit: t('members.attemptsUnit') },
     { key: 'forca', label: 'FORCA', icon: Ban, color: 'var(--lsd-red)', unit: t('members.mistakesUnit') },
+    { key: 'lsdle', label: 'LSDLE', icon: Gamepad2, color: 'var(--lsd-magenta)', unit: t('members.attemptsUnit') },
   ] as const;
 
   const memberSince = data
@@ -121,6 +123,7 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {games.map(({ key, label, icon: Icon, color, unit }) => {
                 const g = data.games[key];
+                if (!g) return null; // older API without this game's stats
                 const played = g.wins > 0;
                 return (
                   <div key={key} className="member-game-row">

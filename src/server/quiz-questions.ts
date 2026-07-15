@@ -1,0 +1,370 @@
+// Question bank for the daily POSCOMP-style quiz. Original questions written in
+// the style of the exam (5 alternatives, one correct), split into the same three
+// areas as the POSCOMP: Matemática, Fundamentos da Computação and Tecnologia da
+// Computação. Answers/areas are domain values and stay in Portuguese.
+//
+// `answer` is the index (0-4) of the correct option. `explanation` is shown
+// after the player answers, to reinforce the micro-learning goal.
+
+export type QuizArea = 'Matemática' | 'Fundamentos da Computação' | 'Tecnologia da Computação';
+
+export interface QuizQuestion {
+  id: string;
+  area: QuizArea;
+  question: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+}
+
+export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  // ── Matemática ─────────────────────────────────────────────────────────────
+  {
+    id: 'mat-01',
+    area: 'Matemática',
+    question: 'Quantas funções injetoras existem de um conjunto com 3 elementos em um conjunto com 5 elementos?',
+    options: ['15', '35', '60', '125', '243'],
+    answer: 2,
+    explanation: 'Para cada elemento do domínio escolhe-se uma imagem distinta: 5 × 4 × 3 = 60.',
+  },
+  {
+    id: 'mat-02',
+    area: 'Matemática',
+    question: 'Se um conjunto A possui n elementos, quantos subconjuntos A possui?',
+    options: ['n', 'n²', '2n', '2ⁿ', 'n!'],
+    answer: 3,
+    explanation: 'Cada elemento pode estar ou não em um subconjunto: 2 opções por elemento, logo 2ⁿ subconjuntos.',
+  },
+  {
+    id: 'mat-03',
+    area: 'Matemática',
+    question: 'A negação da proposição "todo programa tem bug" é:',
+    options: [
+      'Nenhum programa tem bug',
+      'Existe um programa que não tem bug',
+      'Todo programa não tem bug',
+      'Existe um programa que tem bug',
+      'Alguns programas têm bug',
+    ],
+    answer: 1,
+    explanation: 'A negação de ∀x P(x) é ∃x ¬P(x): existe ao menos um programa sem bug.',
+  },
+  {
+    id: 'mat-04',
+    area: 'Matemática',
+    question: 'O valor de log₂(1024) é:',
+    options: ['8', '9', '10', '11', '12'],
+    answer: 2,
+    explanation: '2¹⁰ = 1024, logo log₂(1024) = 10.',
+  },
+  {
+    id: 'mat-05',
+    area: 'Matemática',
+    question: 'Quantos anagramas tem a palavra DADOS?',
+    options: ['24', '60', '120', '240', '720'],
+    answer: 1,
+    explanation: 'São 5 letras com o D repetido duas vezes: 5!/2! = 120/2 = 60.',
+  },
+  {
+    id: 'mat-06',
+    area: 'Matemática',
+    question: 'Ao lançar duas moedas honestas, a probabilidade de obter duas caras é:',
+    options: ['1/2', '1/3', '1/4', '2/3', '3/4'],
+    answer: 2,
+    explanation: 'Os lançamentos são independentes: (1/2) × (1/2) = 1/4.',
+  },
+  {
+    id: 'mat-07',
+    area: 'Matemática',
+    question: 'O determinante da matriz identidade de ordem 3 é:',
+    options: ['0', '1', '3', '9', '-1'],
+    answer: 1,
+    explanation: 'O determinante da matriz identidade é sempre 1, em qualquer ordem.',
+  },
+  {
+    id: 'mat-08',
+    area: 'Matemática',
+    question: 'A soma dos inteiros de 1 a 100 é:',
+    options: ['4950', '5000', '5050', '5100', '10100'],
+    answer: 2,
+    explanation: 'Pela fórmula de Gauss: n(n+1)/2 = 100 × 101 / 2 = 5050.',
+  },
+  {
+    id: 'mat-09',
+    area: 'Matemática',
+    question: 'Em um grafo não dirigido com 10 arestas, a soma dos graus de todos os vértices é:',
+    options: ['5', '10', '15', '20', 'Depende do número de vértices'],
+    answer: 3,
+    explanation: 'Cada aresta contribui com 2 para a soma dos graus (lema do aperto de mãos): 2 × 10 = 20.',
+  },
+  {
+    id: 'mat-10',
+    area: 'Matemática',
+    question: 'O resto da divisão de 2¹⁰ por 7 é:',
+    options: ['0', '1', '2', '4', '6'],
+    answer: 2,
+    explanation: '2¹⁰ = 1024 e 1022 = 146 × 7, logo o resto é 2.',
+  },
+  {
+    id: 'mat-11',
+    area: 'Matemática',
+    question: 'A derivada da função f(x) = x² é:',
+    options: ['x', '2x', 'x²/2', '2x²', '2'],
+    answer: 1,
+    explanation: 'Pela regra da potência, d(xⁿ)/dx = n·xⁿ⁻¹, então d(x²)/dx = 2x.',
+  },
+  {
+    id: 'mat-12',
+    area: 'Matemática',
+    question: 'Se |A| = 10, |B| = 8 e |A ∩ B| = 3, então |A ∪ B| é:',
+    options: ['15', '18', '21', '13', '11'],
+    answer: 0,
+    explanation: 'Princípio da inclusão-exclusão: |A ∪ B| = 10 + 8 − 3 = 15.',
+  },
+
+  // ── Fundamentos da Computação ──────────────────────────────────────────────
+  {
+    id: 'fun-01',
+    area: 'Fundamentos da Computação',
+    question: 'A complexidade de tempo da busca binária em um vetor ordenado com n elementos é:',
+    options: ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)', 'O(n²)'],
+    answer: 1,
+    explanation: 'A cada comparação a busca binária descarta metade do vetor, resultando em O(log n).',
+  },
+  {
+    id: 'fun-02',
+    area: 'Fundamentos da Computação',
+    question: 'A estrutura de dados em que o último elemento inserido é o primeiro a ser removido (LIFO) é a:',
+    options: ['Fila', 'Pilha', 'Lista encadeada', 'Árvore binária', 'Tabela hash'],
+    answer: 1,
+    explanation: 'A pilha segue a política LIFO (Last In, First Out); a fila segue FIFO.',
+  },
+  {
+    id: 'fun-03',
+    area: 'Fundamentos da Computação',
+    question: 'A complexidade de pior caso do algoritmo Quicksort é:',
+    options: ['O(n)', 'O(log n)', 'O(n log n)', 'O(n²)', 'O(2ⁿ)'],
+    answer: 3,
+    explanation: 'Com pivôs ruins (ex.: vetor já ordenado e pivô fixo), as partições ficam desbalanceadas e o custo é O(n²).',
+  },
+  {
+    id: 'fun-04',
+    area: 'Fundamentos da Computação',
+    question: 'O percurso em uma árvore binária de busca que visita as chaves em ordem crescente é o:',
+    options: ['Pré-ordem', 'Pós-ordem', 'Em-ordem (in-order)', 'Em largura (BFS)', 'Em profundidade a partir da raiz'],
+    answer: 2,
+    explanation: 'O percurso em-ordem visita esquerda, raiz e direita — o que, numa BST, produz as chaves ordenadas.',
+  },
+  {
+    id: 'fun-05',
+    area: 'Fundamentos da Computação',
+    question: 'A classe de linguagens reconhecida pelos autômatos finitos é a das linguagens:',
+    options: ['Regulares', 'Livres de contexto', 'Sensíveis ao contexto', 'Recursivamente enumeráveis', 'Decidíveis'],
+    answer: 0,
+    explanation: 'Autômatos finitos (determinísticos ou não) reconhecem exatamente as linguagens regulares.',
+  },
+  {
+    id: 'fun-06',
+    area: 'Fundamentos da Computação',
+    question: 'O problema da parada (halting problem) é:',
+    options: [
+      'Decidível em tempo polinomial',
+      'Decidível, mas apenas em tempo exponencial',
+      'NP-completo',
+      'Indecidível',
+      'Decidível apenas para programas sem laços',
+    ],
+    answer: 3,
+    explanation: 'Turing provou que não existe algoritmo que decida, para todo programa e entrada, se a execução termina.',
+  },
+  {
+    id: 'fun-07',
+    area: 'Fundamentos da Computação',
+    question: 'Em uma heap binária com n elementos, a inserção de um novo elemento custa, no pior caso:',
+    options: ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)', 'O(n²)'],
+    answer: 1,
+    explanation: 'O elemento sobe no máximo a altura da heap, que é O(log n).',
+  },
+  {
+    id: 'fun-08',
+    area: 'Fundamentos da Computação',
+    question: 'Em uma tabela hash bem dimensionada e com boa função de hash, o custo médio de busca é:',
+    options: ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)', 'O(n²)'],
+    answer: 0,
+    explanation: 'Com poucas colisões, o acesso ao bucket calculado pela função de hash é feito em tempo constante médio.',
+  },
+  {
+    id: 'fun-09',
+    area: 'Fundamentos da Computação',
+    question: 'A busca em largura (BFS) em grafos utiliza como estrutura de dados auxiliar uma:',
+    options: ['Pilha', 'Fila', 'Árvore AVL', 'Heap', 'Tabela hash'],
+    answer: 1,
+    explanation: 'A BFS visita os vértices por níveis, e a fila (FIFO) garante essa ordem; a DFS é que usa pilha.',
+  },
+  {
+    id: 'fun-10',
+    area: 'Fundamentos da Computação',
+    question: 'O número binário 101101 corresponde, em decimal, a:',
+    options: ['43', '44', '45', '46', '53'],
+    answer: 2,
+    explanation: '32 + 8 + 4 + 1 = 45 (bits ligados nas posições 5, 3, 2 e 0).',
+  },
+  {
+    id: 'fun-11',
+    area: 'Fundamentos da Computação',
+    question: 'O valor da expressão pós-fixa (notação polonesa reversa) "3 4 + 2 *" é:',
+    options: ['10', '11', '14', '18', '24'],
+    answer: 2,
+    explanation: '"3 4 +" = 7; em seguida "7 2 *" = 14.',
+  },
+  {
+    id: 'fun-12',
+    area: 'Fundamentos da Computação',
+    question: 'Se algum problema NP-completo puder ser resolvido em tempo polinomial, então:',
+    options: [
+      'P = NP',
+      'P ≠ NP',
+      'NP = EXP',
+      'Todos os problemas se tornam decidíveis',
+      'Nada pode ser concluído',
+    ],
+    answer: 0,
+    explanation: 'Todo problema em NP se reduz polinomialmente a um NP-completo; resolvê-lo em tempo polinomial implicaria P = NP.',
+  },
+
+  // ── Tecnologia da Computação ───────────────────────────────────────────────
+  {
+    id: 'tec-01',
+    area: 'Tecnologia da Computação',
+    question: 'Em SQL, o comando que remove uma tabela e sua estrutura do banco de dados é:',
+    options: ['DELETE TABLE', 'REMOVE TABLE', 'DROP TABLE', 'TRUNCATE TABLE', 'ERASE TABLE'],
+    answer: 2,
+    explanation: 'DROP TABLE remove a tabela inteira; DELETE e TRUNCATE removem apenas linhas.',
+  },
+  {
+    id: 'tec-02',
+    area: 'Tecnologia da Computação',
+    question: 'Qual das opções NÃO é uma das quatro condições necessárias para a ocorrência de deadlock?',
+    options: [
+      'Exclusão mútua',
+      'Posse e espera',
+      'Preempção de recursos',
+      'Espera circular',
+      'Não-preempção',
+    ],
+    answer: 2,
+    explanation: 'Deadlock exige NÃO-preempção. Se recursos podem ser preemptados (tomados à força), o deadlock é quebrado.',
+  },
+  {
+    id: 'tec-03',
+    area: 'Tecnologia da Computação',
+    question: 'Sobre os protocolos de transporte da Internet, é correto afirmar que:',
+    options: [
+      'UDP é orientado a conexão e TCP não',
+      'TCP é orientado a conexão e garante entrega ordenada',
+      'TCP e UDP garantem entrega dos pacotes',
+      'UDP retransmite pacotes perdidos automaticamente',
+      'TCP não possui controle de congestionamento',
+    ],
+    answer: 1,
+    explanation: 'O TCP estabelece conexão (three-way handshake) e garante entrega confiável e ordenada; o UDP não.',
+  },
+  {
+    id: 'tec-04',
+    area: 'Tecnologia da Computação',
+    question: 'No modelo OSI, o roteamento de pacotes entre redes é responsabilidade da camada de:',
+    options: ['Enlace', 'Física', 'Transporte', 'Rede', 'Sessão'],
+    answer: 3,
+    explanation: 'A camada de rede (camada 3) cuida de endereçamento lógico e roteamento — é onde atua o IP.',
+  },
+  {
+    id: 'tec-05',
+    area: 'Tecnologia da Computação',
+    question: 'Em um banco de dados relacional, uma chave primária:',
+    options: [
+      'Pode conter valores nulos',
+      'Pode ter valores repetidos',
+      'Identifica unicamente cada linha e não admite nulos',
+      'Só pode ser formada por uma única coluna',
+      'É opcional apenas em tabelas pequenas',
+    ],
+    answer: 2,
+    explanation: 'A chave primária identifica unicamente cada tupla: sem duplicatas e sem valores nulos (pode ser composta).',
+  },
+  {
+    id: 'tec-06',
+    area: 'Tecnologia da Computação',
+    question: 'A técnica que permite a um processo usar mais memória do que a RAM física disponível é:',
+    options: ['Cache L1', 'Memória virtual', 'Registradores', 'DMA', 'Pipeline'],
+    answer: 1,
+    explanation: 'A memória virtual (com paginação/troca para disco) dá a cada processo um espaço de endereçamento maior que a RAM.',
+  },
+  {
+    id: 'tec-07',
+    area: 'Tecnologia da Computação',
+    question: 'O HTTPS difere do HTTP por adicionar:',
+    options: [
+      'Compressão dos dados',
+      'Cache obrigatório no navegador',
+      'Criptografia via TLS',
+      'Balanceamento de carga',
+      'Um novo formato de HTML',
+    ],
+    answer: 2,
+    explanation: 'O HTTPS é o HTTP sobre TLS: o tráfego é cifrado e o servidor é autenticado por certificado.',
+  },
+  {
+    id: 'tec-08',
+    area: 'Tecnologia da Computação',
+    question: 'Na programação orientada a objetos, o mecanismo pelo qual uma classe reaproveita e estende outra é:',
+    options: ['Encapsulamento', 'Herança', 'Sobrecarga', 'Coesão', 'Acoplamento'],
+    answer: 1,
+    explanation: 'Herança permite que uma subclasse reutilize atributos e métodos da superclasse, estendendo seu comportamento.',
+  },
+  {
+    id: 'tec-09',
+    area: 'Tecnologia da Computação',
+    question: 'Uma tabela está na primeira forma normal (1FN) quando:',
+    options: [
+      'Não possui dependências transitivas',
+      'Todos os atributos são atômicos (sem valores multivalorados)',
+      'Toda dependência funcional tem a chave como determinante',
+      'Não possui chaves estrangeiras',
+      'Possui no máximo uma chave candidata',
+    ],
+    answer: 1,
+    explanation: 'A 1FN exige atributos atômicos; dependências transitivas e parciais são tratadas na 2FN e 3FN.',
+  },
+  {
+    id: 'tec-10',
+    area: 'Tecnologia da Computação',
+    question: 'No escalonamento de processos Round-Robin, o parâmetro que define o tempo máximo de CPU por vez é o:',
+    options: ['Deadline', 'Quantum', 'Throughput', 'Turnaround', 'Timestamp'],
+    answer: 1,
+    explanation: 'O quantum (fatia de tempo) limita quanto cada processo executa antes de voltar ao fim da fila.',
+  },
+  {
+    id: 'tec-11',
+    area: 'Tecnologia da Computação',
+    question: 'O serviço da Internet responsável por traduzir nomes de domínio em endereços IP é o:',
+    options: ['DHCP', 'DNS', 'NAT', 'SMTP', 'FTP'],
+    answer: 1,
+    explanation: 'O DNS (Domain Name System) resolve nomes como exemplo.com para endereços IP.',
+  },
+  {
+    id: 'tec-12',
+    area: 'Tecnologia da Computação',
+    question: 'No teste de software, a técnica de caixa-preta caracteriza-se por:',
+    options: [
+      'Analisar a cobertura de todas as linhas do código',
+      'Derivar casos de teste da especificação, sem olhar o código-fonte',
+      'Exigir acesso ao controle de versão',
+      'Testar apenas métodos privados',
+      'Medir a complexidade ciclomática',
+    ],
+    answer: 1,
+    explanation: 'Caixa-preta testa entradas e saídas com base na especificação; caixa-branca é que examina a estrutura interna do código.',
+  },
+];
+
+export const QUESTION_BY_ID = new Map(QUIZ_QUESTIONS.map((q) => [q.id, q]));

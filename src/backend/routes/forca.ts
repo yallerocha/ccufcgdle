@@ -8,17 +8,19 @@ import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
 
-// GET /api/forca/daily — word length (number of blanks), allowed wrong guesses,
-// and a non-identifying daily key the client uses to detect an admin reset.
+// GET /api/forca/daily — word length (number of blanks), theme hint, allowed
+// wrong guesses, and a non-identifying daily key the client uses to detect an
+// admin reset.
 router.get('/daily', async (_req, res) => {
   try {
-    const { word, personName, personPhoto } = await getOrCreateDailyWord();
+    const { word, theme, personName, personPhoto } = await getOrCreateDailyWord();
     const daily = await prisma.forcaDaily.findUnique({
       where: { date: getLocalDateString() },
       select: { id: true },
     });
     return res.json({
       wordLength: word.length,
+      theme,
       maxWrong: MAX_WRONG,
       dailyKey: daily?.id ?? null,
       personName: personName ?? null,

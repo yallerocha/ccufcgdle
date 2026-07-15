@@ -1,8 +1,10 @@
 import { prisma } from './db';
 import { getLocalDateString } from '@/shared/utils';
-import { TERMO_GUESS_WORDS } from './termo-words';
 
-export const WORD_LENGTH = 5;
+// The daily word length follows the day's solution (4–8 letters), so rounds vary
+// in difficulty. MAX_ATTEMPTS stays fixed regardless of length.
+export const MIN_WORD_LENGTH = 4;
+export const MAX_WORD_LENGTH = 8;
 export const MAX_ATTEMPTS = 6;
 
 // Per-letter feedback, Wordle-style:
@@ -11,48 +13,35 @@ export const MAX_ATTEMPTS = 6;
 //  - 'absent'  : letter is not in the word (gray)
 export type LetterResult = 'correct' | 'present' | 'absent';
 
-// Curated pool of 5-letter Portuguese words used as daily answers. Stored with
-// their accented display form; matching always happens on the normalized
-// (accent-free, uppercase) form. Accepted guesses come from TERMO_GUESS_WORDS.
+// Curated pool of computing terms (pt-BR plus consolidated tech loanwords) used
+// as daily answers, in varied lengths so each day can have a different board.
+// Stored with their accented display form; matching always happens on the
+// normalized (accent-free, uppercase) form. Since the theme is computing, any
+// well-formed word of the right length is accepted as a guess (there is no
+// general dictionary of tech terms to validate against).
 const WORDS: string[] = [
-  'ABRIR', 'ACENO', 'AGORA', 'ALUNO', 'AMIGO', 'AMORA', 'ANTES', 'AREIA', 'ARROZ', 'ASSIM',
-  'ATLAS', 'ATUAL', 'AVISO', 'AZEDO', 'BALDE', 'BALSA', 'BANCO', 'BANHO', 'BARCO', 'BEIJO',
-  'BICHO', 'BOLSA', 'BRAÇO', 'BRASA', 'BRAVO', 'BREVE', 'BRIGA', 'BROTO', 'CABRA', 'CALMA',
-  'CALOR', 'CAMPO', 'CANAL', 'CANTO', 'CAPAZ', 'CARGA', 'CARTA', 'CARRO', 'CASAL', 'CAUSA',
-  'CEDRO', 'CERCA', 'CHAPA', 'CHAVE', 'CHEIO', 'CHUVA', 'CICLO', 'CINCO', 'CINZA', 'CLARO',
-  'CLIMA', 'CLUBE', 'COBRA', 'COISA', 'COLAR', 'COMER', 'CONTA', 'CORAL', 'CORPO', 'COURO',
-  'CREME', 'CRISE', 'CRUZA', 'CULPA', 'CURSO', 'CUSTO', 'DADOS', 'DENTE', 'DEVER', 'DICAS',
-  'DIETA', 'DISCO', 'DOBRO', 'DÓLAR', 'DRAMA', 'DUPLA', 'ÉPOCA', 'ERVAS', 'FACAS', 'FALAR',
-  'FALHA', 'FALTA', 'FAROL', 'FAZER', 'FEBRE', 'FELIZ', 'FENDA', 'FERRO', 'FESTA', 'FILHO',
-  'FILME', 'FLORA', 'FOLHA', 'FORÇA', 'FORMA', 'FRACO', 'FRADE', 'FRASE', 'FRITO', 'FRUTA',
-  'FUGIR', 'FUNDO', 'GAROA', 'GATOS', 'GANHO', 'GARFO', 'GENTE', 'GENRO', 'GESTO', 'GLOBO',
-  'GORDO', 'GOSTO', 'GRAÇA', 'GRADE', 'GRAMA', 'GRAVE', 'GREVE', 'GRITO', 'GRUPO', 'GRUTA',
-  'HINOS', 'HORDA', 'HUMOR', 'IDEIA', 'IGUAL', 'IRMÃO', 'ISOLA', 'JARRO', 'JEITO', 'JOGAR',
-  'JOVEM', 'JULHO', 'JUNTO', 'LABOR', 'LÁPIS', 'LAÇOS', 'LARGO', 'LEGAL', 'LEITE', 'LENHA',
-  'LENTO', 'LETRA', 'LIÇÃO', 'LIMPO', 'LINDO', 'LIVRE', 'LIVRO', 'LOJAS', 'LOMBO', 'LONGE',
-  'LOUCO', 'LUGAR', 'MACHO', 'MAGRO', 'MALHA', 'MANHÃ', 'MANGA', 'MAPAS', 'MARCO', 'MATAR',
-  'MEDIR', 'MEDOS', 'MELÃO', 'MENOR', 'MENOS', 'MESMO', 'METAL', 'METRO', 'MEXER', 'MICRO',
-  'MILHO', 'MINHA', 'MISSA', 'MITOS', 'MODAS', 'MOEDA', 'MONTE', 'MORAR', 'MORNO', 'MORRO',
-  'MORTE', 'MOTOR', 'MUDAR', 'MUNDO', 'MURAL', 'MUSEU', 'NAÇÃO', 'NADAR', 'NATAL', 'NAVIO',
-  'NEGRO', 'NERVO', 'NICHO', 'NOITE', 'NOIVA', 'NORTE', 'NOZES', 'NUVEM', 'OESTE', 'OLHAR',
-  'OLIVA', 'OMBRO', 'OPERA', 'ORDEM', 'OSTRA', 'ÓTICA', 'OUVIR', 'OUTRO', 'OVINO', 'PACTO',
-  'PADRE', 'PAGAR', 'PALCO', 'PALMA', 'PAPEL', 'PARAR', 'PARTE', 'PASSO', 'PASTA', 'PATAS',
-  'PAUSA', 'PAVOR', 'PEDRA', 'PEITO', 'PEIXE', 'PENSA', 'PENSO', 'PERCA', 'PERDE', 'PERNA',
-  'PESCA', 'PIANO', 'PILHA', 'PINHO', 'PINTO', 'PISTA', 'PLACA', 'PLANO', 'PLENO', 'PLUMA',
-  'POBRE', 'POEMA', 'PODER', 'POLPA', 'POLVO', 'PONTE', 'PONTO', 'PORCA', 'PORCO', 'PORTA',
-  'POSTE', 'POUCO', 'PRADO', 'PRAIA', 'PRATO', 'PRAZO', 'PRECE', 'PREÇO', 'PRESO', 'PRIMA',
-  'PROSA', 'PROVA', 'PUDOR', 'PULAR', 'QUASE', 'QUEDA', 'QUERO', 'QUOTA', 'RÁDIO', 'RAIVA',
-  'RAMPA', 'RAPAZ', 'RATOS', 'REGRA', 'REINO', 'RENDA', 'RESTO', 'RISCO', 'RITMO', 'ROCHA',
-  'RODAR', 'ROUPA', 'RUBRO', 'RURAL', 'SABER', 'SABIA', 'SABOR', 'SALMO', 'SALTO', 'SANTO',
-  'SAPOS', 'SAÚDE', 'SEIVA', 'SELVA', 'SENHA', 'SÉRIE', 'SERRA', 'SERVO', 'SINAL', 'SOBRA',
-  'SÓCIO', 'SOLTO', 'SONDA', 'SONHO', 'SOPRO', 'SORTE', 'SUBIR', 'SUAVE', 'SUÍNO', 'SURDO',
-  'TAMPA', 'TARDE', 'TECLA', 'TEMOR', 'TEMPO', 'TENDA', 'TENOR', 'TERMO', 'TERRA', 'TESTE',
-  'TIGRE', 'TOCAR', 'TOCHA', 'TOQUE', 'TOMAR', 'TORRE', 'TORTA', 'TRAMA', 'TRAVA', 'TRIBO',
-  'TRIGO', 'TREVO', 'TROCA', 'TROCO', 'TURMA', 'ÚNICO', 'USUAL', 'VAGAR', 'VALOR', 'VALSA',
-  'VAPOR', 'VAZIO', 'VELHO', 'VENTO', 'VERBO', 'VERDE', 'VESPA', 'VÍDEO', 'VIDRO', 'VIOLA',
-  'VINHO', 'VIRAR', 'VISTA', 'VITAL', 'VIVER', 'VOLTA', 'VOTAR', 'VOZES', 'ZEBRA', 'ZINCO',
-  'ZOMBA',
-].filter((w) => normalize(w).length === WORD_LENGTH);
+  // 4 letters
+  'BYTE', 'REDE', 'CHIP', 'DADO', 'JAVA', 'LOOP', 'WIFI', 'CABO', 'BIOS', 'RUST',
+  'PING', 'SITE', 'FILA', 'ROBÔ',
+  // 5 letters
+  'MOUSE', 'CACHE', 'ARRAY', 'LINUX', 'PIXEL', 'MODEM', 'PLACA', 'DISCO', 'PORTA',
+  'SENHA', 'TECLA', 'MICRO', 'BANCO', 'GRAFO', 'PILHA', 'LISTA', 'VETOR', 'TOKEN',
+  'PROXY', 'LOGIN', 'DEBUG', 'FIBRA', 'NUVEM', 'DADOS', 'VÍRUS',
+  // 6 letters
+  'KERNEL', 'PYTHON', 'CÓDIGO', 'SCRIPT', 'CLASSE', 'OBJETO', 'MÉTODO', 'THREAD',
+  'BUFFER', 'DRIVER', 'CURSOR', 'TABELA', 'ÍNDICE', 'PACOTE', 'SOCKET', 'COOKIE',
+  'BACKUP', 'LAPTOP', 'SWITCH', 'MATRIZ', 'FUNÇÃO', 'HACKER',
+  // 7 letters
+  'MEMÓRIA', 'BINÁRIO', 'SISTEMA', 'ARQUIVO', 'MONITOR', 'TECLADO', 'CONSOLE',
+  'DOMÍNIO', 'USUÁRIO', 'HASKELL', 'ANDROID', 'CLUSTER',
+  // 8 letters
+  'INTERNET', 'PROGRAMA', 'PROCESSO', 'CIRCUITO', 'PONTEIRO', 'DEADLOCK',
+  'FIREWALL', 'TERMINAL', 'SOFTWARE', 'HARDWARE', 'NOTEBOOK', 'ITERAÇÃO',
+  'RECURSÃO',
+].filter((w) => {
+  const len = normalize(w).length;
+  return len >= MIN_WORD_LENGTH && len <= MAX_WORD_LENGTH;
+});
 
 // Uppercase, strip diacritics, keep only A–Z. "ção" → "CAO", "saúde" → "SAUDE".
 export function normalize(word: string): string {
@@ -63,21 +52,17 @@ export function normalize(word: string): string {
     .replace(/[^A-Z]/g, '');
 }
 
-// normalized form -> accented display form, used both to validate a guess and to
-// auto-fill its accents. Built from the broad accepted-guess dictionary, with the
-// curated answer words layered on top so daily reveals use their exact accents.
+// normalized form -> accented display form. Built from the curated answers so
+// daily reveals (and matching guesses) show their exact accents.
 const DISPLAY_BY_NORM = new Map<string, string>();
-for (const w of TERMO_GUESS_WORDS) {
-  const n = normalize(w);
-  if (n.length === WORD_LENGTH && !DISPLAY_BY_NORM.has(n)) DISPLAY_BY_NORM.set(n, w);
-}
 for (const w of WORDS) {
-  DISPLAY_BY_NORM.set(normalize(w), w); // curated answers win for display
+  DISPLAY_BY_NORM.set(normalize(w), w);
 }
-const VALID_GUESSES = new Set(DISPLAY_BY_NORM.keys());
 
-export function isValidGuess(normalized: string): boolean {
-  return VALID_GUESSES.has(normalized);
+// A guess is any A–Z word of the round's length — the computing theme has no
+// exhaustive dictionary, so unlike classic Termo there is no word-list check.
+export function isValidGuess(normalized: string, length: number): boolean {
+  return normalized.length === length && /^[A-Z]+$/.test(normalized);
 }
 
 export function displayFor(normalized: string): string {
@@ -138,11 +123,12 @@ export async function getOrCreateDailyWord(dateStr?: string): Promise<DailyWord>
 // Two-pass evaluation so repeated letters are colored correctly (a 'present'
 // letter is only awarded if an unmatched copy of it remains in the solution).
 export function evaluateGuess(guessNorm: string, solutionNorm: string): LetterResult[] {
-  const result: LetterResult[] = new Array(WORD_LENGTH).fill('absent');
+  const length = solutionNorm.length;
+  const result: LetterResult[] = new Array(length).fill('absent');
   const remaining: Record<string, number> = {};
 
   // Pass 1: exact matches.
-  for (let i = 0; i < WORD_LENGTH; i++) {
+  for (let i = 0; i < length; i++) {
     if (guessNorm[i] === solutionNorm[i]) {
       result[i] = 'correct';
     } else {
@@ -151,7 +137,7 @@ export function evaluateGuess(guessNorm: string, solutionNorm: string): LetterRe
   }
 
   // Pass 2: present-but-misplaced, limited by leftover counts.
-  for (let i = 0; i < WORD_LENGTH; i++) {
+  for (let i = 0; i < length; i++) {
     if (result[i] === 'correct') continue;
     const letter = guessNorm[i];
     if (remaining[letter] > 0) {
