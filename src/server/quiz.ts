@@ -3,13 +3,13 @@ import { getLocalDateString } from '@/shared/utils';
 import { hashString } from './termo';
 import { QUIZ_QUESTIONS, QUESTION_BY_ID, type QuizQuestion } from './quiz-questions';
 
-// Daily set: 5 short questions mixing the three POSCOMP areas, so a round takes
-// only a few minutes (micro-learning). 1 Matemática + 2 Fundamentos + 2 Tecnologia.
-export const QUESTIONS_PER_DAY = 5;
+// Daily set: 3 short questions, one from each POSCOMP area, so a round takes only
+// a couple of minutes (micro-learning). 1 Matemática + 1 Fundamentos + 1 Tecnologia.
+export const QUESTIONS_PER_DAY = 3;
 const AREA_COUNTS: [string, number][] = [
   ['Matemática', 1],
-  ['Fundamentos da Computação', 2],
-  ['Tecnologia da Computação', 2],
+  ['Fundamentos da Computação', 1],
+  ['Tecnologia da Computação', 1],
 ];
 
 // Deterministic per-date pick: for each area, rank its questions by a hash mixing
@@ -56,7 +56,20 @@ export async function getOrCreateDailyQuiz(dateStr?: string): Promise<DailyQuiz>
   });
 
   const existing = await prisma.quizDaily.findUnique({ where: { date } });
-  if (existing) return toQuiz(existing);
+  if (existing) {
+    const quiz = toQuiz(existing);
+    const storedCount = existing.questionIds.split(',').filter(Boolean).length;
+    // Self-heal: if the stored set references questions no longer in the bank
+    // (e.g. right after the bank changed), some/all ids won't resolve. Redraw
+    // this date's set so the round is never rendered empty or short.
+    if (quiz.questions.length === storedCount) return quiz;
+    const refreshed = pickDailyIds(date).join(',');
+    const updated = await prisma.quizDaily.update({
+      where: { date },
+      data: { questionIds: refreshed },
+    });
+    return toQuiz(updated);
+  }
 
   const questionIds = pickDailyIds(date).join(',');
   try {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { getLocalDateString } from '../../shared/utils';
-import { getOrCreateDailyChallenge, runUserCode, MAX_CODE_LENGTH } from '../../server/code';
+import { getOrCreateDailyChallenge, runUserCode, isCodeLanguage, MAX_CODE_LENGTH } from '../../server/code';
 import { recordStreakSolve, getStreak, getStreakWeek, type StreakInfo } from '../../server/streak';
 import { requireAuth, withAuth } from '../middleware/auth';
 
@@ -18,10 +18,12 @@ router.get('/daily', async (_req, res) => {
       challenge: {
         id: challenge.id,
         title: challenge.title,
+        titleEn: challenge.titleEn,
         difficulty: challenge.difficulty,
         functionName: challenge.functionName,
         description: challenge.description,
-        starter: challenge.starter,
+        descriptionEn: challenge.descriptionEn,
+        starters: challenge.starters,
         tests: challenge.tests,
       },
     });
@@ -44,9 +46,10 @@ router.post('/submit', withAuth, async (req, res) => {
     if (code.length > MAX_CODE_LENGTH) {
       return res.status(400).json({ error: `O código excede o limite de ${MAX_CODE_LENGTH} caracteres.` });
     }
+    const language = isCodeLanguage(req.body?.language) ? req.body.language : 'js';
 
     const { challenge } = await getOrCreateDailyChallenge();
-    const run = runUserCode(code, challenge);
+    const run = runUserCode(code, challenge, language);
     const solved = run.ok && run.passed === run.total;
 
     let attemptsUsed = 0;

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
-import { HelpCircle, Info, Trophy, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import { HelpCircle, Info, Trophy, CheckCircle2, XCircle, ArrowRight, BookOpen } from 'lucide-react';
 import { BackLink } from '@/client/components/BackLink';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
@@ -19,6 +19,8 @@ interface Question {
   area: string;
   question: string;
   options: string[];
+  // Exam edition + original question number (traceable to the official caderno).
+  source?: { year: number; number: number } | null;
 }
 
 // One answered question, as confirmed by the server (which is the only place
@@ -207,6 +209,7 @@ export default function QuizPage() {
           <h3><Info size={18} style={{ color: 'var(--primary)' }} /> {t('quiz.rulesTitle')}</h3>
           <ul>
             <li>{t('quiz.rules.l1')}</li>
+            <li>{t('quiz.rules.sourceInfo')}</li>
             <li>{t('quiz.rules.l2')}</li>
             <li>{t('quiz.rules.l3')}</li>
             <li>{t('quiz.rules.l4')}</li>
@@ -233,9 +236,15 @@ export default function QuizPage() {
             })}
           </div>
 
-          <h2 style={{ fontSize: '1.05rem', fontWeight: 600, lineHeight: 1.5, margin: '1rem 0 1.25rem 0' }}>
-            {question.question}
-          </h2>
+          <div className="quiz-question-box">
+            {question.source && (
+              <div className="quiz-question-source">
+                <BookOpen size={13} aria-hidden />
+                <span>{t('quiz.source', { year: question.source.year, number: question.source.number })}</span>
+              </div>
+            )}
+            <h2 className="quiz-question-text">{question.question}</h2>
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {question.options.map((opt, idx) => {

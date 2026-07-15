@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { getLocalDateString } from '../../shared/utils';
 import { getOrCreateDailyQuiz, parseAnswers, QUESTIONS_PER_DAY, type QuizAnswer } from '../../server/quiz';
+import { questionSource } from '../../server/quiz-questions';
 import { recordStreakSolve, getStreak, getStreakWeek, type StreakInfo } from '../../server/streak';
 import { requireAuth, withAuth } from '../middleware/auth';
 
@@ -46,6 +47,7 @@ router.get('/daily', withAuth, async (req, res) => {
         area: q.area,
         question: q.question,
         options: q.options,
+        source: questionSource(q),
       })),
       answered,
     });

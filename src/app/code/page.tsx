@@ -15,13 +15,18 @@ import { apiFetch } from '@/client/lib/api';
 import { Logo } from '@/client/components/Logo';
 import { GameStreakButton } from '@/client/components/GameStreakButton';
 
+type CodeLang = 'js' | 'py';
+const LANG_LABELS: Record<CodeLang, string> = { js: 'JavaScript', py: 'Python' };
+
 interface Challenge {
   id: string;
   title: string;
+  titleEn: string;
   difficulty: string;
   functionName: string;
   description: string;
-  starter: string;
+  descriptionEn: string;
+  starters: Record<CodeLang, string>;
   tests: { args: unknown[]; expected: unknown }[];
 }
 
@@ -38,12 +43,15 @@ function fmt(value: unknown): string {
 }
 
 export default function CodePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+  const isEnglish = (i18n.language || '').toLowerCase().startsWith('en');
 
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [dailyKey, setDailyKey] = useState<number | null>(null);
-  const [code, setCode] = useState('');
+  const [language, setLanguage] = useState<CodeLang>('js');
+  const [codeByLang, setCodeByLang] = useState<Record<CodeLang, string>>({ js: '', py: '' });
+  const code = codeByLang[language];
   const [results, setResults] = useState<TestOutcome[] | null>(null);
   const [runError, setRunError] = useState('');
   const [solved, setSolved] = useState(false);
@@ -85,7 +93,14 @@ export default function CodePage() {
           if (roundWasReset) {
             localStorage.removeItem(storageKey);
           } else {
-            setCode(typeof saved.code === 'string' && saved.code !== '' ? saved.code : ch.starter);
+            const savedLang: CodeLang = saved.language === 'py' ? 'py' : 'js';
+            // Older saves kept a single `code` string (JS-only era).
+            const savedDrafts = saved.codeByLang ?? { js: saved.code };
+            setLanguage(savedLang);
+            setCodeByLang({
+              js: typeof savedDrafts.js === 'string' && savedDrafts.js !== '' ? savedDrafts.js : ch.starters.js,
+              py: typeof savedDrafts.py === 'string' && savedDrafts.py !== '' ? savedDrafts.py : ch.starters.py,
+            });
             setResults(saved.results ?? null);
             setRunError(saved.runError ?? '');
             setSolved(Boolean(saved.solved));
@@ -96,7 +111,8 @@ export default function CodePage() {
           }
         }
         if (!restored) {
-          setCode(ch.starter);
+          setLanguage('js');
+          setCodeByLang({ ...ch.starters });
           setResults(null);
           setRunError('');
           setSolved(false);
@@ -120,7 +136,8 @@ export default function CodePage() {
   }, [todayStr, user?.id, authLoading]);
 
   const persist = (next: {
-    code: string;
+    language: CodeLang;
+    codeByLang: Record<CodeLang, string>;
     results: TestOutcome[] | null;
     runError: string;
     solved: boolean;
@@ -128,6 +145,12 @@ export default function CodePage() {
     streak: StreakInfo | null;
   }) => {
     localStorage.setItem(storageKey, JSON.stringify({ ...next, dailyKey }));
+  };
+
+  const switchLanguage = (lang: CodeLang) => {
+    if (lang === language || running) return;
+    setLanguage(lang);
+    persist({ language: lang, codeByLang, results, runError, solved, attempts, streak });
   };
 
   async function run() {
@@ -138,7 +161,7 @@ export default function CodePage() {
     try {
       const res = await apiFetch('/api/code/submit', {
         method: 'POST',
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, language }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -161,7 +184,8 @@ export default function CodePage() {
         setTimeout(() => setShowResult(true), 800);
       }
       persist({
-        code,
+        language,
+        codeByLang,
         results: newResults,
         runError: newRunError,
         solved: newSolved,
@@ -229,25 +253,47 @@ export default function CodePage() {
           {/* Statement */}
           <div className="card" style={{ marginBottom: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{challenge.title}</h2>
-              <span className="badge">{challenge.difficulty}</span>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 700 }}>
+                {isEnglish && challenge.titleEn ? challenge.titleEn : challenge.title}
+              </h2>
+              <span className="badge">
+                {t(`code.difficultyNames.${challenge.difficulty}`, { defaultValue: challenge.difficulty })}
+              </span>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.6 }}>
-              {challenge.description}
+              {isEnglish && challenge.descriptionEn ? challenge.descriptionEn : challenge.description}
             </p>
           </div>
 
           {/* Editor */}
           <div className="card" style={{ marginBottom: '1rem' }}>
-            <label htmlFor="code-editor" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-              {t('code.editorLabel', { name: challenge.functionName })}
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+              <label htmlFor="code-editor" style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                {t('code.editorLabel', { name: challenge.functionName })}
+              </label>
+              <div role="group" aria-label={t('code.languageLabel')} style={{ display: 'flex', gap: '0.35rem' }}>
+                {(Object.keys(LANG_LABELS) as CodeLang[]).map((lang) => (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => switchLanguage(lang)}
+                    className={`btn ${language === lang ? '' : 'btn-secondary'}`}
+                    aria-pressed={language === lang}
+                    disabled={running}
+                    style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem' }}
+                  >
+                    {LANG_LABELS[lang]}
+                  </button>
+                ))}
+              </div>
+            </div>
             <textarea
               id="code-editor"
               className="code-editor"
               value={code}
               onChange={(e) => {
-                setCode(e.target.value);
+                const value = e.target.value;
+                setCodeByLang((prev) => ({ ...prev, [language]: value }));
               }}
               spellCheck={false}
               rows={Math.max(10, code.split('\n').length + 2)}
