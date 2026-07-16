@@ -15,6 +15,7 @@ import { LoadingState } from '@/client/components/LoadingState';
 import type { StreakInfo } from '@/client/components/StreakBadge';
 import { Toast } from '@/client/components/Toast';
 import { apiFetch } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { Logo } from '@/client/components/Logo';
 import { GameStreakButton } from '@/client/components/GameStreakButton';
 import { isProfileComplete } from '@/shared/validation';
@@ -405,7 +406,7 @@ export default function GamePage() {
                           style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255, 255, 255, 0.2)', flexShrink: 0 }}
                         />
                       ) : (
-                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-primary)', fontSize: '0.65rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255, 255, 255, 0.15)', flexShrink: 0 }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: avatarColorForName(c.name), color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           {c.name.slice(0, 2).toUpperCase()}
                         </div>
                       )}
@@ -488,7 +489,10 @@ export default function GamePage() {
                           className="guess-photo"
                         />
                       ) : (
-                        <div className="guess-photo-placeholder">
+                        <div
+                          className="guess-photo-placeholder"
+                          style={{ backgroundColor: avatarColorForName(guess.fields?.name?.value || '?'), color: '#fff' }}
+                        >
                           {guess.fields?.name?.value?.slice(0, 2).toUpperCase()}
                         </div>
                       )}

@@ -101,7 +101,6 @@ export default function Navbar() {
             <span className="nav-logo-game">GAME</span>
             HUB
           </span>
-          <span className="nav-logo-sub">LSD-UFCG</span>
         </Link>
 
         <div className="nav-toolbar">

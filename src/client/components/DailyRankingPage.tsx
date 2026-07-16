@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { Trophy, Clock, Info } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { BackLink } from '@/client/components/BackLink';
 import { LoadingState } from '@/client/components/LoadingState';
 import { ErrorState } from '@/client/components/ErrorState';
@@ -126,7 +127,7 @@ export function DailyRankingPage({ endpoint, backHref, subtitle, metricHeader }:
                           {entry.photoUrl ? (
                             <img src={entry.photoUrl} alt={entry.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)', flexShrink: 0 }} />
                           ) : (
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)', flexShrink: 0 }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: avatarColorForName(entry.name), color: '#fff', fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               {entry.name.slice(0, 2).toUpperCase()}
                             </div>
                           )}

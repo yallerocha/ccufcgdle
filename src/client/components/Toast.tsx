@@ -43,9 +43,17 @@ export function Toast({ message, type = 'info', onClose, duration = 4000 }: Toas
 
   if (!mounted || !message) return null;
 
+  // Errors interrupt the screen reader (assertive); info/success wait politely.
+  const isError = type === 'error';
+
   return createPortal(
     <div className="toast-container">
-      <div className={`toast toast-${type}`} role="status" aria-live="polite">
+      <div
+        className={`toast toast-${type}`}
+        role={isError ? 'alert' : 'status'}
+        aria-live={isError ? 'assertive' : 'polite'}
+        onClick={() => closeRef.current?.()}
+      >
         {ICONS[type]}
         <span>{message}</span>
       </div>

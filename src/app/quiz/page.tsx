@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
-import { HelpCircle, Info, Trophy, CheckCircle2, XCircle, ArrowRight, BookOpen } from 'lucide-react';
+import { HelpCircle, Info, Trophy, CheckCircle2, XCircle, ArrowRight, BookOpen, Check, X } from 'lucide-react';
 import { BackLink } from '@/client/components/BackLink';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
@@ -221,29 +221,49 @@ export default function QuizPage() {
 
       {question && (
         <div className="card quiz-card fade-in" style={{ maxWidth: '700px', margin: '0 auto', width: '100%' }}>
-          {/* Progress + area */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700 }}>
-              {t('quiz.progress', { current: current + 1, total: questions.length })}
-            </span>
-            <span className="badge">{question.area}</span>
-          </div>
-
-          <div className="quiz-progress-track" aria-hidden>
+          {/* Stepper: one numbered circle per question. Answered steps show the
+              outcome (check/X) and can be revisited; future ones stay locked. */}
+          <div
+            className="quiz-stepper"
+            aria-label={t('quiz.progress', { current: current + 1, total: questions.length })}
+          >
             {questions.map((_, i) => {
               const a = answers.find((x) => x.i === i);
+              const reachable = i <= answers.length;
               const cls = a ? (a.correct ? 'correct' : 'wrong') : i === current ? 'current' : '';
-              return <span key={i} className={`quiz-progress-dot ${cls}`} />;
+              return (
+                <React.Fragment key={i}>
+                  {i > 0 && (
+                    <span
+                      className={`quiz-step-connector ${answers.some((x) => x.i === i - 1) ? 'done' : ''}`}
+                      aria-hidden
+                    />
+                  )}
+                  <button
+                    type="button"
+                    className={`quiz-step ${cls}`}
+                    onClick={() => reachable && setCurrent(i)}
+                    disabled={!reachable}
+                    aria-label={t('quiz.progress', { current: i + 1, total: questions.length })}
+                    aria-current={i === current ? 'step' : undefined}
+                  >
+                    {a ? (a.correct ? <Check size={16} strokeWidth={3} /> : <X size={16} strokeWidth={3} />) : i + 1}
+                  </button>
+                </React.Fragment>
+              );
             })}
           </div>
 
           <div className="quiz-question-box">
-            {question.source && (
-              <div className="quiz-question-source">
-                <BookOpen size={13} aria-hidden />
-                <span>{t('quiz.source', { year: question.source.year, number: question.source.number })}</span>
-              </div>
-            )}
+            <div className="quiz-question-meta">
+              {question.source && (
+                <div className="quiz-question-source">
+                  <BookOpen size={13} aria-hidden />
+                  <span>{t('quiz.source', { year: question.source.year, number: question.source.number })}</span>
+                </div>
+              )}
+              <span className="badge">{question.area}</span>
+            </div>
             <h2 className="quiz-question-text">{question.question}</h2>
           </div>
 

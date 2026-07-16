@@ -9,6 +9,7 @@ import type { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
 import { isStrongPassword } from '@/shared/validation';
 import { apiFetch, setToken } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { Toast } from '@/client/components/Toast';
 import { PasswordInput } from '@/client/components/PasswordInput';
@@ -267,7 +268,10 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             {photoUrl ? (
               <img src={photoUrl} alt={name} className="profile-avatar" />
             ) : (
-              <div className="profile-avatar profile-avatar-placeholder">
+              <div
+                className="profile-avatar profile-avatar-placeholder"
+                style={{ backgroundColor: avatarColorForName(name.trim() || '?'), color: '#fff' }}
+              >
                 {name.trim() ? name.trim().slice(0, 2).toUpperCase() : '?'}
               </div>
             )}

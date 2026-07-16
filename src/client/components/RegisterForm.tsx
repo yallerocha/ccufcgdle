@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Camera, Trash2, User as UserIcon, Mail, Lock, LockKeyhole, MailCheck } from 'lucide-react';
 import { apiFetch, setToken } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
 import { PasswordInput } from '@/client/components/PasswordInput';
@@ -167,7 +168,10 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
               {photoUrl ? (
                 <img src={photoUrl} alt={name || t('register.title')} className="profile-avatar" />
               ) : (
-                <div className="profile-avatar profile-avatar-placeholder">
+                <div
+                  className="profile-avatar profile-avatar-placeholder"
+                  style={{ backgroundColor: avatarColorForName(name.trim() || '?'), color: '#fff' }}
+                >
                   {name.trim() ? name.trim().slice(0, 2).toUpperCase() : '?'}
                 </div>
               )}

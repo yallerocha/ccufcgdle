@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Users, Search } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { BackLink } from '@/client/components/BackLink';
 import { LoadingState } from '@/client/components/LoadingState';
 import { ErrorState } from '@/client/components/ErrorState';
@@ -134,7 +135,10 @@ export default function MembersPage() {
                   {m.photoUrl ? (
                     <img src={m.photoUrl} alt={m.name} className="member-photo" />
                   ) : (
-                    <div className="member-photo member-photo-placeholder">
+                    <div
+                      className="member-photo member-photo-placeholder"
+                      style={{ backgroundColor: avatarColorForName(m.name), color: '#fff' }}
+                    >
                       {m.name.slice(0, 2).toUpperCase()}
                     </div>
                   )}

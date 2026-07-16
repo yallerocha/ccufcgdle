@@ -6,10 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { Trophy, Clock, Camera, Trash2, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { fileToResizedDataUrl } from '@/client/lib/image';
 import { Toast } from '@/client/components/Toast';
 import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
 import { ModalColorBar } from '@/client/components/ModalColorBar';
+import { useModalDismiss } from '@/client/hooks/useModalDismiss';
 import { MAX_DAILY_MESSAGE_LENGTH } from '@/shared/validation';
 
 interface RankingEntry {
@@ -176,6 +178,8 @@ export function VictoryModal({
       setSavingMessage(false);
     }
   };
+
+  useModalDismiss(show, onClose);
 
   if (!show || !mounted) return null;
 
@@ -385,7 +389,7 @@ export function VictoryModal({
                 {entry.photoUrl ? (
                   <img src={entry.photoUrl} alt={entry.name} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700 }}>
+                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: avatarColorForName(entry.name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700 }}>
                     {entry.name.slice(0, 2).toUpperCase()}
                   </div>
                 )}
@@ -448,7 +452,7 @@ export function VictoryModal({
   // transformed `main.fade-in` ancestor and can span the full viewport.
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-        <div className={`modal-content modal-has-bottom-bar${useSplitLayout ? ' modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className={`modal-content modal-has-bottom-bar${useSplitLayout ? ' modal-wide' : ''}`} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="modal-body">
         <Trophy size={48} style={{ color: 'var(--color-partial)', margin: '0 auto 1rem auto' }} />
         <h2 className="modal-title">{t('victory.title')} <span className="modal-emoji">🎉</span></h2>

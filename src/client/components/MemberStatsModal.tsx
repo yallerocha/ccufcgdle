@@ -5,7 +5,9 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Trophy, Flame, Crown, Skull, Gamepad2, Type, Ban, Clock, Target, GraduationCap, TerminalSquare } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { ModalColorBar } from '@/client/components/ModalColorBar';
+import { useModalDismiss } from '@/client/hooks/useModalDismiss';
 
 interface GameStats {
   wins: number;
@@ -57,6 +59,8 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
     return () => { cancelled = true; };
   }, [memberId, t]);
 
+  useModalDismiss(Boolean(memberId), onClose);
+
   if (!memberId || !mounted) return null;
 
   const games = [
@@ -73,7 +77,7 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-wide modal-has-bottom-bar" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content modal-wide modal-has-bottom-bar" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="modal-body">
         {loading ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('members.statsLoading')}</p>
@@ -86,7 +90,7 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
               {data.member.photoUrl ? (
                 <img src={data.member.photoUrl} alt={data.member.name} style={{ width: '88px', height: '88px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)', boxShadow: '0 0 15px var(--primary-glow)' }} />
               ) : (
-                <div style={{ width: '88px', height: '88px', borderRadius: '50%', backgroundColor: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', fontWeight: 700, border: '3px solid var(--primary)' }}>
+                <div style={{ width: '88px', height: '88px', borderRadius: '50%', backgroundColor: avatarColorForName(data.member.name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', fontWeight: 700, border: '3px solid var(--primary)' }}>
                   {data.member.name.slice(0, 2).toUpperCase()}
                 </div>
               )}

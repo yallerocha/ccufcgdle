@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Trophy, Clock, TerminalSquare } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
 import { ModalColorBar } from '@/client/components/ModalColorBar';
+import { useModalDismiss } from '@/client/hooks/useModalDismiss';
 
 interface RankingEntry {
   rank: number;
@@ -54,11 +56,13 @@ export function CodeResultModal({ show, attempts, streak, todayStr, onClose }: C
     }
   }, [show, todayStr]);
 
+  useModalDismiss(show, onClose);
+
   if (!show || !mounted) return null;
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-has-bottom-bar" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content modal-has-bottom-bar" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="modal-body">
           <TerminalSquare size={48} style={{ color: 'var(--color-correct)', margin: '0 auto 1rem auto' }} />
 
@@ -107,7 +111,7 @@ export function CodeResultModal({ show, attempts, streak, todayStr, onClose }: C
                           {entry.photoUrl ? (
                             <img src={entry.photoUrl} alt={entry.name} style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
                           ) : (
-                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700 }}>
+                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: avatarColorForName(entry.name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700 }}>
                               {entry.name.slice(0, 2).toUpperCase()}
                             </div>
                           )}

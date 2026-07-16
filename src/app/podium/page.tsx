@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { Trophy, Info } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
+import { avatarColorForName } from '@/client/lib/avatar';
 import { BackLink } from '@/client/components/BackLink';
 import { LoadingState } from '@/client/components/LoadingState';
 import { ErrorState } from '@/client/components/ErrorState';
@@ -47,7 +48,8 @@ function Avatar({ entry, size }: { entry: Entry; size: number }) {
     <div
       style={{
         ...style,
-        backgroundColor: 'var(--bg-input)',
+        backgroundColor: avatarColorForName(entry.name),
+        color: '#fff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
