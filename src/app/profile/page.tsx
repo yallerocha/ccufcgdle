@@ -27,7 +27,10 @@ export default function ProfilePage() {
     content = (
       <LoginForm
         loginFn={login}
-        onLoginSuccess={() => refreshUser()}
+        onLoginSuccess={async () => {
+          await refreshUser();
+          router.replace('/');
+        }}
         onSwitchToRegister={() => setIsRegistering(true)}
       />
     );

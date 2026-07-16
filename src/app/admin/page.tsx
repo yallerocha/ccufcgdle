@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Type, Ban, KeyRound, Search, Copy, Check, FolderGit2, Plus } from 'lucide-react';
+import { ShieldAlert, Trash2, Power, Shield, Shuffle, UserCheck, AlertTriangle, Gamepad2, Type, Ban, KeyRound, Search, Copy, Check, FolderGit2, Plus, Clock } from 'lucide-react';
 import { getLocalDateString } from '@/shared/utils';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
@@ -63,6 +63,9 @@ export default function AdminPage() {
   // Users-tab list controls.
   const [userSearch, setUserSearch] = useState('');
   const [userSort, setUserSort] = useState<UserSort>('newest');
+  // Admin settings: 30-day inactivity exclusion toggle (null until loaded).
+  const [inactivityExclusion, setInactivityExclusion] = useState<boolean | null>(null);
+  const [savingSetting, setSavingSetting] = useState(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -115,12 +118,56 @@ export default function AdminPage() {
     }
   };
 
+  const loadSettings = async () => {
+    try {
+      const res = await apiFetch('/api/admin/settings');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (typeof data.inactivityExclusionEnabled === 'boolean') {
+        setInactivityExclusion(data.inactivityExclusionEnabled);
+      }
+    } catch (err) {
+      console.error('Error loading admin settings:', err);
+    }
+  };
+
   useEffect(() => {
     if (currentUser && currentUser.isAdmin) {
       loadAdminData();
       loadProjects();
+      loadSettings();
     }
   }, [currentUser]);
+
+  const handleToggleInactivityExclusion = async () => {
+    if (inactivityExclusion === null || savingSetting) return;
+    const next = !inactivityExclusion;
+    setSavingSetting(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await apiFetch('/api/admin/settings', {
+        method: 'PUT',
+        body: JSON.stringify({ inactivityExclusionEnabled: next }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setInactivityExclusion(data.inactivityExclusionEnabled);
+        setSuccessMsg(
+          data.inactivityExclusionEnabled
+            ? t('admin.inactivityEnabledMsg')
+            : t('admin.inactivityDisabledMsg')
+        );
+      } else {
+        setErrorMsg(data.error || t('admin.inactivityError'));
+      }
+    } catch (err) {
+      console.error('Error updating inactivity setting:', err);
+      setErrorMsg(t('admin.inactivityError'));
+    } finally {
+      setSavingSetting(false);
+    }
+  };
 
   const handleToggleActive = async (userId: string, currentActive: boolean) => {
     setErrorMsg('');
@@ -673,6 +720,43 @@ export default function AdminPage() {
 
         {/* Users Management List */}
         {activeTab === 'users' && (
+        <>
+        {/* Inactivity rule: non-destructive toggle (hides 30-day-inactive members
+            from the games; never deletes accounts). */}
+        <div className="card" style={{ padding: '1.5rem 2rem', marginBottom: '1.5rem' }}>
+          <h3 className="card-title" style={{ marginBottom: '0.75rem' }}>
+            <Clock size={20} style={{ color: 'var(--primary)' }} /> {t('admin.inactivityTitle')}
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+            {t('admin.inactivityDesc')}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <span
+              className={`badge ${inactivityExclusion ? 'badge-active' : ''}`}
+              style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}
+            >
+              {inactivityExclusion === null
+                ? '…'
+                : inactivityExclusion
+                  ? t('admin.inactivityOn')
+                  : t('admin.inactivityOff')}
+            </span>
+            <button
+              onClick={handleToggleInactivityExclusion}
+              disabled={inactivityExclusion === null || savingSetting}
+              className="btn"
+              style={{ minWidth: '190px' }}
+            >
+              <Power size={16} />
+              {savingSetting
+                ? t('admin.inactivitySaving')
+                : inactivityExclusion
+                  ? t('admin.inactivityDisableBtn')
+                  : t('admin.inactivityEnableBtn')}
+            </button>
+          </div>
+        </div>
+
         <div className="card" style={{ padding: '1.5rem 2rem' }}>
           <h3 className="card-title" style={{ marginBottom: '1rem' }}>
             <Shield size={20} style={{ color: 'var(--primary)' }} /> {t('admin.usersTitle')} ({users.length})
@@ -814,6 +898,7 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+        </>
         )}
 
       </div>

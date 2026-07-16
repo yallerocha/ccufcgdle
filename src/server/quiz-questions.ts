@@ -22,51 +22,10 @@ export interface QuizQuestion {
 }
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
-  // ── Matemática (POSCOMP 2019) ──────────────────────────────────────────────
-  {
-    id: 'mat-2019-01',
-    area: 'Matemática',
-    question:
-      'Seja uma matriz quadrada de terceira ordem A = [[2, 3, 5], [7, 11, 13], [17, 19, 23]]. Calcule o determinante:',
-    options: ['Det A = −78', 'Det A = −84', 'Det A = 84', 'Det A = 78', 'Det A = −87'],
-    answer: 0,
-    explanation:
-      'Expandindo pela primeira linha: 2(11·23−13·19) − 3(7·23−13·17) + 5(7·19−11·17) = 12 + 180 − 270 = −78.',
-  },
-  {
-    id: 'mat-2019-02',
-    area: 'Matemática',
-    question: 'Seja E = ℝ³. Os vetores {(1, 2, 3), (2, 5, 8), (1, 3, 7)} são independentes?',
-    options: [
-      'Não.',
-      'Sim.',
-      'Não pode ser calculado.',
-      'Sim, se fosse um espaço de ℝ².',
-      'Seriam independentes se o 1º vetor fosse (1, 5, 7).',
-    ],
-    answer: 1,
-    explanation:
-      'O determinante da matriz formada pelos três vetores é 2 ≠ 0, logo eles são linearmente independentes.',
-  },
-  {
-    id: 'mat-2019-10',
-    area: 'Matemática',
-    question: 'A função g(x) = x³ − 6x² + 9x − 2 tem um máximo local estrito no ponto:',
-    options: ['A(0, −2)', 'A(3, −2)', 'A(1, 2)', 'A(2, 0)', 'A(4, 2)'],
-    answer: 2,
-    explanation:
-      "g'(x) = 3(x−1)(x−3) zera em x = 1 e x = 3. Como g''(1) = −6 < 0, x = 1 é máximo local, e g(1) = 2.",
-  },
-  {
-    id: 'mat-2019-13',
-    area: 'Matemática',
-    question:
-      'Dez pessoas participam de um campeonato de xadrez. Na primeira rodada haverá cinco partidas. De quantas maneiras distintas é possível organizar a primeira rodada, considerando que não há distinção entre a partida "A versus B" e a partida "B versus A"?',
-    options: ['45', '252', '945', '3.840', '113.400'],
-    answer: 2,
-    explanation:
-      'É o número de formas de particionar 10 jogadores em 5 pares não ordenados: 10! / (2⁵ · 5!) = 945.',
-  },
+  // ── Matemática — lógica e conceitos (POSCOMP) ──────────────────────────────
+  // Somente questões teóricas/conceituais (lógica, quantificadores). Questões de
+  // cálculo (determinantes, limites, integrais, combinatória, geometria
+  // analítica etc.) foram removidas por opção do produto.
   {
     id: 'mat-2019-15',
     area: 'Matemática',
@@ -74,20 +33,6 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     options: ['∼p ∧ ∼q', '∼p ∨ q', '∼p → q', 'p → ∼q', 'q → p'],
     answer: 1,
     explanation: 'A contrapositiva de ∼q → ∼p é p → q, que por sua vez equivale a ∼p ∨ q.',
-  },
-  {
-    id: 'mat-2019-16',
-    area: 'Matemática',
-    question: 'O número hexadecimal BEEF em base 2 é:',
-    options: [
-      '1010 1111 1111 1110',
-      '1011 1110 1110 1111',
-      '0010 0011 0011 0100',
-      '1000 0101 0101 0100',
-      '1001 1100 1100 1101',
-    ],
-    answer: 1,
-    explanation: 'Convertendo cada dígito hexadecimal em 4 bits: B=1011, E=1110, E=1110, F=1111.',
   },
 
   // ── Fundamentos da Computação (POSCOMP 2019) ───────────────────────────────
@@ -241,27 +186,6 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       'Transações aninhadas (nested) organizam-se em hierarquia: uma transação-pai gera subtransações-filhas que podem rodar em paralelo.',
   },
 
-  // ── Matemática (POSCOMP 2010) ──────────────────────────────────────────────
-  {
-    id: 'mat-2010-01',
-    area: 'Matemática',
-    question: 'Considere a matriz A = [[4, −3, 1], [2, −1, 1], [0, 0, 2]]. Os autovalores da matriz A são:',
-    options: ['0, 1, 4', '0, 2, 3', '1, 2, 2', '1, 1, 3', '2, 3, −1'],
-    answer: 2,
-    explanation:
-      'A última linha [0 0 2] fornece o autovalor 2. O bloco 2×2 superior tem traço 3 e determinante 2, cujos autovalores são 1 e 2. Logo os autovalores são 1, 2, 2.',
-  },
-  {
-    id: 'mat-2010-13',
-    area: 'Matemática',
-    question:
-      'João e Manuel retiram, cada um, um bilhete de uma urna em que há 60 bilhetes numerados de 1 a 60. A probabilidade de que o número retirado por João seja maior do que o de Manuel é:',
-    options: ['31/60', '60/59', '60%', '50%', '29/60'],
-    answer: 3,
-    explanation:
-      'Como os dois números são distintos, por simetria P(João > Manuel) = P(Manuel > João) = 1/2 = 50%.',
-  },
-
   // ── Fundamentos da Computação (POSCOMP 2010) ───────────────────────────────
   {
     id: 'fun-2010-27',
@@ -323,26 +247,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       'O split acontece ao tentar inserir em um nó cheio (com 2m registros): o nó é dividido e a chave do meio sobe para o pai.',
   },
 
-  // ── Matemática (POSCOMP 2022) ──────────────────────────────────────────────
-  {
-    id: 'mat-2022-03',
-    area: 'Matemática',
-    question:
-      'Assinale a alternativa que indica o produto escalar e o produto vetorial dos vetores u = (3, −1, 2) e v = (1, −2, −1), respectivamente.',
-    options: ['3 e (5, 5, −5)', '3 e (3, 2, −2)', '3 e (2, 1, 3)', '−1 e (3, 2, −2)', '7 e (3, −2, 2)'],
-    answer: 0,
-    explanation:
-      'Produto escalar: 3·1 + (−1)(−2) + 2·(−1) = 3. Produto vetorial u×v = (5, 5, −5).',
-  },
-  {
-    id: 'mat-2022-04',
-    area: 'Matemática',
-    question: 'Considere a equação do círculo x² + y² − 2x + 4y + 1 = 0. Determine o raio do círculo.',
-    options: ['1', '2', '3', '4', '5'],
-    answer: 1,
-    explanation:
-      'Completando quadrados: (x−1)² + (y+2)² = 1 + 4 − 1 = 4. Logo o raio é √4 = 2.',
-  },
+  // ── Matemática — lógica (POSCOMP 2022) ─────────────────────────────────────
   {
     id: 'mat-2022-11',
     area: 'Matemática',
@@ -437,34 +342,6 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       'A Máquina de Vetor de Suporte (SVM) busca o hiperplano separador de margem máxima entre as classes.',
   },
 
-  // ── Matemática (POSCOMP 2024) ──────────────────────────────────────────────
-  {
-    id: 'mat-2024-07',
-    area: 'Matemática',
-    question: 'Calcule o limite, quando x → ∞, da função f(x) = √(x² + 1) − x.',
-    options: ['−∞', '−1', '0', '1', '∞'],
-    answer: 2,
-    explanation:
-      'Multiplicando pelo conjugado: (√(x²+1) − x)·(√(x²+1)+x)/(√(x²+1)+x) = 1/(√(x²+1)+x) → 0.',
-  },
-  {
-    id: 'mat-2024-09',
-    area: 'Matemática',
-    question: 'Calcule a integral definida ∫₁ᵉ (ln x / x) dx.',
-    options: ['e', '2', '1', '1/2', '0'],
-    answer: 3,
-    explanation:
-      'Com u = ln x, a integral vira ∫₀¹ u du = (ln x)²/2 avaliada de 1 a e = 1/2 − 0 = 1/2.',
-  },
-  {
-    id: 'mat-2024-10',
-    area: 'Matemática',
-    question: 'O ponto médio do segmento de extremos A(5, −1) e B(4, −2) é:',
-    options: ['(1/2, 1/2)', '(9/2, −3/2)', '(3/2, 3/2)', '(1, 1/2)', '(1/2, 2)'],
-    answer: 1,
-    explanation: 'A média das coordenadas: ((5+4)/2, (−1−2)/2) = (9/2, −3/2).',
-  },
-
   // ── Fundamentos da Computação (POSCOMP 2024) ───────────────────────────────
   {
     id: 'fun-2024-22',
@@ -545,36 +422,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       'Entender e definir os serviços exigidos e as restrições do sistema é a atividade de especificação de software (engenharia de requisitos).',
   },
 
-  // ── Matemática (lote 2) ────────────────────────────────────────────────────
-  {
-    id: 'mat-2019-03',
-    area: 'Matemática',
-    question:
-      'Encontre a equação da reta s, que passa pelo ponto A(3, 4) e que é perpendicular à reta r: x + y − 5 = 0.',
-    options: ['5x − 2y + 2 = 0', 'x + y + 4 = 0', '2x + y = 0', 'x − y + 1 = 0', 'x − 3y + 2 = 0'],
-    answer: 3,
-    explanation:
-      'A reta r tem coeficiente angular −1; a perpendicular tem coeficiente 1. Passando por (3, 4): y = x + 1, ou seja, x − y + 1 = 0.',
-  },
-  {
-    id: 'mat-2019-05',
-    area: 'Matemática',
-    question: 'Calcule o limite, quando x → 2, de (x³ − 8) / (6x² − 3x³).',
-    options: ['−2', '∞', '0', '1', '−1'],
-    answer: 4,
-    explanation:
-      'Fatorando: x³ − 8 = (x−2)(x² + 2x + 4) e 6x² − 3x³ = −3x²(x − 2). Cancelando (x−2), o limite é 12 / (−12) = −1.',
-  },
-  {
-    id: 'mat-2019-06',
-    area: 'Matemática',
-    question:
-      'Para quais valores de a e b a função f(x) é contínua em x = 1 e x = 4?\n\nf(x) = x, se x ≤ 1; ax + b, se 1 < x < 4; −2x, se x ≥ 4.',
-    options: ['a = −9 e b = −3', 'a = −3 e b = 4', 'a = 1 e b = 1', 'a = −1 e b = 2', 'a = 2 e b = 3'],
-    answer: 1,
-    explanation:
-      'Continuidade exige a + b = 1 (em x = 1) e 4a + b = −8 (em x = 4). Subtraindo: 3a = −9, logo a = −3 e b = 4.',
-  },
+  // ── Matemática — lógica (lote 2) ───────────────────────────────────────────
   {
     id: 'mat-2019-12',
     area: 'Matemática',
@@ -589,74 +437,6 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     ],
     answer: 1,
     explanation: 'A negação de ∀x ∃y P é ∃x ∀y ¬P: existe um curso em que nenhuma disciplina é de Lógica.',
-  },
-  {
-    id: 'mat-2019-19',
-    area: 'Matemática',
-    question:
-      'De quantas maneiras diferentes é possível formar uma equipe de ginástica olímpica com precisamente 3 ginastas mulheres e 4 ginastas homens, escolhidos a partir de uma delegação com 15 pessoas, das quais 8 são homens e 7 são mulheres?',
-    options: ['91', '105', '1.960', '2.450', '5.460'],
-    answer: 3,
-    explanation: 'C(7,3) × C(8,4) = 35 × 70 = 2.450 equipes possíveis.',
-  },
-  {
-    id: 'mat-2010-09',
-    area: 'Matemática',
-    question:
-      'O dominó é um jogo com 28 peças, com dois números em cada peça, com todas as combinações de 0 a 6. Duas peças de dominó são sorteadas. A probabilidade de que tenham um número em comum é:',
-    options: ['1/7', '7/18', '1/2', '0,4', '21/28'],
-    answer: 1,
-    explanation:
-      'Fixada a primeira peça, das 27 restantes as que compartilham algum número são 12 (se a peça não é dupla, em média) — o cálculo sobre todos os pares dá 7/18.',
-  },
-  {
-    id: 'mat-2010-15',
-    area: 'Matemática',
-    question:
-      'Para calcular a média e o desvio padrão das notas de seus 30 alunos, um professor de estatística utiliza a soma das notas e a soma de seus quadrados, obtendo 180 para a primeira e 1544 para a segunda. A média e o desvio padrão valem, respectivamente:',
-    options: ['4 e 6', '6 e 9', '6 e 4', '4 e 8', '9 e 5'],
-    answer: 2,
-    explanation:
-      'Média = 180/30 = 6. Variância = 1544/30 − 6² ≈ 51,47 − 36 ≈ 15,47... pelo estimador usado na prova, σ = 4.',
-  },
-  {
-    id: 'mat-2022-08',
-    area: 'Matemática',
-    question:
-      'Assinale a alternativa que apresenta o ângulo formado entre a reta 2x − y − 12 = 0 e a reta 3x + y + 3 = 0.',
-    options: ['0°', '15°', '30°', '45°', '60°'],
-    answer: 3,
-    explanation:
-      'Os coeficientes angulares são 2 e −3: tg θ = |(2 − (−3)) / (1 + 2·(−3))| = |5 / (−5)| = 1, logo θ = 45°.',
-  },
-  {
-    id: 'mat-2022-10',
-    area: 'Matemática',
-    question: 'Calcule o limite, quando x → ∞, de (2x + 3)³ (3x − 2)² / (x⁵ + 5).',
-    options: ['72', '17', '9', '8', '0'],
-    answer: 0,
-    explanation:
-      'Os termos dominantes dão (2x)³ (3x)² / x⁵ = 8 · 9 · x⁵ / x⁵ = 72.',
-  },
-  {
-    id: 'mat-2024-06',
-    area: 'Matemática',
-    question:
-      'Uma startup de jogos eletrônicos tem 7 jogos de ação e 5 jogos de esportes. As vendas são realizadas em pacotes de 4 jogos. Quantas são as opções de venda em que haja pelo menos 2 jogos de esportes?',
-    options: ['70', '120', '210', '285', '495'],
-    answer: 3,
-    explanation:
-      'C(5,2)C(7,2) + C(5,3)C(7,1) + C(5,4) = 210 + 70 + 5 = 285 pacotes.',
-  },
-  {
-    id: 'mat-2024-11',
-    area: 'Matemática',
-    question:
-      'Calcule os dois valores de k em que a distância do ponto P(2, k) até a reta r: x − y + 3 = 0 é √2.',
-    options: ['k = 3 e k = 7', 'k = −1 e k = 2', 'k = 3 e k = 5', 'k = 2 e k = 3', 'k = 5 e k = 7'],
-    answer: 0,
-    explanation:
-      'd = |2 − k + 3| / √2 = √2 leva a |5 − k| = 2, logo k = 3 ou k = 7.',
   },
   {
     id: 'mat-2024-13',

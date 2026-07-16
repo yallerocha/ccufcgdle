@@ -124,6 +124,15 @@ model DailyCharacter {
   createdAt   DateTime @default(now())
 }
 
+// Simple key/value store for admin-tunable runtime settings (e.g. whether the
+// 30-day inactivity rule hides players from the games). Read with a code-side
+// default so an absent row keeps the historical behavior.
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 // One result per logged-in player per day. Ranking: fewer attempts ranks
 // higher; ties broken by shorter durationMs (time from 1st guess to win).
 model GameResult {

@@ -303,11 +303,11 @@ export default function GamePage() {
 
       {/* Hero Section */}
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Logo 
-          alt="LSD Logo" 
-          style={{ width: '180px', maxWidth: '100%', marginBottom: '1rem' }} 
+        <Logo
+          alt="LSD Logo"
+          style={{ width: '180px', maxWidth: '100%', marginBottom: '0.75rem' }}
         />
-        <h1 className="lsd-gradient-text" style={{ paddingBottom: '0.2rem', display: 'none' }}>LSDLE</h1>
+        <h1 className="lsd-gradient-text" style={{ paddingBottom: '0.2rem' }}>LSDLE</h1>
         <p>{t('home.tagline')}</p>
         <div className="hero-actions">
           <button

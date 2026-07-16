@@ -2,6 +2,7 @@ import { prisma } from './db';
 import { User } from '@prisma/client';
 import { INACTIVITY_DAYS, getLocalDateString } from '@/shared/utils';
 import { isProfileComplete } from '@/shared/validation';
+import { isInactivityExclusionEnabled } from './settings';
 
 // Promotes each user's editable attributes into their daily game snapshot
 // (game* fields) at most once per day. Because a profile edit never touches the
@@ -61,6 +62,9 @@ export async function livePhotoByUserName(name: string | null | undefined): Prom
 export async function getActiveUsers(): Promise<User[]> {
   await syncGameAttributes();
 
+  // The 30-day inactivity rule can be turned off from the admin panel; when off,
+  // last-login is ignored and every active/verified member participates.
+  const exclusionEnabled = await isInactivityExclusionEnabled();
   const activeThreshold = new Date();
   activeThreshold.setDate(activeThreshold.getDate() - INACTIVITY_DAYS);
 
@@ -68,9 +72,7 @@ export async function getActiveUsers(): Promise<User[]> {
     where: {
       isActive: true,
       emailVerifiedAt: { not: null },
-      lastLogin: {
-        gte: activeThreshold
-      }
+      ...(exclusionEnabled ? { lastLogin: { gte: activeThreshold } } : {}),
     }
   });
   // Expose the daily snapshot, not the live (possibly just-edited) attributes.

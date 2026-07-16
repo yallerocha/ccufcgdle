@@ -241,7 +241,8 @@ export default function ForcaPage() {
       <BackLink href="/" label={t('nav.backToHub')} style={{ margin: '2rem 0 0.5rem 0' }} />
 
       <section className="hero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Logo alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
+        <Logo alt="LSD Logo" style={{ width: '160px', maxWidth: '100%', marginBottom: '0.75rem' }} />
+        <h1 className="lsd-gradient-text">FORCA</h1>
         <p>{t('forca.tagline')}</p>
         <div className="hero-actions">
           <button onClick={() => setShowRules(!showRules)} className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>

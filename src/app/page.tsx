@@ -34,7 +34,7 @@ function readPlayedToday(userId: string | undefined): Record<GameId, boolean> {
     const quiz = localStorage.getItem(`quiz-game-state-${suffix}`);
     if (quiz) {
       const saved = JSON.parse(quiz);
-      result.quiz = Array.isArray(saved.answers) && saved.answers.length >= 5;
+      result.quiz = Array.isArray(saved.answers) && saved.answers.length >= 3;
     }
     const code = localStorage.getItem(`code-game-state-${suffix}`);
     if (code) result.code = !!JSON.parse(code).solved;

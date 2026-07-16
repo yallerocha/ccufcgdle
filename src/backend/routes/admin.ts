@@ -19,11 +19,43 @@ import {
 } from '../../server/forca';
 import { requireAdmin } from '../middleware/auth';
 import { createProject, deleteProject, listProjectsWithCounts } from '../../server/projects';
+import { isInactivityExclusionEnabled, setInactivityExclusionEnabled } from '../../server/settings';
 
 const router = Router();
 
 // All admin routes require an authenticated admin user.
 router.use(requireAdmin);
+
+// GET /api/admin/settings — current admin-tunable settings.
+router.get('/settings', async (_req, res) => {
+  try {
+    const inactivityExclusionEnabled = await isInactivityExclusionEnabled();
+    return res.json({ inactivityExclusionEnabled });
+  } catch (error) {
+    console.error('Error loading admin settings:', error);
+    return res.status(500).json({ error: 'Erro ao carregar as configurações.' });
+  }
+});
+
+// PUT /api/admin/settings — update admin-tunable settings. Currently only the
+// inactivity-exclusion toggle (non-destructive: it never deletes accounts, it
+// only controls whether 30-day-inactive members are hidden from the games).
+router.put('/settings', async (req, res) => {
+  try {
+    const { inactivityExclusionEnabled } = req.body ?? {};
+    if (typeof inactivityExclusionEnabled === 'boolean') {
+      await setInactivityExclusionEnabled(inactivityExclusionEnabled);
+    }
+    const current = await isInactivityExclusionEnabled();
+    return res.json({
+      message: 'Configurações atualizadas!',
+      inactivityExclusionEnabled: current,
+    });
+  } catch (error) {
+    console.error('Error updating admin settings:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar as configurações.' });
+  }
+});
 
 // GET /api/admin/users — list all users.
 router.get('/users', async (_req, res) => {
