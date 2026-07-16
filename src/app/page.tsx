@@ -49,20 +49,24 @@ interface GameCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
+  accent: string; // per-game brand color, drives the card's hover glow and icon chip
   playedToday: boolean;
   playedLabel: string;
 }
 
-function GameCard({ href, icon, title, description, playedToday, playedLabel }: GameCardProps) {
+function GameCard({ href, icon, title, description, accent, playedToday, playedLabel }: GameCardProps) {
   return (
     <Link href={href} className="hub-game-card-link">
-      <div className="card ranking-preview-card hub-game-card">
+      <div
+        className="card ranking-preview-card hub-game-card"
+        style={{ '--game-accent': accent } as React.CSSProperties}
+      >
         {playedToday && (
           <span className="badge badge-active" style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }}>
             <CheckCircle2 size={13} /> {playedLabel}
           </span>
         )}
-        {icon}
+        <span className="hub-game-icon">{icon}</span>
         <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 700 }}>{title}</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{description}</p>
       </div>
@@ -97,7 +101,8 @@ export default function HubPage() {
       <div className="hub-grid">
         <GameCard
           href="/quiz"
-          icon={<GraduationCap size={48} style={{ color: 'var(--lsd-orange)', marginBottom: '1rem' }} />}
+          icon={<GraduationCap size={40} />}
+          accent="var(--lsd-orange)"
           title="QUIZ"
           description={t('hub.quizDesc')}
           playedToday={played.quiz}
@@ -106,7 +111,8 @@ export default function HubPage() {
 
         <GameCard
           href="/code"
-          icon={<TerminalSquare size={48} style={{ color: 'var(--color-correct)', marginBottom: '1rem' }} />}
+          icon={<TerminalSquare size={40} />}
+          accent="var(--color-correct)"
           title="CODE"
           description={t('hub.codeDesc')}
           playedToday={played.code}
@@ -115,7 +121,8 @@ export default function HubPage() {
 
         <GameCard
           href="/termo"
-          icon={<Type size={48} style={{ color: 'var(--lsd-teal)', marginBottom: '1rem' }} />}
+          icon={<Type size={40} />}
+          accent="var(--lsd-teal)"
           title="TERMO"
           description={t('hub.termoDesc')}
           playedToday={played.termo}
@@ -124,7 +131,8 @@ export default function HubPage() {
 
         <GameCard
           href="/forca"
-          icon={<Ban size={48} style={{ color: 'var(--lsd-red)', marginBottom: '1rem' }} />}
+          icon={<Ban size={40} />}
+          accent="var(--lsd-red)"
           title="FORCA"
           description={t('hub.forcaDesc')}
           playedToday={played.forca}
@@ -133,7 +141,8 @@ export default function HubPage() {
 
         <GameCard
           href="/lsdle"
-          icon={<Gamepad2 size={48} style={{ color: 'var(--lsd-magenta)', marginBottom: '1rem' }} />}
+          icon={<Gamepad2 size={40} />}
+          accent="var(--lsd-magenta)"
           title="LSDLE"
           description={t('hub.lsdleDesc')}
           playedToday={played.lsdle}

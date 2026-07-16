@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/client/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { User, Users, Trophy, ShieldCheck, LogOut, Menu, X } from 'lucide-react';
@@ -13,9 +14,16 @@ import { Logo } from '@/client/components/Logo';
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  // Marks the section the user is in (subroutes count: /podium/x → /podium).
+  const linkClass = (href: string, extra = '') => {
+    const active = pathname === href || pathname.startsWith(`${href}/`);
+    return `nav-link${extra ? ` ${extra}` : ''}${active ? ' active' : ''}`;
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -32,27 +40,27 @@ export default function Navbar() {
 
   const navLinksMain = (
     <>
-      <Link href="/podium" className="nav-link" title={t('podium.nav')} onClick={closeMenu}>
+      <Link href="/podium" className={linkClass('/podium')} title={t('podium.nav')} onClick={closeMenu}>
         <Trophy size={18} /> <span className="nav-link-label">{t('podium.nav')}</span>
       </Link>
 
-      <Link href="/members" className="nav-link" title={t('nav.members')} onClick={closeMenu}>
+      <Link href="/members" className={linkClass('/members')} title={t('nav.members')} onClick={closeMenu}>
         <Users size={18} /> <span className="nav-link-label">{t('nav.members')}</span>
       </Link>
 
       {user ? (
         <>
-          <Link href="/profile" className="nav-link" title={t('nav.myCharacter')} onClick={closeMenu}>
+          <Link href="/profile" className={linkClass('/profile')} title={t('nav.myCharacter')} onClick={closeMenu}>
             <User size={18} /> <span className="nav-link-label">{t('nav.myCharacter')}</span>
           </Link>
           {user.isAdmin && (
-            <Link href="/admin" className="nav-link nav-link-admin" title={t('nav.admin')} onClick={closeMenu}>
+            <Link href="/admin" className={linkClass('/admin', 'nav-link-admin')} title={t('nav.admin')} onClick={closeMenu}>
               <ShieldCheck size={18} /> <span className="nav-link-label">{t('nav.admin')}</span>
             </Link>
           )}
         </>
       ) : (
-        <Link href="/profile" className="nav-link" title={t('nav.joinLogin')} onClick={closeMenu}>
+        <Link href="/profile" className="nav-link nav-link-cta" title={t('nav.joinLogin')} onClick={closeMenu}>
           <User size={18} /> <span className="nav-link-label">{t('nav.joinLogin')}</span>
         </Link>
       )}
