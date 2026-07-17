@@ -15,8 +15,9 @@ import { apiFetch } from '@/client/lib/api';
 import { Logo } from '@/client/components/Logo';
 import { GameStreakButton } from '@/client/components/GameStreakButton';
 
-type CodeLang = 'js' | 'py';
-const LANG_LABELS: Record<CodeLang, string> = { js: 'JavaScript', py: 'Python' };
+type CodeLang = 'js' | 'py' | 'java';
+const LANG_LABELS: Record<CodeLang, string> = { js: 'JavaScript', py: 'Python', java: 'Java' };
+const CODE_LANGS = Object.keys(LANG_LABELS) as CodeLang[];
 
 interface Challenge {
   id: string;
@@ -27,15 +28,16 @@ interface Challenge {
   description: string;
   descriptionEn: string;
   starters: Record<CodeLang, string>;
-  tests: { args: unknown[]; expected: unknown }[];
+  // Worked examples (input → output). The real test cases are secret and
+  // intentionally different, so answers can't be hardcoded.
+  examples: { args: unknown[]; expected: unknown }[];
 }
 
+// Per-test verdict as returned by the server: pass/fail plus the error message
+// when the player's function threw — never the test inputs or expected outputs.
 interface TestOutcome {
-  args: unknown[];
-  expected: unknown;
-  got?: unknown;
-  threw?: string;
   pass: boolean;
+  threw?: string;
 }
 
 function fmt(value: unknown): string {
@@ -50,7 +52,7 @@ export default function CodePage() {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [dailyKey, setDailyKey] = useState<number | null>(null);
   const [language, setLanguage] = useState<CodeLang>('js');
-  const [codeByLang, setCodeByLang] = useState<Record<CodeLang, string>>({ js: '', py: '' });
+  const [codeByLang, setCodeByLang] = useState<Record<CodeLang, string>>({ js: '', py: '', java: '' });
   const code = codeByLang[language];
   const [results, setResults] = useState<TestOutcome[] | null>(null);
   const [runError, setRunError] = useState('');
@@ -93,13 +95,14 @@ export default function CodePage() {
           if (roundWasReset) {
             localStorage.removeItem(storageKey);
           } else {
-            const savedLang: CodeLang = saved.language === 'py' ? 'py' : 'js';
+            const savedLang: CodeLang = CODE_LANGS.includes(saved.language) ? saved.language : 'js';
             // Older saves kept a single `code` string (JS-only era).
             const savedDrafts = saved.codeByLang ?? { js: saved.code };
             setLanguage(savedLang);
             setCodeByLang({
               js: typeof savedDrafts.js === 'string' && savedDrafts.js !== '' ? savedDrafts.js : ch.starters.js,
               py: typeof savedDrafts.py === 'string' && savedDrafts.py !== '' ? savedDrafts.py : ch.starters.py,
+              java: typeof savedDrafts.java === 'string' && savedDrafts.java !== '' ? savedDrafts.java : ch.starters.java,
             });
             setResults(saved.results ?? null);
             setRunError(saved.runError ?? '');
@@ -264,6 +267,27 @@ export default function CodePage() {
             <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.6 }}>
               {isEnglish && challenge.descriptionEn ? challenge.descriptionEn : challenge.description}
             </p>
+
+            {/* Worked examples — different from the (secret) real tests */}
+            {challenge.examples?.length > 0 && (
+              <div style={{ marginTop: '1rem' }}>
+                <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                  {t('code.examplesTitle')}
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {challenge.examples.map((ex, i) => (
+                    <div key={i} className="code-test">
+                      <code style={{ fontSize: '0.82rem' }}>
+                        {challenge.functionName}({ex.args.map(fmt).join(', ')}) → {fmt(ex.expected)}
+                      </code>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.5rem' }}>
+                  {t('code.examplesHint')}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Editor */}
@@ -272,21 +296,19 @@ export default function CodePage() {
               <label htmlFor="code-editor" style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)' }}>
                 {t('code.editorLabel', { name: challenge.functionName })}
               </label>
-              <div role="group" aria-label={t('code.languageLabel')} style={{ display: 'flex', gap: '0.35rem' }}>
-                {(Object.keys(LANG_LABELS) as CodeLang[]).map((lang) => (
-                  <button
-                    key={lang}
-                    type="button"
-                    onClick={() => switchLanguage(lang)}
-                    className={`btn ${language === lang ? '' : 'btn-secondary'}`}
-                    aria-pressed={language === lang}
-                    disabled={running}
-                    style={{ fontSize: '0.75rem', padding: '0.3rem 0.7rem' }}
-                  >
+              <select
+                value={language}
+                onChange={(e) => switchLanguage(e.target.value as CodeLang)}
+                disabled={running}
+                aria-label={t('code.languageLabel')}
+                style={{ width: 'auto', fontSize: '0.85rem', padding: '0.35rem 2.5rem 0.35rem 0.75rem' }}
+              >
+                {CODE_LANGS.map((lang) => (
+                  <option key={lang} value={lang}>
                     {LANG_LABELS[lang]}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
             <textarea
               id="code-editor"
@@ -315,55 +337,36 @@ export default function CodePage() {
                 </button>
               )}
             </div>
-          </div>
 
-          {/* Tests */}
-          <div className="card">
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem' }}>
-              {t('code.testsTitle')}
-              {results && (
-                <span style={{ marginLeft: '0.5rem', color: results.every((r) => r.pass) ? 'var(--color-correct)' : 'var(--text-muted)', fontWeight: 700 }}>
-                  {results.filter((r) => r.pass).length}/{results.length}
-                </span>
-              )}
-            </h3>
-
+            {/* Run feedback: compile/runtime error banner, or the score against
+                the secret test suite (never the tests themselves). */}
             {runError && (
-              <div className="quiz-explanation wrong" style={{ marginBottom: '0.75rem' }}>
+              <div className="quiz-explanation wrong" style={{ marginTop: '0.75rem' }}>
                 {runError}
               </div>
             )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {challenge.tests.map((test, i) => {
-                const r = results?.[i];
-                return (
-                  <div key={i} className={`code-test ${r ? (r.pass ? 'pass' : 'fail') : ''}`}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      {r ? (
-                        r.pass ? (
-                          <CheckCircle2 size={16} style={{ color: 'var(--color-correct)', flexShrink: 0 }} />
-                        ) : (
-                          <XCircle size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                        )
-                      ) : (
-                        <span className="code-test-dot" />
-                      )}
-                      <code style={{ fontSize: '0.82rem' }}>
-                        {challenge.functionName}({test.args.map(fmt).join(', ')}) → {fmt(test.expected)}
-                      </code>
-                    </div>
-                    {r && !r.pass && (
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem', paddingLeft: '1.5rem' }}>
-                        {r.threw
-                          ? t('code.testThrew', { error: r.threw })
-                          : t('code.testGot', { got: fmt(r.got) })}
+            {results && !runError && (() => {
+              const passed = results.filter((r) => r.pass).length;
+              const firstThrew = results.find((r) => r.threw)?.threw;
+              const allPass = passed === results.length;
+              return (
+                <div className={`code-run-summary ${allPass ? 'pass' : 'fail'}`}>
+                  {allPass ? (
+                    <CheckCircle2 size={18} style={{ color: 'var(--color-correct)', flexShrink: 0 }} />
+                  ) : (
+                    <XCircle size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                  )}
+                  <div>
+                    <strong>{t('code.resultSummary', { passed, total: results.length })}</strong>
+                    {firstThrew && !allPass && (
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                        {t('code.testThrew', { error: firstThrew })}
                       </div>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

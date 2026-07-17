@@ -1,7 +1,9 @@
 # Dockerfile for the standalone Express backend (API only).
 FROM node:20-alpine AS base
-# libc6-compat for Prisma; python3/make/g++ to compile native deps (pg/bcrypt)
-RUN apk add --no-cache libc6-compat python3 make g++
+# libc6-compat for Prisma; python3/make/g++ to compile native deps (pg/bcrypt).
+# python3 also powers the Python runner of the daily code challenge, and
+# openjdk21 (javac + java) powers the Java runner.
+RUN apk add --no-cache libc6-compat python3 make g++ openjdk21
 WORKDIR /app
 
 # Install all dependencies (the backend runs via tsx, so source is kept as-is)

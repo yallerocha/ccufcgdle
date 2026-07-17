@@ -35,6 +35,14 @@ interface Answered {
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
+// Accent color per POSCOMP area, so each question's subject is recognizable at
+// a glance (chip + dot in the question header).
+const AREA_COLORS: Record<string, string> = {
+  'Matemática': 'var(--lsd-teal)',
+  'Fundamentos da Computação': 'var(--lsd-magenta)',
+  'Tecnologia da Computação': 'var(--lsd-orange)',
+};
+
 export default function QuizPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
@@ -221,10 +229,16 @@ export default function QuizPage() {
 
       {question && (
         <div className="card quiz-card fade-in" style={{ maxWidth: '700px', margin: '0 auto', width: '100%' }}>
-          {/* Stepper: one numbered circle per question. Answered steps show the
-              outcome (check/X) and can be revisited; future ones stay locked. */}
+          {/* Progress header: counter over a slim segmented bar. Answered
+              segments show the outcome color and can be revisited (click);
+              future ones stay locked. */}
+          <div className="quiz-progress-head">
+            <span className="quiz-progress-label">
+              {t('quiz.progress', { current: current + 1, total: questions.length })}
+            </span>
+          </div>
           <div
-            className="quiz-stepper"
+            className="quiz-segments"
             aria-label={t('quiz.progress', { current: current + 1, total: questions.length })}
           >
             {questions.map((_, i) => {
@@ -232,37 +246,33 @@ export default function QuizPage() {
               const reachable = i <= answers.length;
               const cls = a ? (a.correct ? 'correct' : 'wrong') : i === current ? 'current' : '';
               return (
-                <React.Fragment key={i}>
-                  {i > 0 && (
-                    <span
-                      className={`quiz-step-connector ${answers.some((x) => x.i === i - 1) ? 'done' : ''}`}
-                      aria-hidden
-                    />
-                  )}
-                  <button
-                    type="button"
-                    className={`quiz-step ${cls}`}
-                    onClick={() => reachable && setCurrent(i)}
-                    disabled={!reachable}
-                    aria-label={t('quiz.progress', { current: i + 1, total: questions.length })}
-                    aria-current={i === current ? 'step' : undefined}
-                  >
-                    {a ? (a.correct ? <Check size={16} strokeWidth={3} /> : <X size={16} strokeWidth={3} />) : i + 1}
-                  </button>
-                </React.Fragment>
+                <button
+                  key={i}
+                  type="button"
+                  className={`quiz-seg ${cls}`}
+                  onClick={() => reachable && setCurrent(i)}
+                  disabled={!reachable}
+                  aria-label={t('quiz.progress', { current: i + 1, total: questions.length })}
+                  aria-current={i === current ? 'step' : undefined}
+                />
               );
             })}
           </div>
 
-          <div className="quiz-question-box">
-            <div className="quiz-question-meta">
+          {/* Question box: subject chip (colored per area) + exam provenance,
+              with the statement inside; the left accent follows the area color. */}
+          <div
+            className="quiz-question-box"
+            style={{ '--chip-color': AREA_COLORS[question.area] ?? 'var(--primary)' } as React.CSSProperties}
+          >
+            <div className="quiz-question-head">
+              <span className="quiz-area-chip">{question.area}</span>
               {question.source && (
-                <div className="quiz-question-source">
-                  <BookOpen size={13} aria-hidden />
-                  <span>{t('quiz.source', { year: question.source.year, number: question.source.number })}</span>
-                </div>
+                <span className="quiz-source-chip">
+                  <BookOpen size={12} aria-hidden />
+                  {t('quiz.source', { year: question.source.year, number: question.source.number })}
+                </span>
               )}
-              <span className="badge">{question.area}</span>
             </div>
             <h2 className="quiz-question-text">{question.question}</h2>
           </div>

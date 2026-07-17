@@ -2490,7 +2490,8 @@ a:focus-visible,
 .podium-col:nth-child(1) { animation-delay: 0.18s; }
 .podium-col:nth-child(3) { animation-delay: 0.28s; }
 
-/* Soft golden halo behind the champion's avatar (center column) */
+/* Soft golden halo behind the champion's avatar (center column). z-index: -1
+   keeps it under the (statically positioned) photo/medal content. */
 .podium-col:nth-child(2)::before {
   content: '';
   position: absolute;
@@ -2503,6 +2504,7 @@ a:focus-visible,
   background: radial-gradient(circle, rgba(234, 179, 8, 0.28), transparent 70%);
   filter: blur(6px);
   pointer-events: none;
+  z-index: -1;
 }
 
 .podium-col:hover {
@@ -3440,84 +3442,87 @@ a:focus-visible,
 
 /* Question stepper: one numbered circle per question, connected by rails.
    Answered steps show the outcome (check/X) and stay clickable for review. */
-.quiz-stepper {
+/* ── Quiz header: counter + running score over a slim segmented bar ────────── */
+.quiz-progress-head {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.25rem 0.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
-.quiz-step {
-  width: 2.25rem;
-  height: 2.25rem;
-  min-width: 2.25rem;
-  border-radius: 50%;
+.quiz-progress-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.quiz-score-hint {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-family: inherit;
-  font-size: 0.92rem;
-  font-weight: 700;
-  border: 2px solid var(--border-color);
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.quiz-score-hint .ok,
+.quiz-score-hint .bad {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.quiz-score-hint .ok { color: var(--color-correct); }
+.quiz-score-hint .bad { color: #ef4444; }
+
+/* One slim segment per question: outcome-colored once answered, glowing for the
+   current one. Answered segments are buttons (revisit); future ones are inert. */
+.quiz-segments {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.4rem;
+}
+
+.quiz-seg {
+  flex: 1;
+  height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
   background: var(--bg-input);
-  color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px var(--border-color);
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
-    box-shadow 0.2s ease, transform 0.15s ease;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.quiz-step:disabled {
+.quiz-seg:disabled {
   cursor: default;
-  opacity: 0.55;
 }
 
-.quiz-step.current {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: var(--bg-card);
+.quiz-seg.current {
+  background: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-.quiz-step.correct {
-  background: var(--color-correct);
-  border-color: var(--color-correct);
-  color: #ffffff;
+.quiz-seg.correct {
+  background: linear-gradient(90deg, #10b981, #059669);
+  box-shadow: none;
 }
 
-.quiz-step.wrong {
-  background: #ef4444;
-  border-color: #ef4444;
-  color: #ffffff;
+.quiz-seg.wrong {
+  background: linear-gradient(90deg, #ef4444, #b91c1c);
+  box-shadow: none;
 }
 
-.quiz-step.correct:hover,
-.quiz-step.wrong:hover {
-  transform: scale(1.1);
+.quiz-seg.correct:hover,
+.quiz-seg.wrong:hover {
+  transform: scaleY(1.7);
 }
 
-.quiz-step-connector {
-  flex: 1;
-  height: 2px;
-  border-radius: 9999px;
-  background: var(--border-color);
-  transition: background-color 0.3s ease;
-}
-
-.quiz-step-connector.done {
-  background: var(--primary);
-}
-
-.quiz-question-box {
-  margin: 0.75rem 0 1.25rem 0;
-  padding: 1.15rem 1.25rem 1.25rem;
-  border: 1px solid var(--border-color);
-  border-left: 3px solid var(--primary);
-  border-radius: var(--border-radius);
-  background: var(--bg-input);
-}
-
-/* Provenance + area badge share the box header row */
-.quiz-question-meta {
+/* Question header: subject chip (accent per area) + exam provenance chip */
+.quiz-question-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3526,30 +3531,49 @@ a:focus-visible,
   margin-bottom: 0.75rem;
 }
 
-.quiz-question-source {
+.quiz-area-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--chip-color, var(--primary));
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--chip-color, var(--primary)) 40%, transparent);
+  background: color-mix(in srgb, var(--chip-color, var(--primary)) 10%, transparent);
+}
+
+.quiz-area-chip::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--chip-color, var(--primary));
+}
+
+.quiz-source-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-}
-
-.quiz-question-meta .badge {
+  font-weight: 600;
+  color: var(--text-dim);
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
   border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-muted);
+  background: var(--bg-input);
 }
 
 .quiz-question-text {
-  font-size: 1.1rem;
-  font-weight: 400;
-  line-height: 1.6;
+  font-size: 1.18rem;
+  font-weight: 600;
+  line-height: 1.55;
   /* Questions transcribed from the exam may embed line breaks (e.g. code). */
   white-space: pre-line;
-  margin: 0;
+  margin: 0 0 1.4rem 0;
 }
 
 .quiz-option {
@@ -3708,4 +3732,38 @@ a:focus-visible,
     height: auto;
     aspect-ratio: 1;
   }
+}
+
+/* Profile: placeholder shown instead of the LSDLE attribute fields until the
+   member completes the game registration for the first time. */
+.profile-lsdle-locked {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 1.15rem;
+  margin: 0.75rem 0 1rem 0;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-input);
+}
+
+/* Code: post-run score summary shown under the editor (tests stay secret) */
+.code-run-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  font-size: 0.9rem;
+}
+
+.code-run-summary.pass {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.code-run-summary.fail {
+  border-color: rgba(239, 68, 68, 0.5);
 }

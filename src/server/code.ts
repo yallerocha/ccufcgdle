@@ -1,5 +1,8 @@
 import vm from 'node:vm';
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { prisma } from './db';
 import { getLocalDateString } from '@/shared/utils';
 import { hashString } from './termo';
@@ -117,7 +120,9 @@ export function runUserCode(
   if (code.length > MAX_CODE_LENGTH) {
     return failAllFor(challenge)(`O código excede o limite de ${MAX_CODE_LENGTH} caracteres.`);
   }
-  return language === 'py' ? runPythonCode(code, challenge) : runJsCode(code, challenge);
+  if (language === 'py') return runPythonCode(code, challenge);
+  if (language === 'java') return runJavaCode(code, challenge);
+  return runJsCode(code, challenge);
 }
 
 // JavaScript runner: fresh `node:vm` context with a hard timeout. The sandbox
@@ -186,7 +191,7 @@ function runJsCode(code: string, challenge: CodeChallenge): RunOutcome {
 // runs at module level; a harness then calls the required function for every
 // test and prints a single marker-prefixed JSON line, so stray print()s in the
 // player's code never break the protocol.
-const PY_OUT_MARKER = '__CCDLE_OUT__';
+const OUT_MARKER = '__CCDLE_OUT__';
 
 function runPythonCode(code: string, challenge: CodeChallenge): RunOutcome {
   const failAll = failAllFor(challenge);
@@ -216,7 +221,7 @@ def __ccdle_main():
             results.append({"threw": str(e) or type(e).__name__})
     return __ccdle_json.dumps({"results": results})
 
-print(${JSON.stringify(PY_OUT_MARKER)} + __ccdle_main())
+print(${JSON.stringify(OUT_MARKER)} + __ccdle_main())
 `;
 
   const proc = spawnSync('python3', ['-I', '-c', harness], {
@@ -241,7 +246,7 @@ print(${JSON.stringify(PY_OUT_MARKER)} + __ccdle_main())
   }
 
   const stdout = proc.stdout ?? '';
-  const markerAt = stdout.lastIndexOf(PY_OUT_MARKER);
+  const markerAt = stdout.lastIndexOf(OUT_MARKER);
   if (proc.status !== 0 || markerAt === -1) {
     // Top-level crash (syntax error, exception fora da função): show the last
     // stderr line, which Python reserves for the error type + message.
@@ -250,7 +255,7 @@ print(${JSON.stringify(PY_OUT_MARKER)} + __ccdle_main())
     return failAll(last ? `Erro ao executar o código: ${last.slice(0, 300)}` : 'Erro ao executar o código.');
   }
 
-  const payload = stdout.slice(markerAt + PY_OUT_MARKER.length).trim();
+  const payload = stdout.slice(markerAt + OUT_MARKER.length).trim();
   if (payload.length > MAX_OUT_LENGTH) {
     return failAll('A saída do código não pôde ser interpretada.');
   }
@@ -270,4 +275,200 @@ print(${JSON.stringify(PY_OUT_MARKER)} + __ccdle_main())
   }
 
   return gradeResults(challenge, out.results);
+}
+
+// Java runner: the player's `class Solucao` is compiled together with a
+// generated `Main` harness (javac in a temp dir, then `java Main`). The harness
+// resolves the required method by reflection, invokes it with the test args
+// (embedded as Java literals by javaLiteral below) and prints the same
+// marker-prefixed JSON protocol as the Python runner. Compilation is slow, so
+// Java gets its own, larger timeouts.
+const JAVA_COMPILE_TIMEOUT_MS = 20000;
+const JAVA_RUN_TIMEOUT_MS = 5000;
+
+// JSON args → Java source literals. The challenge bank only uses integers,
+// strings, booleans and integer arrays, so anything else is rejected upfront.
+function javaLiteral(v: unknown): string {
+  if (typeof v === 'number' && Number.isInteger(v)) return String(v);
+  if (typeof v === 'boolean') return String(v);
+  if (typeof v === 'string') return JSON.stringify(v); // JSON escapes are valid in Java
+  if (Array.isArray(v) && v.every((x) => typeof x === 'number' && Number.isInteger(x))) {
+    return `new int[]{${v.join(', ')}}`;
+  }
+  throw new Error(`unsupported Java arg: ${JSON.stringify(v)}`);
+}
+
+function buildJavaHarness(challenge: CodeChallenge): string {
+  const testsLiteral = challenge.tests
+    .map((t) => `{ ${t.args.map(javaLiteral).join(', ')} }`)
+    .join(',\n            ');
+
+  return `
+public class Main {
+    static String esc(String s) {
+        StringBuilder b = new StringBuilder("\\"");
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '"' || c == '\\\\') b.append('\\\\').append(c);
+            else if (c == '\\n') b.append("\\\\n");
+            else if (c == '\\r') b.append("\\\\r");
+            else if (c == '\\t') b.append("\\\\t");
+            else if (c < 0x20) b.append(String.format("\\\\u%04x", (int) c));
+            else b.append(c);
+        }
+        return b.append('"').toString();
+    }
+
+    static String j(Object v) {
+        if (v == null) return "null";
+        if (v instanceof Integer || v instanceof Long || v instanceof Double || v instanceof Boolean) {
+            return String.valueOf(v);
+        }
+        if (v instanceof String) return esc((String) v);
+        if (v instanceof int[]) {
+            int[] a = (int[]) v;
+            StringBuilder b = new StringBuilder("[");
+            for (int i = 0; i < a.length; i++) { if (i > 0) b.append(','); b.append(a[i]); }
+            return b.append(']').toString();
+        }
+        if (v instanceof java.util.List) {
+            StringBuilder b = new StringBuilder("[");
+            java.util.List<?> l = (java.util.List<?>) v;
+            for (int i = 0; i < l.size(); i++) { if (i > 0) b.append(','); b.append(j(l.get(i))); }
+            return b.append(']').toString();
+        }
+        return esc(String.valueOf(v));
+    }
+
+    public static void main(String[] args) {
+        Object[][] tests = {
+            ${testsLiteral}
+        };
+        java.lang.reflect.Method fn = null;
+        for (java.lang.reflect.Method m : Solucao.class.getDeclaredMethods()) {
+            if (m.getName().equals(${JSON.stringify(challenge.functionName)})) { fn = m; break; }
+        }
+        if (fn == null) {
+            System.out.println(${JSON.stringify(OUT_MARKER)} + "{\\"missing\\":true}");
+            return;
+        }
+        fn.setAccessible(true);
+        Object target = null;
+        if (!java.lang.reflect.Modifier.isStatic(fn.getModifiers())) {
+            try {
+                java.lang.reflect.Constructor<?> ctor = Solucao.class.getDeclaredConstructor();
+                ctor.setAccessible(true);
+                target = ctor.newInstance();
+            } catch (Throwable ignored) { /* invoke below reports the failure */ }
+        }
+        StringBuilder sb = new StringBuilder("{\\"results\\":[");
+        for (int i = 0; i < tests.length; i++) {
+            if (i > 0) sb.append(',');
+            try {
+                Object got = fn.invoke(target, tests[i]);
+                sb.append("{\\"got\\":").append(j(got)).append('}');
+            } catch (Throwable t) {
+                Throwable c = (t instanceof java.lang.reflect.InvocationTargetException && t.getCause() != null)
+                    ? t.getCause() : t;
+                String msg = c.getMessage() == null ? c.getClass().getSimpleName() : c.getMessage();
+                sb.append("{\\"threw\\":").append(j(msg)).append('}');
+            }
+        }
+        sb.append("]}");
+        System.out.println(${JSON.stringify(OUT_MARKER)} + sb);
+    }
+}
+`;
+}
+
+function runJavaCode(code: string, challenge: CodeChallenge): RunOutcome {
+  const failAll = failAllFor(challenge);
+
+  let harness: string;
+  try {
+    harness = buildJavaHarness(challenge);
+  } catch {
+    return failAll('Este desafio não está disponível em Java no momento.');
+  }
+
+  let dir: string;
+  try {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ccdle-java-'));
+  } catch {
+    return failAll('Erro ao preparar o ambiente de execução.');
+  }
+
+  try {
+    fs.writeFileSync(path.join(dir, 'Solucao.java'), code);
+    fs.writeFileSync(path.join(dir, 'Main.java'), harness);
+
+    const compile = spawnSync('javac', ['Solucao.java', 'Main.java'], {
+      cwd: dir,
+      timeout: JAVA_COMPILE_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
+      encoding: 'utf8',
+      maxBuffer: MAX_OUT_LENGTH * 4,
+    });
+    if (compile.error) {
+      const errno = (compile.error as NodeJS.ErrnoException).code;
+      if (errno === 'ENOENT') return failAll('Java não está disponível no servidor no momento.');
+      if (errno === 'ETIMEDOUT') return failAll('Tempo limite de compilação excedido.');
+      return failAll(`Erro ao compilar o código: ${compile.error.message}`);
+    }
+    if (compile.status !== 0) {
+      // Player-facing compile diagnostics: javac already points at Solucao.java
+      // with the right line numbers (the harness is a separate file).
+      const firstLines = (compile.stderr ?? '').trim().split('\n').slice(0, 6).join('\n');
+      return failAll(`Erro de compilação: ${firstLines.slice(0, 400) || 'código Java inválido.'}`);
+    }
+
+    const run = spawnSync('java', ['-Xmx128m', '-cp', dir, 'Main'], {
+      timeout: JAVA_RUN_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
+      encoding: 'utf8',
+      maxBuffer: MAX_OUT_LENGTH * 4,
+    });
+    if (run.error) {
+      const errno = (run.error as NodeJS.ErrnoException).code;
+      if (errno === 'ETIMEDOUT') {
+        return failAll(`Tempo limite de execução excedido (${JAVA_RUN_TIMEOUT_MS / 1000}s). Verifique laços infinitos.`);
+      }
+      if (errno === 'ENOENT') return failAll('Java não está disponível no servidor no momento.');
+      return failAll(`Erro ao executar o código: ${run.error.message}`);
+    }
+    if (run.signal) {
+      return failAll(`Tempo limite de execução excedido (${JAVA_RUN_TIMEOUT_MS / 1000}s). Verifique laços infinitos.`);
+    }
+
+    const stdout = run.stdout ?? '';
+    const markerAt = stdout.lastIndexOf(OUT_MARKER);
+    if (run.status !== 0 || markerAt === -1) {
+      const stderrLines = (run.stderr ?? '').trim().split('\n');
+      const last = stderrLines[stderrLines.length - 1]?.trim();
+      return failAll(last ? `Erro ao executar o código: ${last.slice(0, 300)}` : 'Erro ao executar o código.');
+    }
+
+    const payload = stdout.slice(markerAt + OUT_MARKER.length).trim();
+    if (payload.length > MAX_OUT_LENGTH) {
+      return failAll('A saída do código não pôde ser interpretada.');
+    }
+
+    let out: { missing?: boolean; results?: { got?: unknown; threw?: string }[] };
+    try {
+      out = JSON.parse(payload);
+    } catch {
+      return failAll('A saída do código não pôde ser interpretada.');
+    }
+
+    if (out.missing) {
+      return failAll(`Defina o método ${challenge.functionName} na classe Solucao — o desafio chama exatamente esse nome.`);
+    }
+    if (!Array.isArray(out.results)) {
+      return failAll('A saída do código não pôde ser interpretada.');
+    }
+
+    return gradeResults(challenge, out.results);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 }

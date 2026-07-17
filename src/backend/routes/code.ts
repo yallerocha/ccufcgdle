@@ -7,9 +7,10 @@ import { requireAuth, withAuth } from '../middleware/auth';
 
 const router = Router();
 
-// GET /api/code/daily — today's challenge (statement, starter code and the test
-// cases, which are all visible) plus a non-identifying daily key the client
-// uses to detect an admin reset.
+// GET /api/code/daily — today's challenge (statement and starter code) plus a
+// non-identifying daily key the client uses to detect an admin reset. The test
+// cases are NEVER sent to the client (only their count), so players can't
+// hardcode the expected outputs.
 router.get('/daily', async (_req, res) => {
   try {
     const { dailyKey, challenge } = await getOrCreateDailyChallenge();
@@ -24,7 +25,7 @@ router.get('/daily', async (_req, res) => {
         description: challenge.description,
         descriptionEn: challenge.descriptionEn,
         starters: challenge.starters,
-        tests: challenge.tests,
+        examples: challenge.examples,
       },
     });
   } catch (error) {
@@ -90,10 +91,13 @@ router.post('/submit', withAuth, async (req, res) => {
       }
     }
 
+    // Strip the test contents (args/expected/got) from the response: the client
+    // only sees pass/fail per test (plus thrown-error messages for debugging),
+    // so the hidden test cases can't be reverse-engineered from the network tab.
     return res.json({
       ok: run.ok,
       error: run.error,
-      results: run.results,
+      results: run.results.map((r) => ({ pass: r.pass, threw: r.threw })),
       passed: run.passed,
       total: run.total,
       solved,
