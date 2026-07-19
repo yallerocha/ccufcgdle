@@ -1,5 +1,6 @@
 import { prisma } from './db';
 import { getLocalDateString } from '@/shared/utils';
+import { TERMO_GUESS_WORDS } from './termo-words';
 
 // The daily word length follows the day's solution (4–8 letters), so rounds vary
 // in difficulty. MAX_ATTEMPTS stays fixed regardless of length.
@@ -16,9 +17,9 @@ export type LetterResult = 'correct' | 'present' | 'absent';
 // Curated pool of computing terms (pt-BR plus consolidated tech loanwords) used
 // as daily answers, in varied lengths so each day can have a different board.
 // Stored with their accented display form; matching always happens on the
-// normalized (accent-free, uppercase) form. Since the theme is computing, any
-// well-formed word of the right length is accepted as a guess (there is no
-// general dictionary of tech terms to validate against).
+// normalized (accent-free, uppercase) form. Accepted guesses come from
+// TERMO_GUESS_WORDS (Portuguese dictionary, 4-8 letters) plus this pool, so
+// tech loanwords that aren't dictionary words (KERNEL, BACKUP…) stay guessable.
 const WORDS: string[] = [
   // 4 letters
   'BYTE', 'REDE', 'CHIP', 'DADO', 'JAVA', 'LOOP', 'WIFI', 'CABO', 'BIOS', 'RUST',
@@ -52,16 +53,29 @@ export function normalize(word: string): string {
     .replace(/[^A-Z]/g, '');
 }
 
-// normalized form -> accented display form. Built from the curated answers so
-// daily reveals (and matching guesses) show their exact accents.
+// normalized form -> accented display form, used both to validate a guess and
+// to auto-fill its accents. Built from the broad accepted-guess dictionary, with
+// the curated answer pool layered on top so daily reveals use their exact
+// accents and non-dictionary tech terms are always accepted.
 const DISPLAY_BY_NORM = new Map<string, string>();
+for (const w of TERMO_GUESS_WORDS) {
+  const n = normalize(w);
+  if (!DISPLAY_BY_NORM.has(n)) DISPLAY_BY_NORM.set(n, w);
+}
 for (const w of WORDS) {
-  DISPLAY_BY_NORM.set(normalize(w), w);
+  DISPLAY_BY_NORM.set(normalize(w), w); // curated answers win for display
+}
+const VALID_GUESSES = new Set(DISPLAY_BY_NORM.keys());
+
+// A guess must have the round's length AND be a known word: either a Portuguese
+// dictionary word or one of the curated computing terms.
+export function isValidGuess(normalized: string, length: number): boolean {
+  return normalized.length === length && VALID_GUESSES.has(normalized);
 }
 
-// A guess is any A–Z word of the round's length — the computing theme has no
-// exhaustive dictionary, so unlike classic Termo there is no word-list check.
-export function isValidGuess(normalized: string, length: number): boolean {
+// Length-only check, so the route can tell "wrong length" apart from "not in
+// the word list" when rejecting a guess.
+export function hasValidLength(normalized: string, length: number): boolean {
   return normalized.length === length && /^[A-Z]+$/.test(normalized);
 }
 

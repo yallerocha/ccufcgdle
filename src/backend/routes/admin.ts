@@ -7,6 +7,7 @@ import { getOrCreateDailyCharacter, getActiveUsers } from '../../server/game';
 import {
   normalize,
   displayFor,
+  isValidGuess,
   randomWord as termoRandomWord,
   MIN_WORD_LENGTH,
   MAX_WORD_LENGTH,
@@ -262,11 +263,14 @@ router.post('/termo-force-daily', async (req, res) => {
 
     if (typeof word === 'string' && word.trim() !== '') {
       const norm = normalize(word);
-      // No dictionary for computing terms: any word within the length range works.
       if (norm.length < MIN_WORD_LENGTH || norm.length > MAX_WORD_LENGTH) {
         return res.status(400).json({
           error: `A palavra deve ter entre ${MIN_WORD_LENGTH} e ${MAX_WORD_LENGTH} letras.`,
         });
+      }
+      // The forced word must be guessable: a dictionary word or a curated term.
+      if (!isValidGuess(norm, norm.length)) {
+        return res.status(422).json({ error: 'Palavra não está na lista do jogo.' });
       }
       const created = await prisma.termoDaily.create({
         data: { date: today, word: norm, display: displayFor(norm) },

@@ -5,6 +5,7 @@ import {
   MAX_ATTEMPTS,
   normalize,
   isValidGuess,
+  hasValidLength,
   displayFor,
   evaluateGuess,
   getOrCreateDailyWord,
@@ -45,8 +46,11 @@ router.post('/guess', withAuth, async (req, res) => {
 
     const { word: solution, display } = await getOrCreateDailyWord();
 
-    if (!isValidGuess(guess, solution.length)) {
+    if (!hasValidLength(guess, solution.length)) {
       return res.status(400).json({ error: `A palavra deve ter ${solution.length} letras.` });
+    }
+    if (!isValidGuess(guess, solution.length)) {
+      return res.status(422).json({ error: 'Palavra não está na lista.' });
     }
     const results = evaluateGuess(guess, solution);
     const solved = guess === solution;
