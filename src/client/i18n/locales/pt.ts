@@ -396,6 +396,10 @@ export const pt = {
       saved: 'Recado salvo! 🎉',
       error: 'Não foi possível salvar o recado.',
       fromTitle: 'Recado de {{name}}',
+      publishedTitle: 'Seu recado de hoje está publicado!',
+      publishedHint: 'Quem te acertar verá este recado na tela de vitória.',
+      edit: 'Editar recado',
+      cancelEdit: 'Cancelar edição',
     },
   },
   login: {

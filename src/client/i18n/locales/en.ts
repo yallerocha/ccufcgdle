@@ -400,6 +400,10 @@ export const en: Dictionary = {
       saved: 'Note saved! 🎉',
       error: 'Could not save the note.',
       fromTitle: 'Note from {{name}}',
+      publishedTitle: "Your note for today is live!",
+      publishedHint: 'Players who guess you will see this note on their victory screen.',
+      edit: 'Edit note',
+      cancelEdit: 'Cancel editing',
     },
   },
   login: {

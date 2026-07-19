@@ -70,6 +70,8 @@ export function VictoryModal({
   const [messageNote, setMessageNote] = useState('');
   const [messageNoteType, setMessageNoteType] = useState<'success' | 'error'>('error');
   const [loadingDailyMessage, setLoadingDailyMessage] = useState(false);
+  // The author saved a note but wants to change it (reopens the editor).
+  const [editingNote, setEditingNote] = useState(false);
 
   // Shows a top-of-screen toast for the daily-note editor feedback.
   const notify = (msg: string, type: 'success' | 'error' = 'error') => {
@@ -109,6 +111,7 @@ export function VictoryModal({
       setDraftMedia(null);
       setDraftMediaFileName(null);
       setLoadingDailyMessage(false);
+      setEditingNote(false);
       return;
     }
 
@@ -170,6 +173,7 @@ export function VictoryModal({
       }
       setSavedMessage(data.message ?? null);
       setSavedMedia(data.mediaUrl ?? null);
+      setEditingNote(false);
       notify(t('victory.dailyMsg.saved'), 'success');
     } catch (err) {
       console.error('Error saving daily message:', err);
@@ -186,13 +190,12 @@ export function VictoryModal({
   // Wide split layout when the person of the day still needs to leave their note
   // (editor on the right, ranking on the left), or when a saved note is shown.
   // `isPersonOfDay` from the win response avoids waiting on /daily-message before
-  // opening the editor column.
+  // opening the editor column. The author can reopen the editor after saving.
+  const hasSavedNote = !!savedMessage || !!savedMedia;
   const canWriteNote =
-    !savedMessage &&
-    !savedMedia &&
-    (canEditMessage || (loadingDailyMessage && isPersonOfDay));
-  const hasReadOnlyNote = !canWriteNote && (!!savedMessage || !!savedMedia);
-  const useSplitLayout = canWriteNote || hasReadOnlyNote;
+    (canEditMessage || (loadingDailyMessage && isPersonOfDay)) &&
+    (!hasSavedNote || editingNote);
+  const useSplitLayout = canWriteNote || hasSavedNote;
 
   const photoBlock = targetPhoto ? (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -262,32 +265,15 @@ export function VictoryModal({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
         <input type="file" accept="image/*" onChange={handleMessageImage} style={{ display: 'none' }} id="daily-msg-image" />
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
-          <label
-            htmlFor="daily-msg-image"
-            className="btn"
-            style={{
-              flex: 1,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.4rem',
-              whiteSpace: 'nowrap',
-              ...(draftMedia
-                ? {
-                    backgroundColor: 'rgba(69, 98, 193, 0.22)',
-                    border: '1px solid var(--primary)',
-                    color: 'var(--primary)',
-                    boxShadow: 'none',
-                  }
-                : {}),
-            }}
-          >
-            <Camera size={16} />
-            {draftMedia ? t('victory.dailyMsg.changeImage') : t('victory.dailyMsg.addImage')}
-          </label>
-          {draftMedia && (
+
+        {/* Live thumbnail of the attached image, with remove on top */}
+        {draftMedia && (
+          <div style={{ position: 'relative', alignSelf: 'flex-start' }}>
+            <img
+              src={draftMedia}
+              alt={draftMediaFileName ?? ''}
+              style={{ maxWidth: '100%', maxHeight: '120px', borderRadius: '8px', objectFit: 'contain', border: '1px solid var(--border-color)', display: 'block' }}
+            />
             <button
               type="button"
               onClick={() => {
@@ -297,33 +283,46 @@ export function VictoryModal({
               className="btn btn-danger"
               title={t('victory.dailyMsg.removeImage')}
               aria-label={t('victory.dailyMsg.removeImage')}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.75rem 1rem' }}
+              style={{ position: 'absolute', top: '-0.4rem', right: '-0.4rem', padding: '0.3rem', borderRadius: '50%', display: 'flex' }}
             >
-              <Trash2 size={16} />
+              <Trash2 size={13} />
             </button>
-          )}
-        </div>
-        {draftMedia && draftMediaFileName && (
-          <p
-            style={{
-              margin: 0,
-              fontSize: '0.78rem',
-              color: 'var(--text-muted)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-            title={draftMediaFileName}
-          >
-            {draftMediaFileName}
-          </p>
+          </div>
         )}
-        <button onClick={saveMessage} disabled={savingMessage || !hasDraftContent} className="btn" style={{ whiteSpace: 'nowrap' }}>
-          {savingMessage ? t('victory.dailyMsg.saving') : t('victory.dailyMsg.save')}
-        </button>
+
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
+          <label
+            htmlFor="daily-msg-image"
+            className="btn btn-secondary"
+            style={{ flex: '1 1 auto', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}
+          >
+            <Camera size={16} />
+            {draftMedia ? t('victory.dailyMsg.changeImage') : t('victory.dailyMsg.addImage')}
+          </label>
+          <button onClick={saveMessage} disabled={savingMessage || !hasDraftContent} className="btn" style={{ flex: '1 1 auto', whiteSpace: 'nowrap' }}>
+            {savingMessage ? t('victory.dailyMsg.saving') : t('victory.dailyMsg.save')}
+          </button>
+        </div>
+        {hasSavedNote && (
+          <button
+            type="button"
+            onClick={() => {
+              // Discard draft changes and go back to the published view.
+              setDraftMessage(savedMessage ?? '');
+              setDraftMedia(savedMedia);
+              setDraftMediaFileName(null);
+              setEditingNote(false);
+            }}
+            className="btn btn-secondary"
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            {t('victory.dailyMsg.cancelEdit')}
+          </button>
+        )}
       </div>
     </div>
-  ) : (savedMessage || savedMedia) ? (
+  ) : hasSavedNote && canEditMessage ? (
+    /* Author view after publishing: confirmation + preview + edit button */
     <div style={{
       ...notePanelStyle,
       padding: '0.85rem',
@@ -332,18 +331,71 @@ export function VictoryModal({
       border: '1px solid var(--primary)',
       textAlign: 'center',
       justifyContent: 'center',
+      gap: '0.6rem',
     }}>
-      <p style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: 'var(--primary)' }}>
+      <p style={{ fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: 'var(--primary)', margin: 0 }}>
         <MessageSquare size={15} />
-        {t('victory.dailyMsg.fromTitle', { name: targetName })}
+        {t('victory.dailyMsg.publishedTitle')}
       </p>
       {savedMessage && (
-        <p style={{ fontSize: '0.95rem', fontStyle: 'italic', marginBottom: savedMedia ? '0.6rem' : 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+        <p style={{ fontSize: '0.95rem', fontStyle: 'italic', margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
           “{savedMessage}”
         </p>
       )}
       {savedMedia && (
-        <img src={savedMedia} alt="" style={{ maxWidth: '100%', maxHeight: '280px', borderRadius: '8px', objectFit: 'contain' }} />
+        <img src={savedMedia} alt="" style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '8px', objectFit: 'contain', alignSelf: 'center' }} />
+      )}
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', margin: 0 }}>
+        {t('victory.dailyMsg.publishedHint')}
+      </p>
+      <button
+        type="button"
+        onClick={() => setEditingNote(true)}
+        className="btn btn-secondary"
+        style={{ alignSelf: 'center', fontSize: '0.85rem', padding: '0.45rem 1rem' }}
+      >
+        {t('victory.dailyMsg.edit')}
+      </button>
+    </div>
+  ) : hasSavedNote ? (
+    /* Player view: personal note from the person of the day, with their avatar */
+    <div style={{
+      ...notePanelStyle,
+      padding: '1rem',
+      borderRadius: 'var(--border-radius)',
+      backgroundColor: 'rgba(69, 98, 193, 0.08)',
+      border: '1px solid var(--primary)',
+      textAlign: 'center',
+      justifyContent: 'center',
+      gap: '0.65rem',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+        {targetPhoto ? (
+          <img
+            src={targetPhoto}
+            alt=""
+            aria-hidden
+            style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)', flexShrink: 0 }}
+          />
+        ) : (
+          <div
+            aria-hidden
+            style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: avatarColorForName(targetName), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0 }}
+          >
+            {targetName.slice(0, 2).toUpperCase()}
+          </div>
+        )}
+        <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+          {t('victory.dailyMsg.fromTitle', { name: targetName })}
+        </p>
+      </div>
+      {savedMessage && (
+        <p style={{ fontSize: '1rem', fontStyle: 'italic', margin: 0, lineHeight: 1.55, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+          “{savedMessage}”
+        </p>
+      )}
+      {savedMedia && (
+        <img src={savedMedia} alt="" style={{ maxWidth: '100%', maxHeight: '280px', borderRadius: '8px', objectFit: 'contain', alignSelf: 'center' }} />
       )}
     </div>
   ) : null;
