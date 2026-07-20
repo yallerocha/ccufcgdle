@@ -2,6 +2,7 @@
 export const pt = {
   common: {
     retry: 'Tentar novamente',
+    close: 'Fechar',
   },
   nav: {
     play: 'Jogar',
@@ -133,7 +134,7 @@ export const pt = {
     forcaDesc: 'A forca temática de computação: com o tema como dica, descubra o termo do dia uma letra por vez.',
     quizDesc: 'Quiz diário rápido com questões reais do POSCOMP: 3 questões de matemática, fundamentos e tecnologia.',
     codeDesc: 'Um mini desafio de programação por dia: implemente a função em JavaScript, Python ou Java e passe em todos os testes.',
-    playedToday: 'Concluído hoje',
+    playedToday: 'Concluído',
   },
   termo: {
     tagline: 'Descubra o termo de computação de hoje em 6 tentativas!',
@@ -397,9 +398,7 @@ export const pt = {
       error: 'Não foi possível salvar o recado.',
       fromTitle: 'Recado de {{name}}',
       publishedTitle: 'Seu recado de hoje está publicado!',
-      publishedHint: 'Quem te acertar verá este recado na tela de vitória.',
-      edit: 'Editar recado',
-      cancelEdit: 'Cancelar edição',
+      publishedHint: 'Quem te acertar verá este recado na tela de vitória. Ele não pode mais ser alterado.',
     },
   },
   login: {

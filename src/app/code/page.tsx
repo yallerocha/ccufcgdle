@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
-import { HelpCircle, Info, Trophy, Play, CheckCircle2, XCircle } from 'lucide-react';
+import { HelpCircle, Trophy, Play, CheckCircle2, XCircle } from 'lucide-react';
 import { BackLink } from '@/client/components/BackLink';
+import { RulesModal } from '@/client/components/RulesModal';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { CodeResultModal } from '@/client/components/CodeResultModal';
@@ -218,12 +219,12 @@ export default function CodePage() {
         <p>{t('code.tagline')}</p>
         <div className="hero-actions">
           <button
-            onClick={() => setShowRules(!showRules)}
+            onClick={() => setShowRules(true)}
             className="btn btn-secondary"
             style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
           >
             <HelpCircle size={16} />
-            {showRules ? t('code.hideRules') : t('code.showRules')}
+            {t('code.showRules')}
           </button>
 
           <GameStreakButton streakEndpoint="/api/code/streak" refreshKey={solved ? 'done' : 'playing'} />
@@ -239,9 +240,7 @@ export default function CodePage() {
         </div>
       </section>
 
-      {showRules && (
-        <div className="quick-rules fade-in">
-          <h3><Info size={18} style={{ color: 'var(--primary)' }} /> {t('code.rulesTitle')}</h3>
+      <RulesModal show={showRules} title={t('code.rulesTitle')} onClose={() => setShowRules(false)}>
           <ul>
             <li>{t('code.rules.l1')}</li>
             <li>{t('code.rules.l2')}</li>
@@ -249,8 +248,7 @@ export default function CodePage() {
             <li>{t('code.rules.l4')}</li>
             <li>{t('code.rules.saved')}</li>
           </ul>
-        </div>
-      )}
+      </RulesModal>
 
       {challenge && (
         <div className="code-layout fade-in">

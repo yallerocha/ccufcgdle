@@ -11,6 +11,7 @@ import { VictoryModal } from '@/client/components/VictoryModal';
 import { LsdleGameProfileCarousel, lsdleProfileDismissKey } from '@/client/components/LsdleGameProfileCarousel';
 import { InfoTooltip } from '@/client/components/InfoTooltip';
 import { BackLink } from '@/client/components/BackLink';
+import { RulesModal } from '@/client/components/RulesModal';
 import { LoadingState } from '@/client/components/LoadingState';
 import type { StreakInfo } from '@/client/components/StreakBadge';
 import { Toast } from '@/client/components/Toast';
@@ -312,12 +313,12 @@ export default function GamePage() {
         <p>{t('home.tagline')}</p>
         <div className="hero-actions">
           <button
-            onClick={() => setShowRules(!showRules)}
+            onClick={() => setShowRules(true)}
             className="btn btn-secondary"
             style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
           >
             <HelpCircle size={16} />
-            {showRules ? t('home.hideRules') : t('home.showRules')}
+            {t('home.showRules')}
           </button>
 
           <GameStreakButton streakEndpoint="/api/game/streak" refreshKey={isWon} />
@@ -333,10 +334,8 @@ export default function GamePage() {
         </div>
       </section>
 
-      {/* Rules Box */}
-      {showRules && (
-        <div className="quick-rules fade-in">
-          <h3><Info size={18} style={{ color: 'var(--primary)' }} /> {t('home.rulesTitle')}</h3>
+      {/* Rules modal */}
+      <RulesModal show={showRules} title={t('home.rulesTitle')} onClose={() => setShowRules(false)}>
           <ul>
             <li>{t('home.rules.l1')}</li>
             <li>{t('home.rules.l2')}</li>
@@ -352,8 +351,7 @@ export default function GamePage() {
             <li>{t('home.rules.saved')}</li>
             <li><strong>{t('home.rules.importantLabel')}</strong> {t('home.rules.important')}</li>
           </ul>
-        </div>
-      )}
+      </RulesModal>
 
       {/* Main Game Interface */}
       {characters.length === 0 ? (

@@ -1,9 +1,9 @@
 import React from 'react';
 
-/** Theme-specific logo assets in /public (replace *-light.png with your light-mode art). */
+/** Theme-specific logo assets in /public (replace *-light with your light-mode art). */
 export const LOGO_PATHS = {
-  full: { dark: '/logo-dark.png', light: '/logo-light.png' },
-  icon: { dark: '/logo_icone-dark.png', light: '/logo_icone-light.png' },
+  full: { dark: '/lsdgamehub-dark.png', light: '/lsdgamehub-light.png' },
+  icon: { dark: '/lsdgamehub_icone-dark.svg', light: '/lsdgamehub_icone-light.svg' },
 } as const;
 
 type LogoVariant = keyof typeof LOGO_PATHS;

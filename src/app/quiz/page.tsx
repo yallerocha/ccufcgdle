@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
-import { HelpCircle, Info, Trophy, CheckCircle2, XCircle, ArrowRight, BookOpen, Check, X } from 'lucide-react';
+import { HelpCircle, Trophy, CheckCircle2, XCircle, ArrowRight, BookOpen } from 'lucide-react';
 import { BackLink } from '@/client/components/BackLink';
+import { RulesModal } from '@/client/components/RulesModal';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { QuizResultModal } from '@/client/components/QuizResultModal';
@@ -192,12 +193,12 @@ export default function QuizPage() {
         <p>{t('quiz.tagline')}</p>
         <div className="hero-actions">
           <button
-            onClick={() => setShowRules(!showRules)}
+            onClick={() => setShowRules(true)}
             className="btn btn-secondary"
             style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
           >
             <HelpCircle size={16} />
-            {showRules ? t('quiz.hideRules') : t('quiz.showRules')}
+            {t('quiz.showRules')}
           </button>
 
           <GameStreakButton streakEndpoint="/api/quiz/streak" refreshKey={finished ? 'done' : 'playing'} />
@@ -213,9 +214,7 @@ export default function QuizPage() {
         </div>
       </section>
 
-      {showRules && (
-        <div className="quick-rules fade-in">
-          <h3><Info size={18} style={{ color: 'var(--primary)' }} /> {t('quiz.rulesTitle')}</h3>
+      <RulesModal show={showRules} title={t('quiz.rulesTitle')} onClose={() => setShowRules(false)}>
           <ul>
             <li>{t('quiz.rules.l1')}</li>
             <li>{t('quiz.rules.sourceInfo')}</li>
@@ -224,8 +223,7 @@ export default function QuizPage() {
             <li>{t('quiz.rules.l4')}</li>
             <li>{t('quiz.rules.saved')}</li>
           </ul>
-        </div>
-      )}
+      </RulesModal>
 
       {question && (
         <div className="card quiz-card fade-in" style={{ maxWidth: '700px', margin: '0 auto', width: '100%' }}>

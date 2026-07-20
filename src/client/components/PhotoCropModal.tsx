@@ -16,6 +16,8 @@ interface PhotoCropModalProps {
   file: File | null;
   onConfirm: (dataUrl: string) => void;
   onClose: () => void;
+  /** Viewport shape: circle for avatars (default), square for note images. */
+  shape?: 'circle' | 'square';
 }
 
 function clampPan(
@@ -37,7 +39,7 @@ function clampPan(
   };
 }
 
-export function PhotoCropModal({ file, onConfirm, onClose }: PhotoCropModalProps) {
+export function PhotoCropModal({ file, onConfirm, onClose, shape = 'circle' }: PhotoCropModalProps) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -188,7 +190,7 @@ export function PhotoCropModal({ file, onConfirm, onClose }: PhotoCropModalProps
         ) : image ? (
           <div className="photo-crop-workspace">
             <div
-              className="photo-crop-viewport"
+              className={`photo-crop-viewport photo-crop-viewport--${shape}`}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}

@@ -6,6 +6,7 @@ import type { Dictionary } from './pt';
 export const en: Dictionary = {
   common: {
     retry: 'Try again',
+    close: 'Close',
   },
   nav: {
     play: 'Play',
@@ -137,7 +138,7 @@ export const en: Dictionary = {
     forcaDesc: "Computer-science-themed hangman: with the theme as a hint, find the day's term one letter at a time.",
     quizDesc: 'A quick daily quiz with real POSCOMP questions: 3 questions on math, CS fundamentals and technology.',
     codeDesc: 'One small coding challenge a day: implement the function in JavaScript, Python or Java and pass every test.',
-    playedToday: 'Done today',
+    playedToday: 'Done',
   },
   termo: {
     tagline: "Guess today's computing term in 6 tries!",
@@ -401,9 +402,7 @@ export const en: Dictionary = {
       error: 'Could not save the note.',
       fromTitle: 'Note from {{name}}',
       publishedTitle: "Your note for today is live!",
-      publishedHint: 'Players who guess you will see this note on their victory screen.',
-      edit: 'Edit note',
-      cancelEdit: 'Cancel editing',
+      publishedHint: 'Players who guess you will see this note on their victory screen. It can no longer be changed.',
     },
   },
   login: {

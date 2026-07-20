@@ -2758,13 +2758,20 @@ a:focus-visible,
   height: 280px;
   margin: 0 auto;
   overflow: hidden;
-  border-radius: 50%;
   border: 3px solid var(--border-color);
   background: var(--bg-input);
   cursor: grab;
   touch-action: none;
   isolation: isolate;
   contain: layout paint;
+}
+
+.photo-crop-viewport--circle {
+  border-radius: 50%;
+}
+
+.photo-crop-viewport--square {
+  border-radius: 8px;
 }
 
 .photo-crop-viewport img {
@@ -3766,4 +3773,13 @@ a:focus-visible,
 
 .code-run-summary.fail {
   border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Rules shown inside the shared RulesModal: same list styling, no card chrome */
+.quick-rules--modal {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
 }

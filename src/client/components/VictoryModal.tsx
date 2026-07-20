@@ -7,7 +7,7 @@ import { Trophy, Clock, Camera, Trash2, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
-import { fileToResizedDataUrl } from '@/client/lib/image';
+import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { Toast } from '@/client/components/Toast';
 import { StreakBadge, type StreakInfo } from '@/client/components/StreakBadge';
 import { ModalColorBar } from '@/client/components/ModalColorBar';
@@ -65,13 +65,12 @@ export function VictoryModal({
   const [savedMedia, setSavedMedia] = useState<string | null>(null);
   const [draftMessage, setDraftMessage] = useState('');
   const [draftMedia, setDraftMedia] = useState<string | null>(null);
-  const [draftMediaFileName, setDraftMediaFileName] = useState<string | null>(null);
+  // Selected file awaiting the crop modal; confirming the crop publishes the note.
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [savingMessage, setSavingMessage] = useState(false);
   const [messageNote, setMessageNote] = useState('');
   const [messageNoteType, setMessageNoteType] = useState<'success' | 'error'>('error');
   const [loadingDailyMessage, setLoadingDailyMessage] = useState(false);
-  // The author saved a note but wants to change it (reopens the editor).
-  const [editingNote, setEditingNote] = useState(false);
 
   // Shows a top-of-screen toast for the daily-note editor feedback.
   const notify = (msg: string, type: 'success' | 'error' = 'error') => {
@@ -109,9 +108,8 @@ export function VictoryModal({
       setSavedMedia(null);
       setDraftMessage('');
       setDraftMedia(null);
-      setDraftMediaFileName(null);
+      setCropFile(null);
       setLoadingDailyMessage(false);
-      setEditingNote(false);
       return;
     }
 
@@ -130,41 +128,33 @@ export function VictoryModal({
       .finally(() => setLoadingDailyMessage(false));
   }, [show]);
 
-  const handleMessageImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Selecting a file opens the crop modal (same flow as the profile photo);
+  // confirming the crop publishes the note right away.
+  const handleMessageImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setDraftMedia(await fileToResizedDataUrl(file));
-      setDraftMediaFileName(file.name);
-    } catch (err) {
-      console.error('Error resizing daily message image:', err);
-      // Resizing failed (unsupported format?) — fall back to the raw file,
-      // still subject to the original size limit.
-      if (file.size > 2 * 1024 * 1024) {
-        notify(t('photo.tooLarge'), 'error');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setDraftMedia(reader.result as string);
-        setDraftMediaFileName(file.name);
-      };
-      reader.readAsDataURL(file);
-    }
     e.target.value = '';
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      notify(t('photo.tooLarge'), 'error');
+      return;
+    }
+    setCropFile(file);
   };
 
   // There is something to save only when the text or the image is filled in.
   const hasDraftContent = draftMessage.trim() !== '' || !!draftMedia;
 
-  const saveMessage = async () => {
-    if (savingMessage || !hasDraftContent) return;
+  // `mediaOverride` lets the crop-confirm flow save the freshly cropped image
+  // without waiting for the setState round-trip.
+  const saveMessage = async (mediaOverride?: string | null) => {
+    const media = mediaOverride === undefined ? draftMedia : mediaOverride;
+    if (savingMessage || (draftMessage.trim() === '' && !media)) return;
     setSavingMessage(true);
     setMessageNote('');
     try {
       const res = await apiFetch('/api/game/daily-message', {
         method: 'POST',
-        body: JSON.stringify({ message: draftMessage, mediaUrl: draftMedia }),
+        body: JSON.stringify({ message: draftMessage, mediaUrl: media }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -173,7 +163,6 @@ export function VictoryModal({
       }
       setSavedMessage(data.message ?? null);
       setSavedMedia(data.mediaUrl ?? null);
-      setEditingNote(false);
       notify(t('victory.dailyMsg.saved'), 'success');
     } catch (err) {
       console.error('Error saving daily message:', err);
@@ -183,18 +172,27 @@ export function VictoryModal({
     }
   };
 
-  useModalDismiss(show, onClose);
+  // Crop confirmed → adopt the cropped image and publish the note immediately.
+  const handleCropConfirm = (dataUrl: string) => {
+    setCropFile(null);
+    setDraftMedia(dataUrl);
+    void saveMessage(dataUrl);
+  };
+
+  // While the crop overlay is open, Escape should close only the crop (its own
+  // hook), not this modal underneath it.
+  useModalDismiss(show && !cropFile, onClose);
 
   if (!show || !mounted) return null;
 
   // Wide split layout when the person of the day still needs to leave their note
   // (editor on the right, ranking on the left), or when a saved note is shown.
   // `isPersonOfDay` from the win response avoids waiting on /daily-message before
-  // opening the editor column. The author can reopen the editor after saving.
+  // opening the editor column. The note is final once published — the editor
+  // never reopens, matching the server's one-write-per-round rule.
   const hasSavedNote = !!savedMessage || !!savedMedia;
   const canWriteNote =
-    (canEditMessage || (loadingDailyMessage && isPersonOfDay)) &&
-    (!hasSavedNote || editingNote);
+    (canEditMessage || (loadingDailyMessage && isPersonOfDay)) && !hasSavedNote;
   const useSplitLayout = canWriteNote || hasSavedNote;
 
   const photoBlock = targetPhoto ? (
@@ -266,30 +264,6 @@ export function VictoryModal({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
         <input type="file" accept="image/*" onChange={handleMessageImage} style={{ display: 'none' }} id="daily-msg-image" />
 
-        {/* Live thumbnail of the attached image, with remove on top */}
-        {draftMedia && (
-          <div style={{ position: 'relative', alignSelf: 'flex-start' }}>
-            <img
-              src={draftMedia}
-              alt={draftMediaFileName ?? ''}
-              style={{ maxWidth: '100%', maxHeight: '120px', borderRadius: '8px', objectFit: 'contain', border: '1px solid var(--border-color)', display: 'block' }}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setDraftMedia(null);
-                setDraftMediaFileName(null);
-              }}
-              className="btn btn-danger"
-              title={t('victory.dailyMsg.removeImage')}
-              aria-label={t('victory.dailyMsg.removeImage')}
-              style={{ position: 'absolute', top: '-0.4rem', right: '-0.4rem', padding: '0.3rem', borderRadius: '50%', display: 'flex' }}
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        )}
-
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
           <label
             htmlFor="daily-msg-image"
@@ -299,26 +273,22 @@ export function VictoryModal({
             <Camera size={16} />
             {draftMedia ? t('victory.dailyMsg.changeImage') : t('victory.dailyMsg.addImage')}
           </label>
-          <button onClick={saveMessage} disabled={savingMessage || !hasDraftContent} className="btn" style={{ flex: '1 1 auto', whiteSpace: 'nowrap' }}>
+          {draftMedia && (
+            <button
+              type="button"
+              onClick={() => setDraftMedia(null)}
+              className="btn btn-danger"
+              title={t('victory.dailyMsg.removeImage')}
+              aria-label={t('victory.dailyMsg.removeImage')}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.75rem 1rem' }}
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+          <button onClick={() => saveMessage()} disabled={savingMessage || !hasDraftContent} className="btn" style={{ flex: '1 1 auto', whiteSpace: 'nowrap' }}>
             {savingMessage ? t('victory.dailyMsg.saving') : t('victory.dailyMsg.save')}
           </button>
         </div>
-        {hasSavedNote && (
-          <button
-            type="button"
-            onClick={() => {
-              // Discard draft changes and go back to the published view.
-              setDraftMessage(savedMessage ?? '');
-              setDraftMedia(savedMedia);
-              setDraftMediaFileName(null);
-              setEditingNote(false);
-            }}
-            className="btn btn-secondary"
-            style={{ whiteSpace: 'nowrap' }}
-          >
-            {t('victory.dailyMsg.cancelEdit')}
-          </button>
-        )}
       </div>
     </div>
   ) : hasSavedNote && canEditMessage ? (
@@ -348,14 +318,6 @@ export function VictoryModal({
       <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', margin: 0 }}>
         {t('victory.dailyMsg.publishedHint')}
       </p>
-      <button
-        type="button"
-        onClick={() => setEditingNote(true)}
-        className="btn btn-secondary"
-        style={{ alignSelf: 'center', fontSize: '0.85rem', padding: '0.45rem 1rem' }}
-      >
-        {t('victory.dailyMsg.edit')}
-      </button>
     </div>
   ) : hasSavedNote ? (
     /* Player view: personal note from the person of the day, with their avatar */
@@ -537,6 +499,15 @@ export function VictoryModal({
         </div>
         <ModalColorBar />
       </div>
+
+      {/* Crop step for the note image: confirming publishes the note. Renders
+          its own overlay on <body>, stacking above this modal. */}
+      <PhotoCropModal
+        file={cropFile}
+        shape="square"
+        onConfirm={handleCropConfirm}
+        onClose={() => setCropFile(null)}
+      />
 
       <Toast
         message={messageNote}

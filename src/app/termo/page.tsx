@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
-import { HelpCircle, Info, Trophy, Delete, CornerDownLeft } from 'lucide-react';
+import { HelpCircle, Trophy, Delete, CornerDownLeft } from 'lucide-react';
 import { BackLink } from '@/client/components/BackLink';
+import { RulesModal } from '@/client/components/RulesModal';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { TermoResultModal } from '@/client/components/TermoResultModal';
@@ -285,12 +286,12 @@ export default function TermoPage() {
         <p>{t('termo.tagline')}</p>
         <div className="hero-actions">
           <button
-            onClick={() => setShowRules(!showRules)}
+            onClick={() => setShowRules(true)}
             className="btn btn-secondary"
             style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
           >
             <HelpCircle size={16} />
-            {showRules ? t('termo.hideRules') : t('termo.showRules')}
+            {t('termo.showRules')}
           </button>
 
           <GameStreakButton streakEndpoint="/api/termo/streak" refreshKey={status} />
@@ -306,9 +307,7 @@ export default function TermoPage() {
         </div>
       </section>
 
-      {showRules && (
-        <div className="quick-rules fade-in">
-          <h3><Info size={18} style={{ color: 'var(--primary)' }} /> {t('termo.rulesTitle')}</h3>
+      <RulesModal show={showRules} title={t('termo.rulesTitle')} onClose={() => setShowRules(false)}>
           <ul>
             <li>{t('termo.rules.l1')}</li>
             <li>{t('termo.rules.l2')}</li>
@@ -324,8 +323,7 @@ export default function TermoPage() {
             <li>{t('termo.rules.accents')}</li>
             <li>{t('termo.rules.saved')}</li>
           </ul>
-        </div>
-      )}
+      </RulesModal>
 
       {/* Board — --termo-cols lets the CSS shrink cells for longer words */}
       <div className="termo-board fade-in" style={{ '--termo-cols': wordLength } as React.CSSProperties}>

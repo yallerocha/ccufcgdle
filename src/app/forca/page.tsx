@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
 import { getLocalDateString } from '@/shared/utils';
-import { HelpCircle, Info, Trophy } from 'lucide-react';
+import { HelpCircle, Trophy } from 'lucide-react';
 import { BackLink } from '@/client/components/BackLink';
+import { RulesModal } from '@/client/components/RulesModal';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { ForcaResultModal } from '@/client/components/ForcaResultModal';
@@ -245,9 +246,9 @@ export default function ForcaPage() {
         <h1 className="lsd-gradient-text">FORCA</h1>
         <p>{t('forca.tagline')}</p>
         <div className="hero-actions">
-          <button onClick={() => setShowRules(!showRules)} className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
+          <button onClick={() => setShowRules(true)} className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
             <HelpCircle size={16} />
-            {showRules ? t('forca.hideRules') : t('forca.showRules')}
+            {t('forca.showRules')}
           </button>
           <GameStreakButton streakEndpoint="/api/forca/streak" refreshKey={status} />
           <Link href="/forca/ranking" className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}>
@@ -257,9 +258,7 @@ export default function ForcaPage() {
         </div>
       </section>
 
-      {showRules && (
-        <div className="quick-rules fade-in">
-          <h3><Info size={18} style={{ color: 'var(--primary)' }} /> {t('forca.rulesTitle')}</h3>
+      <RulesModal show={showRules} title={t('forca.rulesTitle')} onClose={() => setShowRules(false)}>
           <ul>
             <li>{t('forca.rules.l1')}</li>
             <li>{t('forca.rules.l2')}</li>
@@ -267,8 +266,7 @@ export default function ForcaPage() {
             <li>{t('forca.rules.accents')}</li>
             <li>{t('forca.rules.saved')}</li>
           </ul>
-        </div>
-      )}
+      </RulesModal>
 
       {theme && (
         <p className="forca-theme" style={{ textAlign: 'center', margin: '0 auto 0.5rem auto' }}>
