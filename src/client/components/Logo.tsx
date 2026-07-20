@@ -4,6 +4,7 @@ import React from 'react';
 export const LOGO_PATHS = {
   full: { dark: '/lsdgamehub-dark.png', light: '/lsdgamehub-light.png' },
   icon: { dark: '/lsdgamehub_icone-dark.svg', light: '/lsdgamehub_icone-light.svg' },
+  wide: { dark: '/lsdgamehub_wide-dark.png', light: '/lsdgamehub_wide-light.png' },
 } as const;
 
 type LogoVariant = keyof typeof LOGO_PATHS;

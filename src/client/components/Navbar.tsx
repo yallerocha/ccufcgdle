@@ -94,13 +94,8 @@ export default function Navbar() {
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
 
-        <Link href="/" className="nav-logo" onClick={closeMenu}>
-          <Logo variant="icon" alt="LSD Logo Icon" style={{ height: '32px', width: 'auto' }} />
-          <span className="nav-logo-text lsd-gradient-text">
-            LSD{' '}
-            <span className="nav-logo-game">GAME</span>
-            HUB
-          </span>
+        <Link href="/" className="nav-logo" onClick={closeMenu} aria-label="LSD Game Hub">
+          <Logo variant="wide" alt="LSD Game Hub" style={{ height: '32px', width: 'auto' }} />
         </Link>
 
         <div className="nav-toolbar">

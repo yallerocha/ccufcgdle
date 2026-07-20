@@ -303,18 +303,6 @@ body {
   flex-shrink: 0;
 }
 
-.nav-logo-text {
-  margin-left: 4px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.nav-logo-game {
-  -webkit-text-fill-color: var(--text-primary);
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
 .nav-toolbar {
   display: none;
   align-items: center;
@@ -1822,10 +1810,6 @@ a:focus-visible,
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
-  }
-
-  .nav-logo-text {
-    font-size: 1rem;
   }
 
   .nav-logo img {
@@ -3400,10 +3384,6 @@ a:focus-visible,
   }
 
   .nav-logo {
-    font-size: 0.9rem;
-  }
-
-  .nav-logo-text {
     font-size: 0.9rem;
   }
 
