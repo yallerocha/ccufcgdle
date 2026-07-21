@@ -10,7 +10,7 @@ const prisma = new PrismaClient({ adapter });
 
 /** Default admin account (local + production). */
 export const DEFAULT_ADMIN = {
-  email: 'yalle.silva@lsd.ufcg.edu.br',
+  email: 'yalle.silva@ccc.ufcg.edu.br',
   password: 'Yalle@04112002',
   name: 'Yalle Rocha',
   gender: 'Masculino',

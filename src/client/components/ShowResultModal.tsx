@@ -34,7 +34,7 @@ export function ShowResultModal({ run, onClose, onPlayAgain }: ShowResultModalPr
   const lost = run.status === 'lost';
 
   const Icon = won ? PartyPopper : lost ? XCircle : HandCoins;
-  const iconColor = won ? 'var(--color-partial)' : lost ? 'var(--lsd-red)' : 'var(--color-correct)';
+  const iconColor = won ? 'var(--color-partial)' : lost ? 'var(--brand-red)' : 'var(--color-correct)';
   const title = won ? t('show.resultWonTitle') : lost ? t('show.resultLostTitle') : t('show.resultStoppedTitle');
   const subtitle = lost && run.securedPrize === 0 ? t('show.resultZero') : t('show.resultBanked');
 

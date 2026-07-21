@@ -11,7 +11,7 @@ export function isSmtpConfigured(): boolean {
 }
 
 export function getEmailFrom(): string {
-  return process.env.EMAIL_FROM?.trim() || 'LSD Game Hub <noreply@localhost>';
+  return process.env.EMAIL_FROM?.trim() || 'O Show da Computação <noreply@localhost>';
 }
 
 export function getMailTransport(): Transporter | null {

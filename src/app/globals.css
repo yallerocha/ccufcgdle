@@ -6,23 +6,23 @@
   --font-mono: 'Fira Code', monospace;
 
   /* Brand palette (shared across themes) */
-  --lsd-teal: #4ab5c4;
-  --lsd-blue: #4562c1;
-  --lsd-purple: #6b52a4;
-  --lsd-magenta: #a55a8e;
-  --lsd-red: #de5d60;
-  --lsd-orange: #e19d53;
+  --brand-teal: #4ab5c4;
+  --brand-blue: #4562c1;
+  --brand-purple: #6b52a4;
+  --brand-magenta: #a55a8e;
+  --brand-red: #de5d60;
+  --brand-orange: #e19d53;
 
-  --primary: var(--lsd-blue);
+  --primary: var(--brand-blue);
   --primary-glow: rgba(69, 98, 193, 0.4);
   --primary-hover: #3d56a6;
-  --accent: var(--lsd-red);
-  --border-focus: var(--lsd-teal);
+  --accent: var(--brand-red);
+  --border-focus: var(--brand-teal);
 
   --color-correct: #10b981;
   --color-partial: #f59e0b;
-  --color-higher: var(--lsd-blue);
-  --color-lower: var(--lsd-red);
+  --color-higher: var(--brand-blue);
+  --color-lower: var(--brand-red);
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -146,15 +146,15 @@ html.theme-light * {
   }
 }
 
-/* LSD Specific Classes */
-.lsd-gradient-bg {
-  background: linear-gradient(90deg, var(--lsd-teal), var(--lsd-blue), var(--lsd-purple), var(--lsd-magenta), var(--lsd-red), var(--lsd-orange));
+/* Brand gradient classes */
+.brand-gradient-bg {
+  background: linear-gradient(90deg, var(--brand-teal), var(--brand-blue), var(--brand-purple), var(--brand-magenta), var(--brand-red), var(--brand-orange));
   background-size: 200% 100%;
   animation: gradientShift 6s ease infinite;
 }
 
-.lsd-gradient-text {
-  background: linear-gradient(90deg, var(--lsd-teal) 0%, var(--lsd-blue) 20%, var(--lsd-purple) 40%, var(--lsd-magenta) 60%, var(--lsd-red) 80%, var(--lsd-orange) 100%);
+.brand-gradient-text {
+  background: linear-gradient(90deg, var(--brand-teal) 0%, var(--brand-blue) 20%, var(--brand-purple) 40%, var(--brand-magenta) 60%, var(--brand-red) 80%, var(--brand-orange) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
@@ -182,8 +182,8 @@ body {
   /* Very soft brand tint at the top of every page — reads as "finished" without
      drawing attention. Alpha is low enough to work over both themes. */
   background-image:
-    radial-gradient(900px 420px at 12% -10%, color-mix(in srgb, var(--lsd-blue) 7%, transparent), transparent 65%),
-    radial-gradient(900px 420px at 88% -10%, color-mix(in srgb, var(--lsd-teal) 6%, transparent), transparent 65%);
+    radial-gradient(900px 420px at 12% -10%, color-mix(in srgb, var(--brand-blue) 7%, transparent), transparent 65%),
+    radial-gradient(900px 420px at 88% -10%, color-mix(in srgb, var(--brand-teal) 6%, transparent), transparent 65%);
   background-repeat: no-repeat;
   color: var(--text-primary);
   font-family: var(--font-sans);
@@ -823,9 +823,9 @@ a:focus-visible,
 
 /* Game Board */
 .game-board {
-  --lsdle-col-size: 88px;
-  --lsdle-grid-gap: 0.5rem;
-  --lsdle-grid-cols: repeat(8, var(--lsdle-col-size));
+  --board-col-size: 88px;
+  --board-grid-gap: 0.5rem;
+  --board-grid-cols: repeat(8, var(--board-col-size));
 
   margin-top: 2rem;
   width: 100%;
@@ -870,9 +870,9 @@ a:focus-visible,
 
 .grid-row {
   display: grid;
-  grid-template-columns: var(--lsdle-grid-cols);
-  gap: var(--lsdle-grid-gap);
-  margin-bottom: var(--lsdle-grid-gap);
+  grid-template-columns: var(--board-grid-cols);
+  gap: var(--board-grid-gap);
+  margin-bottom: var(--board-grid-gap);
   width: max-content;
   min-width: 100%;
 }
@@ -1203,7 +1203,7 @@ a:focus-visible,
   max-width: 760px;
 }
 
-/* LSD-colored bar — default at bottom; use --top for header placement. */
+/* Brand-colored bar — default at bottom; use --top for header placement. */
 .modal-color-bar {
   display: flex;
   height: 12px;
@@ -1863,8 +1863,8 @@ a:focus-visible,
 
   /* Game Board — fixed columns + horizontal scroll (like reference dle games) */
   .game-board {
-    --lsdle-col-size: 76px;
-    --lsdle-grid-gap: 0.4rem;
+    --board-col-size: 76px;
+    --board-grid-gap: 0.4rem;
     padding: 1rem 0.75rem;
   }
 
@@ -3090,21 +3090,21 @@ a:focus-visible,
   }
 }
 
-/* LSDLE game profile onboarding carousel */
-.lsdle-profile-overlay {
+/* Profile onboarding carousel */
+.profile-carousel-overlay {
   z-index: 1100;
 }
 
-.lsdle-profile-modal.modal-content {
-  --lsdle-profile-width: min(560px, 94vw);
-  width: var(--lsdle-profile-width);
-  max-width: var(--lsdle-profile-width);
+.profile-carousel-modal.modal-content {
+  --profile-carousel-width: min(560px, 94vw);
+  width: var(--profile-carousel-width);
+  max-width: var(--profile-carousel-width);
   height: auto;
   max-height: 92vh;
   padding: 1.5rem 1.75rem 0;
 }
 
-.lsdle-profile-modal .modal-body {
+.profile-carousel-modal .modal-body {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -3114,7 +3114,7 @@ a:focus-visible,
   overflow-y: auto;
 }
 
-.lsdle-profile-step {
+.profile-carousel-step {
   flex: 0 1 auto;
   display: flex;
   flex-direction: column;
@@ -3123,32 +3123,32 @@ a:focus-visible,
 }
 
 /* Etapa de projeto: mais altura para a lista de projetos */
-.lsdle-profile-modal--step-4 {
+.profile-carousel-modal--step-4 {
   min-height: min(720px, 90vh);
 }
 
-.lsdle-profile-modal--step-4 .lsdle-profile-step {
+.profile-carousel-modal--step-4 .profile-carousel-step {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
 }
 
-.lsdle-profile-modal--step-4 .project-picker .project-list {
+.profile-carousel-modal--step-4 .project-picker .project-list {
   max-height: min(22rem, 42vh);
 }
 
-.lsdle-profile-modal .modal-title {
+.profile-carousel-modal .modal-title {
   font-size: 1.45rem;
   text-align: center;
 }
 
-.lsdle-profile-modal .modal-subtitle {
+.profile-carousel-modal .modal-subtitle {
   margin-bottom: 1rem;
   font-size: 0.9rem;
   text-align: center;
 }
 
-.lsdle-profile-progress {
+.profile-carousel-progress {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -3159,7 +3159,7 @@ a:focus-visible,
   overflow: visible;
 }
 
-.lsdle-profile-dot {
+.profile-carousel-dot {
   width: 8px;
   height: 8px;
   border-radius: 999px;
@@ -3168,13 +3168,13 @@ a:focus-visible,
   flex-shrink: 0;
 }
 
-.lsdle-profile-dot--active {
+.profile-carousel-dot--active {
   background: var(--primary);
   width: 10px;
   height: 10px;
 }
 
-.lsdle-profile-actions {
+.profile-carousel-actions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -3183,12 +3183,12 @@ a:focus-visible,
   width: 100%;
 }
 
-.lsdle-profile-nav {
+.profile-carousel-nav {
   display: flex;
   gap: 0.75rem;
 }
 
-.lsdle-profile-nav-btn {
+.profile-carousel-nav-btn {
   flex: 1;
   justify-content: center;
 }
@@ -3223,8 +3223,8 @@ a:focus-visible,
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(42% 55% at 36% 46%, color-mix(in srgb, var(--lsd-purple) 15%, transparent), transparent 70%),
-    radial-gradient(38% 52% at 64% 40%, color-mix(in srgb, var(--lsd-teal) 12%, transparent), transparent 70%);
+    radial-gradient(42% 55% at 36% 46%, color-mix(in srgb, var(--brand-purple) 15%, transparent), transparent 70%),
+    radial-gradient(38% 52% at 64% 40%, color-mix(in srgb, var(--brand-teal) 12%, transparent), transparent 70%);
   filter: blur(28px);
 }
 
@@ -3357,7 +3357,7 @@ a:focus-visible,
     padding: 1.25rem 1rem;
   }
 
-  .lsdle-profile-modal--step-4 {
+  .profile-carousel-modal--step-4 {
     min-height: min(640px, 88vh);
   }
 }
@@ -3368,7 +3368,7 @@ a:focus-visible,
   }
 
   .game-board {
-    --lsdle-col-size: 72px;
+    --board-col-size: 72px;
     padding: 0.85rem 0.5rem;
   }
 
@@ -3721,19 +3721,6 @@ a:focus-visible,
   }
 }
 
-/* Profile: placeholder shown instead of the LSDLE attribute fields until the
-   member completes the game registration for the first time. */
-.profile-lsdle-locked {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  padding: 1rem 1.15rem;
-  margin: 0.75rem 0 1rem 0;
-  border: 1px dashed var(--border-color);
-  border-radius: var(--border-radius);
-  background: var(--bg-input);
-}
-
 /* Code: post-run score summary shown under the editor (tests stay secret) */
 .code-run-summary {
   display: flex;
@@ -3903,7 +3890,7 @@ a:focus-visible,
 }
 .show-option-pct {
   font-weight: 700;
-  color: var(--lsd-teal);
+  color: var(--brand-teal);
   font-size: 0.85rem;
 }
 .show-option.is-correct {
@@ -3914,11 +3901,11 @@ a:focus-visible,
   background: var(--color-correct);
 }
 .show-option.is-wrong {
-  border-color: var(--lsd-red);
-  background: color-mix(in srgb, var(--lsd-red) 16%, var(--bg-card));
+  border-color: var(--brand-red);
+  background: color-mix(in srgb, var(--brand-red) 16%, var(--bg-card));
 }
 .show-option.is-wrong .show-option-letter {
-  background: var(--lsd-red);
+  background: var(--brand-red);
 }
 .show-option.is-dim {
   opacity: 0.55;
@@ -3946,7 +3933,7 @@ a:focus-visible,
   border-color: var(--color-correct);
 }
 .show-reveal.is-wrong {
-  border-color: var(--lsd-red);
+  border-color: var(--brand-red);
 }
 .show-reveal-verdict {
   font-weight: 800;
@@ -3956,7 +3943,7 @@ a:focus-visible,
   color: var(--color-correct);
 }
 .show-reveal.is-wrong .show-reveal-verdict {
-  color: var(--lsd-red);
+  color: var(--brand-red);
 }
 .show-explanation {
   color: var(--text-muted);
@@ -4056,7 +4043,7 @@ a:focus-visible,
   font-weight: 600;
 }
 .show-rung.is-checkpoint .show-rung-prize {
-  color: var(--lsd-orange);
+  color: var(--brand-orange);
 }
 .show-rung.is-cleared {
   color: var(--color-correct);

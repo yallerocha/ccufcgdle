@@ -2,16 +2,16 @@
 
 import React from 'react';
 
-/** LSD gradient strip + gray footer band for modal footers (default) or header strip (--top). */
+/** Brand gradient strip + gray footer band for modal footers (default) or header strip (--top). */
 export function ModalColorBar({ position = 'bottom' }: { position?: 'bottom' | 'top' }) {
   const stripes = (
     <>
-      <div style={{ backgroundColor: 'var(--lsd-teal)' }} />
-      <div style={{ backgroundColor: 'var(--lsd-blue)' }} />
-      <div style={{ backgroundColor: 'var(--lsd-purple)' }} />
-      <div style={{ backgroundColor: 'var(--lsd-magenta)' }} />
-      <div style={{ backgroundColor: 'var(--lsd-red)' }} />
-      <div style={{ backgroundColor: 'var(--lsd-orange)' }} />
+      <div style={{ backgroundColor: 'var(--brand-teal)' }} />
+      <div style={{ backgroundColor: 'var(--brand-blue)' }} />
+      <div style={{ backgroundColor: 'var(--brand-purple)' }} />
+      <div style={{ backgroundColor: 'var(--brand-magenta)' }} />
+      <div style={{ backgroundColor: 'var(--brand-red)' }} />
+      <div style={{ backgroundColor: 'var(--brand-orange)' }} />
     </>
   );
 

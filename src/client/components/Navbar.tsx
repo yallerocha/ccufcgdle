@@ -130,7 +130,7 @@ export default function Navbar() {
             >
               <div className="nav-menu-drawer-header">
                 <Link href="/" className="nav-menu-drawer-brand" onClick={closeMenu} aria-label="O Show da Computação">
-                  <Logo variant="icon" alt="LSD Logo Icon" style={{ height: '32px', width: 'auto' }} />
+                  <Logo variant="icon" alt="O Show da Computação" style={{ height: '32px', width: 'auto' }} />
                 </Link>
                 <button
                   type="button"
@@ -141,7 +141,7 @@ export default function Navbar() {
                   <X size={22} />
                 </button>
               </div>
-              <div className="nav-menu-drawer-color-bar lsd-gradient-bg" aria-hidden="true" />
+              <div className="nav-menu-drawer-color-bar brand-gradient-bg" aria-hidden="true" />
               <div className="nav-menu-links">{navLinksMain}</div>
               {logoutButton && (
                 <div className="nav-menu-footer">{logoutButton}</div>
@@ -151,7 +151,7 @@ export default function Navbar() {
           document.body,
         )}
 
-      <div className="navbar-color-bar lsd-gradient-bg" />
+      <div className="navbar-color-bar brand-gradient-bg" />
     </nav>
   );
 }

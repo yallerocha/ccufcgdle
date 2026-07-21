@@ -129,13 +129,13 @@ router.post('/users/reset-password', async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
 
-    // Random suffix from a mixed-case+digits alphabet; the "Lsd" prefix plus a
+    // Random suffix from a mixed-case+digits alphabet; the "Scc" prefix plus a
     // digit guarantee the strong-password rules regardless of the random part.
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     const random = Array.from(crypto.randomBytes(8))
       .map((b) => alphabet[b % alphabet.length])
       .join('');
-    const tempPassword = `Lsd${Math.floor(Math.random() * 10)}-${random}`;
+    const tempPassword = `Scc${Math.floor(Math.random() * 10)}-${random}`;
 
     const passwordHash = await bcrypt.hash(tempPassword, 12);
     await prisma.user.update({ where: { id: userId }, data: { passwordHash } });

@@ -51,7 +51,7 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      EMAIL_FROM: ${EMAIL_FROM:-LSD Game Hub <noreply@localhost>}
+      EMAIL_FROM: ${EMAIL_FROM:-O Show da Computação <noreply@localhost>}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     depends_on:
       db:

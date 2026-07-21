@@ -21,7 +21,7 @@ interface LogoProps {
 /** Renders the logo matching `data-theme` on `<html>` (dark default). */
 export function Logo({
   variant = 'full',
-  alt = 'LSD Logo',
+  alt = 'O Show da Computação',
   className = '',
   style,
 }: LogoProps) {

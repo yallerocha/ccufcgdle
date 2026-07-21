@@ -101,17 +101,17 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
                 <span className="member-stat-hl-lbl">{t('members.bestPrize')}</span>
               </div>
               <div className="member-stat-hl">
-                <Target size={20} style={{ color: 'var(--lsd-teal)' }} />
+                <Target size={20} style={{ color: 'var(--brand-teal)' }} />
                 <span className="member-stat-hl-val">{stats.bestCleared}/{stats.totalSteps}</span>
                 <span className="member-stat-hl-lbl">{t('members.bestStep')}</span>
               </div>
               <div className="member-stat-hl">
-                <Gamepad2 size={20} style={{ color: 'var(--lsd-magenta)' }} />
+                <Gamepad2 size={20} style={{ color: 'var(--brand-magenta)' }} />
                 <span className="member-stat-hl-val">{stats.runs}</span>
                 <span className="member-stat-hl-lbl">{t('members.runsPlayed')}</span>
               </div>
               <div className="member-stat-hl">
-                <Crown size={20} style={{ color: 'var(--lsd-orange)' }} />
+                <Crown size={20} style={{ color: 'var(--brand-orange)' }} />
                 <span className="member-stat-hl-val">{stats.wins}</span>
                 <span className="member-stat-hl-lbl">{t('members.millionaire')}</span>
               </div>

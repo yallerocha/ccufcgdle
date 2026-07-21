@@ -42,9 +42,9 @@ async function sendHtmlEmail(
 function verificationEmailHtml(name: string, link: string): string {
   return `
     <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; color: #1e293b;">
-      <h1 style="font-size: 1.25rem; color: #4562c1;">LSD Game Hub</h1>
+      <h1 style="font-size: 1.25rem; color: #4562c1;">O Show da Computação</h1>
       <p>Olá, <strong>${escapeHtml(name)}</strong>!</p>
-      <p>Confirme seu email para ativar sua conta no LSD Game Hub:</p>
+      <p>Confirme seu email para ativar sua conta no O Show da Computação:</p>
       <p style="margin: 1.5rem 0;">
         <a href="${link}" style="background: #4562c1; color: #fff; padding: 0.75rem 1.25rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
           Confirmar email
@@ -62,7 +62,7 @@ function verificationEmailHtml(name: string, link: string): string {
 function passwordResetEmailHtml(name: string, link: string): string {
   return `
     <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; color: #1e293b;">
-      <h1 style="font-size: 1.25rem; color: #4562c1;">LSD Game Hub</h1>
+      <h1 style="font-size: 1.25rem; color: #4562c1;">O Show da Computação</h1>
       <p>Olá, <strong>${escapeHtml(name)}</strong>!</p>
       <p>Recebemos um pedido para redefinir a senha da sua conta. Se foi você, clique no botão abaixo:</p>
       <p style="margin: 1.5rem 0;">
@@ -91,7 +91,7 @@ export async function sendVerificationEmail(to: string, name: string, token: str
   const link = `${appBaseUrl()}/verify-email?token=${encodeURIComponent(token)}`;
   await sendHtmlEmail(
     to,
-    'Confirme seu email — LSD Game Hub',
+    'Confirme seu email — O Show da Computação',
     verificationEmailHtml(name, link),
     'Verification link',
     link,
@@ -102,7 +102,7 @@ export async function sendPasswordResetEmail(to: string, name: string, token: st
   const link = `${appBaseUrl()}/reset-password?token=${encodeURIComponent(token)}`;
   await sendHtmlEmail(
     to,
-    'Redefinir senha — LSD Game Hub',
+    'Redefinir senha — O Show da Computação',
     passwordResetEmailHtml(name, link),
     'Password reset link',
     link,

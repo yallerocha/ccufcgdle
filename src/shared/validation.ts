@@ -73,7 +73,6 @@ export const COFFEE_OPTIONS = ['Sim', 'Não', 'Só energético'] as const;
 export const ALLOWED_EMAIL_DOMAINS = [
   'ccc.ufcg.edu.br',
   'computacao.ufcg.edu.br',
-  'lsd.ufcg.edu.br',
   'copin.ufcg.edu.br',
 ] as const;
 
@@ -166,29 +165,6 @@ export function validateCharacterFields(
   if (photoError) return photoError;
 
   return null;
-}
-
-export type ProfileCharacterFields = Pick<
-  CharacterFields,
-  'gender' | 'role' | 'entrySemester' | 'isColab' | 'area' | 'projects' | 'likesCoffee'
->;
-
-/** True when all character fields required to appear in LSDLE are filled. */
-export function isProfileComplete(input: ProfileCharacterFields): boolean {
-  const inList = (value: string, list: readonly string[]) => list.includes(value);
-
-  if (!inList(input.gender, GENDER_OPTIONS)) return false;
-  if (!inList(input.role, ROLE_OPTIONS)) return false;
-  if (!inList(input.entrySemester, ENTRY_OPTIONS)) return false;
-  if (!inList(input.isColab, COLAB_OPTIONS)) return false;
-  if (!inList(input.likesCoffee, COFFEE_OPTIONS)) return false;
-  if (!Array.isArray(input.area) || input.area.length === 0 || input.area.length > MAX_AREAS_PER_USER) {
-    return false;
-  }
-  if (input.area.some((a) => !inList(a, AREA_OPTIONS))) return false;
-  if (!Array.isArray(input.projects) || input.projects.length !== MAX_PROJECTS_PER_USER) return false;
-  if (typeof input.projects[0] !== 'string' || normalizeProjectName(input.projects[0]) === null) return false;
-  return true;
 }
 
 /** Validates field formats without requiring every attribute to be filled (partial saves). */

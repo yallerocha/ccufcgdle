@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Clock, Camera, Save, AlertTriangle, Settings2, Trash2, FolderGit2, Layers, KeyRound, User as UserIcon, Briefcase, CalendarDays, Users, Coffee, Lock, LockKeyhole, Gamepad2 } from 'lucide-react';
+import { Clock, Camera, Save, AlertTriangle, Settings2, Trash2, FolderGit2, Layers, KeyRound, User as UserIcon, Briefcase, CalendarDays, Users, Coffee, Lock, LockKeyhole } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { User } from '@/client/context/AuthContext';
 import { INACTIVITY_DAYS } from '@/shared/utils';
-import { isStrongPassword, isProfileComplete } from '@/shared/validation';
+import { isStrongPassword } from '@/shared/validation';
 import { apiFetch, setToken } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
 import { PhotoCropModal } from '@/client/components/PhotoCropModal';
@@ -37,10 +36,6 @@ interface ProfileEditFormProps {
 
 export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const { t } = useTranslation();
-  // The LSDLE attribute fields only appear after the member completed the game
-  // registration once (via the LSDLE page); until then the profile edits just
-  // name/photo/password and points to the game to fill the attributes.
-  const hasGameProfile = isProfileComplete(user);
   const [name, setName] = useState(user.name);
   const [gender, setGender] = useState(user.gender);
   const [role, setRole] = useState(user.role);
@@ -267,7 +262,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     <div className="profile-page fade-in">
       {/* Hero: banner + avatar + name + status */}
       <div className="card profile-hero">
-        <div className="profile-hero-banner lsd-gradient-bg" />
+        <div className="profile-hero-banner brand-gradient-bg" />
         <div className="profile-hero-body">
           <div className="profile-avatar-wrap">
             {photoUrl ? (
@@ -320,14 +315,10 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         <h2 className="card-title">
           <Settings2 size={22} style={{ color: 'var(--primary)' }} /> {t('profileEdit.attrTitle')}
         </h2>
-        {hasGameProfile && (
-          <>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{t('profileEdit.attrSubtitle')}</p>
-            <p className="profile-change-note">
-              <Clock size={14} style={{ flexShrink: 0 }} /> {t('profileEdit.changeNote')}
-            </p>
-          </>
-        )}
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{t('profileEdit.attrSubtitle')}</p>
+        <p className="profile-change-note">
+          <Clock size={14} style={{ flexShrink: 0 }} /> {t('profileEdit.changeNote')}
+        </p>
 
         <Toast
           message={errorMsg || successMsg}
@@ -353,8 +344,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             <span className="profile-field-hint">{t('profileEdit.nameHint')}</span>
           </div>
 
-          {hasGameProfile ? (
-            <>
           <div className="form-row">
             <div className="form-group">
               <label className="profile-field-label">
@@ -405,22 +394,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             </label>
             <select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
           </div>
-            </>
-          ) : (
-            /* Game attributes not filled yet: point to the LSDLE registration
-               instead of showing empty selects. */
-            <div className="profile-lsdle-locked">
-              <Gamepad2 size={18} style={{ color: 'var(--lsd-magenta)', flexShrink: 0 }} />
-              <div>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0 }}>
-                  {t('profileEdit.lsdleLockedBody')}
-                </p>
-                <Link href="/lsdle" className="btn btn-secondary" style={{ marginTop: '0.75rem', display: 'inline-flex', fontSize: '0.85rem', padding: '0.45rem 0.9rem', textDecoration: 'none' }}>
-                  <Gamepad2 size={15} /> {t('profileEdit.lsdleLockedCta')}
-                </Link>
-              </div>
-            </div>
-          )}
 
           <div className="profile-save-bar">
             {isDirty && (

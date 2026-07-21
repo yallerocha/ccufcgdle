@@ -162,7 +162,7 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
     <div style={{ maxWidth: '600px', margin: '2rem auto 0 auto', width: '100%' }} className="fade-in">
       <div className="card register-card">
         <div className="profile-hero">
-          <div className="profile-hero-banner lsd-gradient-bg" />
+          <div className="profile-hero-banner brand-gradient-bg" />
           <div className="profile-hero-body">
             <div className="profile-avatar-wrap">
               {photoUrl ? (

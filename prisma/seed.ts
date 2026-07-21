@@ -8,11 +8,10 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// Pessoas ficticias tematicas do LSD (Laboratorio de Sistemas Distribuidos),
-// usadas apenas para popular o banco em desenvolvimento.
+// Pessoas ficticias, usadas apenas para popular o banco em desenvolvimento.
 const mockUsers = [
   {
-    email: 'yalle.silva@lsd.ufcg.edu.br',
+    email: 'yalle.silva@ccc.ufcg.edu.br',
     name: 'Yalle.Silva',
     gender: 'Masculino',
     role: 'Graduando',
@@ -25,7 +24,7 @@ const mockUsers = [
     isAdmin: true,
   },
   {
-    email: 'brasileiro@lsd.ufcg.edu.br',
+    email: 'brasileiro@ccc.ufcg.edu.br',
     name: 'Prof.Brasileiro',
     gender: 'Masculino',
     role: 'Professor',
@@ -38,7 +37,7 @@ const mockUsers = [
     isAdmin: false,
   },
   {
-    email: 'carla.edge@lsd.ufcg.edu.br',
+    email: 'carla.edge@ccc.ufcg.edu.br',
     name: 'Carla.Edge',
     gender: 'Feminino',
     role: 'Mestrando',
@@ -51,7 +50,7 @@ const mockUsers = [
     isAdmin: false,
   },
   {
-    email: 'rafael.chain@lsd.ufcg.edu.br',
+    email: 'rafael.chain@ccc.ufcg.edu.br',
     name: 'Rafael.Chain',
     gender: 'Masculino',
     role: 'Doutorando',
@@ -64,7 +63,7 @@ const mockUsers = [
     isAdmin: false,
   },
   {
-    email: 'marina.data@lsd.ufcg.edu.br',
+    email: 'marina.data@ccc.ufcg.edu.br',
     name: 'Marina.Data',
     gender: 'Feminino',
     role: 'Mestrando',
@@ -77,7 +76,7 @@ const mockUsers = [
     isAdmin: false,
   },
   {
-    email: 'joao.hpc@lsd.ufcg.edu.br',
+    email: 'joao.hpc@ccc.ufcg.edu.br',
     name: 'Joao.HPC',
     gender: 'Masculino',
     role: 'Pesquisador',
@@ -90,7 +89,7 @@ const mockUsers = [
     isAdmin: false,
   },
   {
-    email: 'beatriz.obs@lsd.ufcg.edu.br',
+    email: 'beatriz.obs@ccc.ufcg.edu.br',
     name: 'Beatriz.Obs',
     gender: 'Feminino',
     role: 'Graduando',
@@ -103,7 +102,7 @@ const mockUsers = [
     isAdmin: false,
   },
   {
-    email: 'diego.iot@lsd.ufcg.edu.br',
+    email: 'diego.iot@ccc.ufcg.edu.br',
     name: 'Diego.IoT',
     gender: 'Masculino',
     role: 'Funcionário',

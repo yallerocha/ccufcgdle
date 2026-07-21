@@ -18,12 +18,12 @@ export default function Footer() {
     >
       {/* Faixa colorida sólida baseada na logo */}
       <div style={{ display: 'flex', height: '8px', width: '100%' }}>
-        <div style={{ flex: 1, backgroundColor: 'var(--lsd-teal)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--lsd-blue)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--lsd-purple)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--lsd-magenta)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--lsd-red)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--lsd-orange)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--brand-teal)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--brand-blue)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--brand-purple)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--brand-magenta)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--brand-red)' }}></div>
+        <div style={{ flex: 1, backgroundColor: 'var(--brand-orange)' }}></div>
       </div>
       
       <div className="site-footer-content">
