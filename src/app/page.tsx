@@ -1,153 +1,379 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Gamepad2, Type, Ban, CheckCircle2, GraduationCap, TerminalSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
-import { getLocalDateString } from '@/shared/utils';
+import { apiFetch } from '@/client/lib/api';
+import { formatPrize } from '@/client/lib/format';
 import { Logo } from '@/client/components/Logo';
+import { LoadingState } from '@/client/components/LoadingState';
+import { Toast } from '@/client/components/Toast';
+import { ShowResultModal } from '@/client/components/ShowResultModal';
 
-type GameId = 'lsdle' | 'termo' | 'forca' | 'quiz' | 'code';
+type LifelineType = 'fifty' | 'skip' | 'audience' | 'students';
+type ShowStatus = 'playing' | 'won' | 'stopped' | 'lost';
 
-const NOT_PLAYED: Record<GameId, boolean> = {
-  lsdle: false,
-  termo: false,
-  forca: false,
-  quiz: false,
-  code: false,
-};
-
-// Reads this account's saved board for each game (written by the game pages)
-// and reports which ones are already finished today.
-function readPlayedToday(userId: string | undefined): Record<GameId, boolean> {
-  const todayStr = getLocalDateString();
-  const suffix = `${todayStr}-${userId ?? 'anon'}`;
-  const result: Record<GameId, boolean> = { ...NOT_PLAYED };
-  try {
-    const lsdle = localStorage.getItem(`lsdle-game-state-${suffix}`);
-    if (lsdle) result.lsdle = !!JSON.parse(lsdle).isWon;
-    const termo = localStorage.getItem(`termo-game-state-${suffix}`);
-    if (termo) result.termo = JSON.parse(termo).status === 'won' || JSON.parse(termo).status === 'lost';
-    const forca = localStorage.getItem(`forca-game-state-${suffix}`);
-    if (forca) result.forca = JSON.parse(forca).status === 'won' || JSON.parse(forca).status === 'lost';
-    const quiz = localStorage.getItem(`quiz-game-state-${suffix}`);
-    if (quiz) {
-      const saved = JSON.parse(quiz);
-      result.quiz = Array.isArray(saved.answers) && saved.answers.length >= 3;
-    }
-    const code = localStorage.getItem(`code-game-state-${suffix}`);
-    if (code) result.code = !!JSON.parse(code).solved;
-  } catch {
-    // Corrupted saved state — just show no badges.
-  }
-  return result;
+interface ShowQuestion {
+  step: number;
+  totalSteps: number;
+  area: string;
+  question: string;
+  options: string[];
+  difficulty: number;
+  source: { year: number; number: number } | null;
 }
 
-interface GameCardProps {
-  href: string;
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  accent: string; // per-game brand color, drives the card's hover glow and icon chip
-  playedToday: boolean;
-  playedLabel: string;
+interface ShowRun {
+  runId: string;
+  status: ShowStatus;
+  currentStep: number;
+  securedPrize: number;
+  ladder: number[];
+  usedLifelines: LifelineType[];
+  question: ShowQuestion | null;
 }
 
-function GameCard({ href, icon, title, description, accent, playedToday, playedLabel }: GameCardProps) {
-  return (
-    <Link href={href} className="hub-game-card-link">
-      <div
-        className="card ranking-preview-card hub-game-card"
-        style={{ '--game-accent': accent } as React.CSSProperties}
-      >
-        {playedToday && (
-          <span className="badge badge-active" style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }}>
-            <CheckCircle2 size={13} /> {playedLabel}
-          </span>
-        )}
-        <span className="hub-game-icon">{icon}</span>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 700 }}>{title}</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{description}</p>
-      </div>
-    </Link>
-  );
+interface AnswerResult {
+  correct: boolean;
+  correctIndex: number;
+  explanation: string;
+  run: ShowRun;
 }
 
-export default function HubPage() {
+interface LifelineResult {
+  type: LifelineType;
+  usedLifelines: LifelineType[];
+  removedIndices?: number[];
+  distribution?: number[];
+  hint?: string;
+  question?: ShowQuestion;
+}
+
+interface Reveal {
+  correct: boolean;
+  correctIndex: number;
+  chosenIndex: number;
+  explanation: string;
+  nextRun: ShowRun;
+}
+
+const RUN_KEY = 'show-run-id';
+const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+const LIFELINES: { type: LifelineType; icon: React.ElementType }[] = [
+  { type: 'fifty', icon: Scissors },
+  { type: 'skip', icon: SkipForward },
+  { type: 'audience', icon: Users },
+  { type: 'students', icon: GraduationCap },
+];
+
+export default function ShowPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
-  const [played, setPlayed] = useState<Record<GameId, boolean>>({ ...NOT_PLAYED });
 
-  // localStorage is only available client-side; read after mount/auth resolve.
+  const [run, setRun] = useState<ShowRun | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [reveal, setReveal] = useState<Reveal | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [result, setResult] = useState<ShowRun | null>(null);
+
+  // Per-question lifeline UI state (reset when the question changes).
+  const [hidden, setHidden] = useState<number[]>([]);
+  const [audience, setAudience] = useState<number[] | null>(null);
+  const [studentsHint, setStudentsHint] = useState<string | null>(null);
+  const [lifelineBusy, setLifelineBusy] = useState<LifelineType | null>(null);
+
+  const resetQuestionAids = () => {
+    setHidden([]);
+    setAudience(null);
+    setStudentsHint(null);
+  };
+
+  // Resume an in-progress run after a reload.
   useEffect(() => {
-    if (authLoading) return;
-    setPlayed(readPlayedToday(user?.id));
-  }, [user?.id, authLoading]);
+    if (authLoading || !user) return;
+    const savedId = typeof window !== 'undefined' ? localStorage.getItem(RUN_KEY) : null;
+    if (!savedId) return;
+    apiFetch(`/api/show/run/${savedId}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
+      .then((data: ShowRun) => {
+        if (data.status === 'playing') setRun(data);
+        else localStorage.removeItem(RUN_KEY);
+      })
+      .catch(() => localStorage.removeItem(RUN_KEY));
+  }, [authLoading, user]);
+
+  const start = useCallback(async () => {
+    setStarting(true);
+    setErrorMsg('');
+    setResult(null);
+    setReveal(null);
+    resetQuestionAids();
+    try {
+      const res = await apiFetch('/api/show/start', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setRun(data);
+        localStorage.setItem(RUN_KEY, data.runId);
+      } else {
+        setErrorMsg(data.error || t('show.errorGeneric'));
+      }
+    } catch {
+      setErrorMsg(t('show.errorGeneric'));
+    } finally {
+      setStarting(false);
+    }
+  }, [t]);
+
+  const answer = async (index: number) => {
+    if (!run?.question || reveal || submitting) return;
+    setSubmitting(true);
+    setErrorMsg('');
+    try {
+      const res = await apiFetch('/api/show/answer', {
+        method: 'POST',
+        body: JSON.stringify({ runId: run.runId, optionIndex: index }),
+      });
+      const data: AnswerResult = await res.json();
+      if (res.ok) {
+        setReveal({
+          correct: data.correct,
+          correctIndex: data.correctIndex,
+          chosenIndex: index,
+          explanation: data.explanation,
+          nextRun: data.run,
+        });
+      } else {
+        setErrorMsg((data as unknown as { error?: string }).error || t('show.errorGeneric'));
+      }
+    } catch {
+      setErrorMsg(t('show.errorGeneric'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const proceed = () => {
+    if (!reveal) return;
+    const next = reveal.nextRun;
+    setReveal(null);
+    resetQuestionAids();
+    setRun(next);
+    if (next.status !== 'playing') {
+      localStorage.removeItem(RUN_KEY);
+      setResult(next);
+    }
+  };
+
+  const stop = async () => {
+    if (!run || reveal || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await apiFetch('/api/show/stop', {
+        method: 'POST',
+        body: JSON.stringify({ runId: run.runId }),
+      });
+      const data: ShowRun = await res.json();
+      if (res.ok) {
+        setRun(data);
+        localStorage.removeItem(RUN_KEY);
+        setResult(data);
+      } else {
+        setErrorMsg((data as unknown as { error?: string }).error || t('show.errorGeneric'));
+      }
+    } catch {
+      setErrorMsg(t('show.errorGeneric'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const spendLifeline = async (type: LifelineType) => {
+    if (!run || reveal || lifelineBusy || run.usedLifelines.includes(type)) return;
+    setLifelineBusy(type);
+    setErrorMsg('');
+    try {
+      const res = await apiFetch('/api/show/lifeline', {
+        method: 'POST',
+        body: JSON.stringify({ runId: run.runId, type }),
+      });
+      const data: LifelineResult = await res.json();
+      if (!res.ok) {
+        setErrorMsg((data as unknown as { error?: string }).error || t('show.errorGeneric'));
+        return;
+      }
+      setRun((r) => (r ? { ...r, usedLifelines: data.usedLifelines } : r));
+      if (type === 'fifty' && data.removedIndices) {
+        setHidden(data.removedIndices);
+      } else if (type === 'audience' && data.distribution) {
+        setAudience(data.distribution);
+      } else if (type === 'students') {
+        if (data.distribution) setAudience(data.distribution);
+        setStudentsHint(data.hint ?? null);
+      } else if (type === 'skip' && data.question) {
+        resetQuestionAids();
+        setRun((r) => (r ? { ...r, question: data.question!, usedLifelines: data.usedLifelines } : r));
+      }
+    } catch {
+      setErrorMsg(t('show.errorGeneric'));
+    } finally {
+      setLifelineBusy(null);
+    }
+  };
+
+  if (authLoading) return <LoadingState message={t('show.loading')} minHeight="50vh" />;
+
+  // ── Intro / not playing ────────────────────────────────────────────────────
+  if (!run || run.status !== 'playing') {
+    return (
+      <div className="show-page fade-in">
+        <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
+        {result && (
+          <ShowResultModal run={result} onClose={() => setResult(null)} onPlayAgain={start} />
+        )}
+        <section className="hero show-hero">
+          <Logo alt="O Show da Computação" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
+          <h1 className="show-title"><Sparkles size={26} /> {t('show.title')}</h1>
+          <p style={{ textAlign: 'center', maxWidth: '620px', color: 'var(--text-muted)' }}>
+            {t('show.tagline')}
+          </p>
+        </section>
+
+        <div className="card show-intro-card">
+          <h2 className="card-title"><Trophy size={20} style={{ color: 'var(--primary)' }} /> {t('show.howToTitle')}</h2>
+          <ul className="show-rules">
+            <li>{t('show.rule1')}</li>
+            <li>{t('show.rule2')}</li>
+            <li>{t('show.rule3')}</li>
+            <li>{t('show.rule4')}</li>
+          </ul>
+          {user ? (
+            <button onClick={start} disabled={starting} className="btn show-start-btn">
+              <Play size={20} /> {starting ? t('show.starting') : t('show.start')}
+            </button>
+          ) : (
+            <Link href="/profile" className="btn show-start-btn">
+              <Play size={20} /> {t('show.loginToPlay')}
+            </Link>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Playing ─────────────────────────────────────────────────────────────────
+  const q = run.question!;
+  const highestPrize = run.ladder[run.ladder.length - 1];
 
   return (
-    <div className="hub-page fade-in">
-      <section className="hero hub-hero">
-        <Logo
-          alt="LSD Logo"
-          style={{ width: '180px', maxWidth: '100%', marginBottom: '1rem' }}
-        />
-        <h1 className="sr-only">LSD Game Hub</h1>
-        <p style={{ textAlign: 'center', maxWidth: '600px', color: 'var(--text-muted)' }}>
-          {t('hub.tagline')}
-        </p>
-      </section>
+    <div className="show-page show-playing fade-in">
+      <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
 
-      <div className="hub-grid">
-        <GameCard
-          href="/quiz"
-          icon={<GraduationCap size={40} />}
-          accent="var(--lsd-orange)"
-          title="QUIZ"
-          description={t('hub.quizDesc')}
-          playedToday={played.quiz}
-          playedLabel={t('hub.playedToday')}
-        />
+      <div className="show-layout">
+        {/* Question + options */}
+        <div className="show-main">
+          <div className="show-qmeta">
+            <span className="show-step">{t('show.stepOf', { step: q.step, total: q.totalSteps })}</span>
+            <span className="show-area">{q.area}</span>
+            {q.source && <span className="show-source">POSCOMP {q.source.year}</span>}
+          </div>
 
-        <GameCard
-          href="/code"
-          icon={<TerminalSquare size={40} />}
-          accent="var(--color-correct)"
-          title="CODE"
-          description={t('hub.codeDesc')}
-          playedToday={played.code}
-          playedLabel={t('hub.playedToday')}
-        />
+          <div className="card show-question-card">
+            <p className="show-question">{q.question}</p>
+          </div>
 
-        <GameCard
-          href="/termo"
-          icon={<Type size={40} />}
-          accent="var(--lsd-teal)"
-          title="TERMO"
-          description={t('hub.termoDesc')}
-          playedToday={played.termo}
-          playedLabel={t('hub.playedToday')}
-        />
+          <div className="show-options">
+            {q.options.map((opt, i) => {
+              const isHidden = hidden.includes(i);
+              let cls = 'show-option';
+              if (reveal) {
+                if (i === reveal.correctIndex) cls += ' is-correct';
+                else if (i === reveal.chosenIndex) cls += ' is-wrong';
+                else cls += ' is-dim';
+              }
+              return (
+                <button
+                  key={i}
+                  className={cls}
+                  disabled={isHidden || !!reveal || submitting}
+                  style={isHidden ? { visibility: 'hidden' } : undefined}
+                  onClick={() => answer(i)}
+                >
+                  <span className="show-option-letter">{LETTERS[i]}</span>
+                  <span className="show-option-text">{opt}</span>
+                  {audience && !reveal && (
+                    <span className="show-option-pct">{audience[i]}%</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-        <GameCard
-          href="/forca"
-          icon={<Ban size={40} />}
-          accent="var(--lsd-red)"
-          title="FORCA"
-          description={t('hub.forcaDesc')}
-          playedToday={played.forca}
-          playedLabel={t('hub.playedToday')}
-        />
+          {studentsHint && !reveal && (
+            <p className="show-hint"><GraduationCap size={16} /> {studentsHint}</p>
+          )}
 
-        <GameCard
-          href="/lsdle"
-          icon={<Gamepad2 size={40} />}
-          accent="var(--lsd-magenta)"
-          title="LSDLE"
-          description={t('hub.lsdleDesc')}
-          playedToday={played.lsdle}
-          playedLabel={t('hub.playedToday')}
-        />
+          {reveal ? (
+            <div className={`show-reveal ${reveal.correct ? 'is-correct' : 'is-wrong'}`}>
+              <p className="show-reveal-verdict">
+                {reveal.correct ? t('show.correct') : t('show.wrong')}
+              </p>
+              <p className="show-explanation">{reveal.explanation}</p>
+              <button onClick={proceed} className="btn show-continue-btn">
+                {reveal.nextRun.status === 'playing' ? t('show.continue') : t('show.seeResult')}
+              </button>
+            </div>
+          ) : (
+            <div className="show-actions">
+              <div className="show-lifelines">
+                {LIFELINES.map(({ type, icon: Icon }) => {
+                  const used = run.usedLifelines.includes(type);
+                  return (
+                    <button
+                      key={type}
+                      className={`show-lifeline ${used ? 'is-used' : ''}`}
+                      disabled={used || !!lifelineBusy}
+                      onClick={() => spendLifeline(type)}
+                      title={t(`show.lifeline.${type}`)}
+                    >
+                      <Icon size={18} />
+                      <span>{t(`show.lifeline.${type}`)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={stop} disabled={submitting || run.currentStep === 1} className="btn btn-secondary show-stop-btn">
+                <HandCoins size={18} /> {t('show.stopWith', { prize: formatPrize(run.securedPrize) })}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Prize ladder */}
+        <aside className="show-ladder card" aria-label={t('show.ladderTitle')}>
+          <h3 className="show-ladder-title"><Trophy size={16} /> {t('show.ladderTitle')}</h3>
+          <ol className="show-ladder-list">
+            {run.ladder.map((prize, i) => {
+              const step = run.ladder.length - i; // render top (15) → bottom (1)
+              const value = run.ladder[step - 1];
+              const isCurrent = step === run.currentStep;
+              const isCleared = step < run.currentStep;
+              const isCheckpoint = step === 5 || step === 10 || value === highestPrize;
+              return (
+                <li
+                  key={step}
+                  className={`show-rung${isCurrent ? ' is-current' : ''}${isCleared ? ' is-cleared' : ''}${isCheckpoint ? ' is-checkpoint' : ''}`}
+                >
+                  <span className="show-rung-step">{step}</span>
+                  <span className="show-rung-prize">{formatPrize(value)}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </aside>
       </div>
     </div>
   );

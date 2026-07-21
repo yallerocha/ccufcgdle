@@ -6,6 +6,7 @@ import { useAuth } from '@/client/context/AuthContext';
 import { Trophy, Info } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
+import { formatPrize } from '@/client/lib/format';
 import { BackLink } from '@/client/components/BackLink';
 import { LoadingState } from '@/client/components/LoadingState';
 import { ErrorState } from '@/client/components/ErrorState';
@@ -74,7 +75,7 @@ export default function PodiumPage() {
     try {
       setLoading(true);
       setErrorMsg('');
-      const res = await apiFetch('/api/game/leaderboard');
+      const res = await apiFetch('/api/community/leaderboard');
       const data = await res.json();
       if (res.ok) setRanking(data.ranking || []);
       else setErrorMsg(data.error || t('podium.error'));
@@ -122,7 +123,7 @@ export default function PodiumPage() {
                   <span className="podium-medal">{MEDALS[place]}</span>
                   <Avatar entry={entry} size={place === 1 ? 88 : 64} />
                   <span className="podium-name">{entry.name}</span>
-                  <span className="podium-points">{entry.points} {t('podium.points')}</span>
+                  <span className="podium-points">{formatPrize(entry.points)}</span>
                   <div className="podium-base" style={{ height: PODIUM_HEIGHT[place], background: PODIUM_COLOR[place] }}>
                     <span className="podium-place">{place}</span>
                   </div>
@@ -157,7 +158,7 @@ export default function PodiumPage() {
                             </div>
                           </td>
                           <td style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{entry.wins}</td>
-                          <td style={{ textAlign: 'center', fontWeight: 700 }}>{entry.points}</td>
+                          <td style={{ textAlign: 'center', fontWeight: 700 }}>{formatPrize(entry.points)}</td>
                         </tr>
                       );
                     })}

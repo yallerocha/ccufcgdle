@@ -11,9 +11,9 @@ model User {
   email            String           @unique
   passwordHash     String?
   googleId         String?          @unique
-  name             String           @unique // This is the character's name/nickname in the game
-  
-  // Game attributes
+  name             String           @unique // Player's display name / nickname
+
+  // Profile attributes (community directory)
   gender           String           // "Masculino", "Feminino", "Outro"
   role             String           // "Professor", "Graduando", "Mestrando", "Doutorando", "Pesquisador", "Funcionário"
   entrySemester    String           // e.g. "2020.1", "2023.2", "Antes de 2018"
@@ -23,20 +23,6 @@ model User {
   likesCoffee      String           // "Sim", "Não", "Só energético"
   photoUrl         String?          // Base64 data URL or photo URL
 
-  // Daily game snapshot: the games (LSDLE etc.) read these, NOT the editable
-  // fields above. They are promoted from the editable values at most once per day
-  // (see syncGameAttributes), so a profile edit only reaches the games the next
-  // day. `gameSyncDate` is the "YYYY-MM-DD" the snapshot reflects ("" = never).
-  gameGender        String          @default("")
-  gameRole          String          @default("")
-  gameEntrySemester String          @default("")
-  gameIsColab       String          @default("")
-  gameArea          String[]        @default([])
-  gameProjects      String[]        @default([])
-  gameLikesCoffee   String          @default("")
-  gamePhotoUrl      String?
-  gameSyncDate      String          @default("")
-
   // Metadata & Activity Tracking
   lastLogin        DateTime         @default(now())
   isActive         Boolean          @default(true)
@@ -45,18 +31,7 @@ model User {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  dailyCharacters  DailyCharacter[]
-  gameResults      GameResult[]
-  dailyProgress    DailyProgress[]
-  termoResults     TermoResult[]
-  termoProgress    TermoProgress[]
-  forcaResults     ForcaResult[]
-  forcaProgress    ForcaProgress[]
-  quizResults      QuizResult[]
-  quizProgress     QuizProgress[]
-  codeResults      CodeResult[]
-  codeProgress     CodeProgress[]
-  streaks          GameStreak[]
+  showRuns         ShowRun[]
   createdProjects  Project[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
@@ -95,37 +70,8 @@ model Project {
   createdAt   DateTime @default(now())
 }
 
-// Per-player, per-game daily streak. `current` counts consecutive days solved
-// (resets to 1 after a gap), `best` is the all-time max, `lastDate` is the last
-// "YYYY-MM-DD" the player solved that game. One row per (playerId, game).
-model GameStreak {
-  id        Int      @id @default(autoincrement())
-  playerId  String
-  player    User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  game      String   // "lsdle" | "termo" | "forca"
-  current   Int      @default(0)
-  best      Int      @default(0)
-  lastDate  String   @default("") // last solved date, "YYYY-MM-DD"
-  updatedAt DateTime @updatedAt
-
-  @@unique([playerId, game])
-}
-
-model DailyCharacter {
-  id          Int      @id @default(autoincrement())
-  date        String   @unique // Format: "YYYY-MM-DD"
-  characterId String
-  character   User     @relation(fields: [characterId], references: [id], onDelete: Cascade)
-  // Optional message the person of the day can leave for the players who guess
-  // them: a short text and/or an image (base64 data URL). Shown in the victory
-  // modal to players who have already solved today's round.
-  message     String?
-  mediaUrl    String?
-  createdAt   DateTime @default(now())
-}
-
 // Simple key/value store for admin-tunable runtime settings (e.g. whether the
-// 30-day inactivity rule hides players from the games). Read with a code-side
+// 30-day inactivity rule hides players from the ranking). Read with a code-side
 // default so an absent row keeps the historical behavior.
 model AppSetting {
   key       String   @id
@@ -133,213 +79,24 @@ model AppSetting {
   updatedAt DateTime @updatedAt
 }
 
-// One result per logged-in player per day. Ranking: fewer attempts ranks
-// higher; ties broken by shorter durationMs (time from 1st guess to win).
-model GameResult {
-  id         Int      @id @default(autoincrement())
-  date       String   // Format: "YYYY-MM-DD"
-  playerId   String
-  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  attempts   Int
-  durationMs Int
-  createdAt  DateTime @default(now())
-
-  @@unique([date, playerId])
-  @@index([date, attempts, durationMs])
-}
-
-// Server-authoritative tracking of a player's progress for a given day. Attempts
-// and timing are derived here from real guesses (see POST /api/game/guess), so
-// the ranking cannot be fabricated by a crafted POST to /api/game/result.
-model DailyProgress {
-  id           Int       @id @default(autoincrement())
-  date         String    // Format: "YYYY-MM-DD"
-  playerId     String
-  player       User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  attempts     Int       @default(0)
-  firstGuessAt DateTime  @default(now())
-  solved       Boolean   @default(false)
-  solvedAt     DateTime?
-  updatedAt    DateTime  @updatedAt
-
-  @@unique([date, playerId])
-}
-
-// ── TERMO (Wordle-style) game ────────────────────────────────────────────────
-// Termo is fully self-contained (its own daily word, progress and ranking) so it
-// never collides with the LSDLE tables above.
-
-// The solution word for a given day. Stored normalized (uppercase, no accents);
-// `display` keeps the accented form revealed when the round ends.
-model TermoDaily {
-  id        Int      @id @default(autoincrement())
-  date      String   @unique // Format: "YYYY-MM-DD"
-  word      String   // normalized solution, e.g. "TERMO"
-  display   String   // accented form to reveal, e.g. "TÉRMO"
-  createdAt DateTime @default(now())
-}
-
-// Server-authoritative play state for the Termo round, mirroring DailyProgress.
-model TermoProgress {
-  id           Int       @id @default(autoincrement())
-  date         String    // Format: "YYYY-MM-DD"
-  playerId     String
-  player       User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  attempts     Int       @default(0)
-  firstGuessAt DateTime  @default(now())
-  solved       Boolean   @default(false)
-  solvedAt     DateTime?
-  updatedAt    DateTime  @updatedAt
-
-  @@unique([date, playerId])
-}
-
-// One Termo result per logged-in player per day. Ranking: fewer attempts ranks
-// higher; ties broken by shorter durationMs (time from 1st guess to win).
-model TermoResult {
-  id         Int      @id @default(autoincrement())
-  date       String   // Format: "YYYY-MM-DD"
-  playerId   String
-  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  attempts   Int
-  durationMs Int
-  createdAt  DateTime @default(now())
-
-  @@unique([date, playerId])
-  @@index([date, attempts, durationMs])
-}
-
-// ── FORCA (Hangman) game ─────────────────────────────────────────────────────
-// Self-contained, like Termo: own daily word, progress and ranking.
-
-model ForcaDaily {
-  id          Int      @id @default(autoincrement())
-  date        String   @unique // Format: "YYYY-MM-DD"
-  word        String   // normalized solution
-  display     String   // accented form to reveal
-  theme       String   @default("") // category hint shown to the player (e.g. "Redes de computadores")
-  // The registered person you're "saving" by guessing the word (flavor only —
-  // unrelated to the answer). Snapshot of name + photo at selection time.
-  personName  String?
-  personPhoto String?
-  createdAt   DateTime @default(now())
-}
-
-// Server-authoritative play state. `guessed` holds the letters tried so far
-// (normalized, no separator); wrong-count and the solved check derive from it.
-model ForcaProgress {
-  id           Int       @id @default(autoincrement())
-  date         String    // Format: "YYYY-MM-DD"
-  playerId     String
-  player       User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  guessed      String    @default("")
-  firstGuessAt DateTime  @default(now())
-  solved       Boolean   @default(false)
-  solvedAt     DateTime?
-  updatedAt    DateTime  @updatedAt
-
-  @@unique([date, playerId])
-}
-
-// One Forca result per logged-in player per day. Ranking: fewer wrong guesses
-// (stored in `attempts`) ranks higher; ties broken by shorter durationMs.
-model ForcaResult {
-  id         Int      @id @default(autoincrement())
-  date       String   // Format: "YYYY-MM-DD"
-  playerId   String
-  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  attempts   Int      // number of wrong guesses
-  durationMs Int
-  createdAt  DateTime @default(now())
-
-  @@unique([date, playerId])
-  @@index([date, attempts, durationMs])
-}
-
-// ── QUIZ (POSCOMP-style daily quiz) ──────────────────────────────────────────
-// Self-contained, like Termo/Forca: own daily question set, progress and ranking.
-
-// The question set for a given day: ids from the server-side question bank
-// (src/server/quiz-questions.ts), in presentation order, comma-separated.
-model QuizDaily {
-  id          Int      @id @default(autoincrement())
-  date        String   @unique // Format: "YYYY-MM-DD"
-  questionIds String   // e.g. "mat-03,fun-01,fun-07,tec-02,tec-09"
-  createdAt   DateTime @default(now())
-}
-
-// Server-authoritative play state. `answers` is a JSON array of
-// { i: questionIndex, choice, correct } — each question can only be answered
-// once, and the score is always derived here, never from the client.
-model QuizProgress {
-  id            Int       @id @default(autoincrement())
-  date          String    // Format: "YYYY-MM-DD"
+// ── O SHOW DA COMPUTAÇÃO ─────────────────────────────────────────────────────
+// One row per play-through of the "Show do Milhão"-style quiz. The whole run is
+// server-authoritative: the ordered question ids, the current step, the banked
+// prize and the lifelines used all live here, so a score can never be fabricated
+// by a crafted POST. The ranking reads the best `prize` per player.
+model ShowRun {
+  id            String    @id @default(cuid())
   playerId      String
   player        User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  answers       String    @default("[]")
-  firstAnswerAt DateTime  @default(now())
-  finished      Boolean   @default(false)
-  finishedAt    DateTime?
-  updatedAt     DateTime  @updatedAt
+  questionIds   String    // ordered csv of the picked question ids (easy → hard)
+  currentStep   Int       @default(1) // 1..N, the step being answered next
+  prize         Int       @default(0) // banked prize: 0 / guaranteed floor / accumulated
+  status        String    @default("playing") // playing | won | stopped | lost
+  usedLifelines String    @default("") // csv: fifty,skip,audience,students
+  durationMs    Int?      // filled when the run ends
+  startedAt     DateTime  @default(now())
+  endedAt       DateTime?
 
-  @@unique([date, playerId])
-}
-
-// One Quiz result per logged-in player per day, recorded when the last question
-// is answered. Ranking: more correct answers first, then shorter durationMs.
-model QuizResult {
-  id         Int      @id @default(autoincrement())
-  date       String   // Format: "YYYY-MM-DD"
-  playerId   String
-  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  correct    Int
-  total      Int
-  durationMs Int
-  createdAt  DateTime @default(now())
-
-  @@unique([date, playerId])
-  @@index([date, correct, durationMs])
-}
-
-// ── CODE (daily coding challenge) ────────────────────────────────────────────
-// Self-contained: own daily challenge, progress and ranking.
-
-// The challenge for a given day: an id from the server-side challenge bank
-// (src/server/code-challenges.ts).
-model CodeDaily {
-  id          Int      @id @default(autoincrement())
-  date        String   @unique // Format: "YYYY-MM-DD"
-  challengeId String
-  createdAt   DateTime @default(now())
-}
-
-// Server-authoritative play state: each code submission increments `attempts`,
-// so the ranking (fewest submissions to pass) comes from real runs.
-model CodeProgress {
-  id           Int       @id @default(autoincrement())
-  date         String    // Format: "YYYY-MM-DD"
-  playerId     String
-  player       User      @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  attempts     Int       @default(0)
-  firstTryAt   DateTime  @default(now())
-  solved       Boolean   @default(false)
-  solvedAt     DateTime?
-  updatedAt    DateTime  @updatedAt
-
-  @@unique([date, playerId])
-}
-
-// One Code result per logged-in player per day, recorded when every test
-// passes. Ranking: fewer submissions first; ties broken by shorter durationMs.
-model CodeResult {
-  id         Int      @id @default(autoincrement())
-  date       String   // Format: "YYYY-MM-DD"
-  playerId   String
-  player     User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  attempts   Int      // number of submissions until all tests passed
-  durationMs Int
-  createdAt  DateTime @default(now())
-
-  @@unique([date, playerId])
-  @@index([date, attempts, durationMs])
+  @@index([playerId, prize])
+  @@index([prize, durationMs])
 }

@@ -19,9 +19,13 @@ export interface QuizQuestion {
   options: string[];
   answer: number;
   explanation: string;
+  // Difficulty on a 1 (fácil) .. 5 (difícil) scale, used to order the Show's
+  // prize ladder from easy to hard. Assigned per id in DIFFICULTY_BY_ID below;
+  // absent ids default to 3. Values are an initial estimate, refinable later.
+  difficulty: number;
 }
 
-export const QUIZ_QUESTIONS: QuizQuestion[] = [
+const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty'>[] = [
   // ── Matemática — lógica e conceitos (POSCOMP) ──────────────────────────────
   // Somente questões teóricas/conceituais (lógica, quantificadores). Questões de
   // cálculo (determinantes, limites, integrais, combinatória, geometria
@@ -696,6 +700,29 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       'Software de qualidade simplifica (e não complica) os processos de negócio — os demais itens são benefícios apontados pelos autores.',
   },
 ];
+
+// Per-question difficulty (1 fácil .. 5 difícil). Ids not listed default to 3.
+// Kept as a compact map so it can be retuned without touching the question data.
+const DIFFICULTY_BY_ID: Record<string, number> = {
+  'mat-2019-15': 2, 'fun-2019-21': 5, 'fun-2019-22': 4, 'fun-2019-23': 3,
+  'fun-2019-24': 1, 'fun-2019-25': 4, 'tec-2019-52': 2, 'tec-2019-54': 2,
+  'tec-2019-57': 2, 'tec-2019-58': 2, 'tec-2019-60': 3, 'tec-2019-64': 3,
+  'fun-2010-27': 4, 'fun-2010-46': 3, 'tec-2010-47': 4, 'tec-2010-49': 3,
+  'mat-2022-11': 3, 'fun-2022-21': 3, 'fun-2022-22': 3, 'fun-2022-26': 1,
+  'tec-2022-50': 3, 'tec-2022-52': 2, 'fun-2024-22': 1, 'fun-2024-23': 2,
+  'fun-2024-48': 2, 'tec-2024-52': 3, 'tec-2024-54': 4, 'tec-2024-59': 2,
+  'mat-2019-12': 3, 'mat-2024-13': 2, 'fun-2010-21': 4, 'fun-2010-26': 2,
+  'fun-2010-50': 5, 'fun-2022-24': 3, 'fun-2022-25': 2, 'fun-2022-28': 4,
+  'fun-2024-21': 3, 'fun-2024-24': 2, 'fun-2024-25': 2, 'tec-2019-43': 3,
+  'tec-2019-45': 4, 'tec-2019-46': 2, 'tec-2019-61': 2, 'tec-2019-62': 3,
+  'tec-2022-46': 4, 'tec-2022-54': 4, 'tec-2024-51': 5, 'tec-2024-53': 4,
+  'tec-2024-58': 2,
+};
+
+export const QUIZ_QUESTIONS: QuizQuestion[] = RAW_QUESTIONS.map((q) => ({
+  ...q,
+  difficulty: DIFFICULTY_BY_ID[q.id] ?? 3,
+}));
 
 export const QUESTION_BY_ID = new Map(QUIZ_QUESTIONS.map((q) => [q.id, q]));
 

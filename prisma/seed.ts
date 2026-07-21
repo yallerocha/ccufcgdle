@@ -124,7 +124,6 @@ async function main() {
   const passwordHash = await bcrypt.hash('senha123', 10);
 
   // Clear existing data (for a clean seed)
-  await prisma.dailyCharacter.deleteMany({});
   await prisma.user.deleteMany({});
 
   for (const name of DEFAULT_PROJECT_NAMES) {

@@ -37,8 +37,8 @@ export default function MembersPage() {
       setLoading(true);
       setErrorMsg('');
       const [membersRes, leaderboardRes] = await Promise.all([
-        apiFetch('/api/game/members'),
-        apiFetch('/api/game/leaderboard'),
+        apiFetch('/api/community/members'),
+        apiFetch('/api/community/leaderboard'),
       ]);
       const membersData = await membersRes.json();
       if (membersRes.ok) {

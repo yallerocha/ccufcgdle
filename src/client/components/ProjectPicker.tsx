@@ -61,7 +61,7 @@ export function ProjectPicker({
   const loadProjects = useCallback(async () => {
     setLoadError('');
     try {
-      const res = await apiFetch('/api/game/projects');
+      const res = await apiFetch('/api/community/projects');
       const data = await res.json();
       if (!res.ok) {
         setLoadError(data.error || t('projects.loadError'));
@@ -114,7 +114,7 @@ export function ProjectPicker({
     setAdding(true);
     setAddError('');
     try {
-      const res = await apiFetch('/api/game/projects', {
+      const res = await apiFetch('/api/community/projects', {
         method: 'POST',
         body: JSON.stringify({ name: trimmed }),
       });

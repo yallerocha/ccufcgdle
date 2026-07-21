@@ -9,8 +9,8 @@ import ThemeBootstrap from "@/client/components/ThemeBootstrap";
 import { THEME_BOOTSTRAP_SCRIPT, THEME_CRITICAL_CSS } from "@/shared/theme";
 
 export const metadata: Metadata = {
-  title: "LSDLE - Jogo do LSD da UFCG",
-  description: "Adivinhe a pessoa do dia do Laboratório de Sistemas Distribuídos (LSD) da UFCG baseado em suas informações e preferências! Cadastre-se para participar.",
+  title: "O Show da Computação",
+  description: "O Show da Computação: um quiz estilo Show do Milhão sobre computação. Responda perguntas do POSCOMP de dificuldade crescente, use suas ajudas e chegue ao milhão!",
 };
 
 export const viewport: Viewport = {

@@ -1,86 +1,64 @@
 import { prisma } from './db';
 
-// Unified cross-game scoring. Every solved daily round awards a flat base plus an
-// efficiency bonus (better play → more points). The games are normalized so none
-// dominates: each contributes roughly the same base, and the bonus is bounded.
-const WIN_BASE = 10;
-
-// Efficiency bonus per solve. `attempts` is the count stored in the result row:
-// guesses for LSDLE/Termo, wrong letters for Forca, submissions for Code.
-function bonus(game: 'lsdle' | 'termo' | 'forca' | 'code', attempts: number): number {
-  switch (game) {
-    case 'termo':
-      // 1..6 guesses → bonus 5..0.
-      return Math.max(0, 6 - attempts);
-    case 'forca':
-      // 0..5 wrong → bonus 5..0.
-      return Math.max(0, 5 - attempts);
-    case 'code':
-      // 1..6 submissions → bonus 5..0.
-      return Math.max(0, 6 - attempts);
-    case 'lsdle':
-    default:
-      // Unbounded guesses; reward solving in few tries, capped like the others.
-      return Math.max(0, 8 - attempts);
-  }
-}
-
-// The quiz has no win/lose: completing it scores 2 points per correct answer,
-// plus a 5-point bonus for a perfect round — max 15, same ceiling as the others.
-function quizPoints(correct: number, total: number): number {
-  return 2 * correct + (total > 0 && correct === total ? 5 : 0);
-}
+// Leaderboard for O Show da Computação. A player's score is the **best prize**
+// they have ever banked across all their finished runs (won/stopped/lost). Ties
+// are broken by the faster of the runs that reached that prize, then by number
+// of runs won, then name — so the order is stable.
 
 export interface PlayerScore {
   id: string;
   name: string;
   photoUrl: string | null;
-  points: number;
-  wins: number;
+  points: number; // best banked prize (R$)
+  wins: number; // number of runs that reached the top of the ladder
 }
 
-// Aggregates every player's total points across all games, ranked desc. Ties are
-// broken by total wins, then name (so the order is stable).
+interface Agg extends PlayerScore {
+  bestDurationMs: number; // duration of the run that set `points` (tiebreak)
+}
+
+const FINISHED = ['won', 'stopped', 'lost'];
+
 export async function computeLeaderboard(): Promise<PlayerScore[]> {
-  const [users, lsdle, termo, forca, code, quiz] = await Promise.all([
+  const [users, runs] = await Promise.all([
     prisma.user.findMany({ select: { id: true, name: true, photoUrl: true } }),
-    prisma.gameResult.findMany({ select: { playerId: true, attempts: true } }),
-    prisma.termoResult.findMany({ select: { playerId: true, attempts: true } }),
-    prisma.forcaResult.findMany({ select: { playerId: true, attempts: true } }),
-    prisma.codeResult.findMany({ select: { playerId: true, attempts: true } }),
-    prisma.quizResult.findMany({ select: { playerId: true, correct: true, total: true } }),
+    prisma.showRun.findMany({
+      where: { status: { in: FINISHED } },
+      select: { playerId: true, prize: true, status: true, durationMs: true },
+    }),
   ]);
 
-  const byId = new Map<string, PlayerScore>();
+  const byId = new Map<string, Agg>();
   for (const u of users) {
-    byId.set(u.id, { id: u.id, name: u.name, photoUrl: u.photoUrl ?? null, points: 0, wins: 0 });
+    byId.set(u.id, {
+      id: u.id,
+      name: u.name,
+      photoUrl: u.photoUrl ?? null,
+      points: 0,
+      wins: 0,
+      bestDurationMs: Number.POSITIVE_INFINITY,
+    });
   }
 
-  const add = (
-    game: 'lsdle' | 'termo' | 'forca' | 'code',
-    rows: { playerId: string; attempts: number }[],
-  ) => {
-    for (const r of rows) {
-      const p = byId.get(r.playerId);
-      if (!p) continue; // result from a deleted user
-      p.points += WIN_BASE + bonus(game, r.attempts);
-      p.wins += 1;
-    }
-  };
-
-  add('lsdle', lsdle);
-  add('termo', termo);
-  add('forca', forca);
-  add('code', code);
-
-  for (const r of quiz) {
+  for (const r of runs) {
     const p = byId.get(r.playerId);
-    if (!p) continue;
-    p.points += quizPoints(r.correct, r.total);
-    p.wins += 1; // a completed quiz counts as a played/won round
+    if (!p) continue; // run from a deleted user
+    if (r.status === 'won') p.wins += 1;
+    const dur = r.durationMs ?? Number.POSITIVE_INFINITY;
+    if (r.prize > p.points || (r.prize === p.points && dur < p.bestDurationMs)) {
+      p.points = r.prize;
+      p.bestDurationMs = dur;
+    }
   }
 
   return [...byId.values()]
-    .filter((p) => p.wins > 0)
-    .sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
+    .filter((p) => p.points > 0)
+    .sort(
+      (a, b) =>
+        b.points - a.points ||
+        a.bestDurationMs - b.bestDurationMs ||
+        b.wins - a.wins ||
+        a.name.localeCompare(b.name),
+    )
+    .map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl, points: p.points, wins: p.wins }));
 }
