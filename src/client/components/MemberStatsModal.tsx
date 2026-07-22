@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Crown, Clock, Target, Gamepad2 } from 'lucide-react';
+import { Trophy, Crown, Clock, Target, Gamepad2, Coins } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
 import { formatPrize } from '@/client/lib/format';
@@ -13,6 +13,7 @@ import { useModalDismiss } from '@/client/hooks/useModalDismiss';
 interface ShowStats {
   runs: number;
   wins: number;
+  totalWinnings: number;
   bestPrize: number;
   bestCleared: number;
   totalSteps: number;
@@ -69,10 +70,11 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
     : '';
 
   const stats = data?.stats;
+  const pct = stats && stats.totalSteps ? Math.round((stats.bestCleared / stats.totalSteps) * 100) : 0;
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-wide modal-has-bottom-bar" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content modal-has-bottom-bar player-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="modal-body">
         {loading ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('members.statsLoading')}</p>
@@ -81,49 +83,63 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
         ) : (
           <>
             {/* Header: avatar + name + member since */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            <div className="player-head">
               {data.member.photoUrl ? (
-                <img src={data.member.photoUrl} alt={data.member.name} style={{ width: '88px', height: '88px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)', boxShadow: '0 0 15px var(--primary-glow)' }} />
+                <img src={data.member.photoUrl} alt={data.member.name} className="player-avatar" />
               ) : (
-                <div style={{ width: '88px', height: '88px', borderRadius: '50%', backgroundColor: avatarColorForName(data.member.name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', fontWeight: 700, border: '3px solid var(--primary)' }}>
+                <div className="player-avatar" style={{ backgroundColor: avatarColorForName(data.member.name), color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.7rem', fontWeight: 700 }}>
                   {data.member.name.slice(0, 2).toUpperCase()}
                 </div>
               )}
-              <h2 className="modal-title" style={{ marginBottom: 0 }}>{data.member.name}</h2>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>{t('members.memberSince', { date: memberSince })}</p>
+              <div className="player-head-text">
+                <h2 className="player-name">{data.member.name}</h2>
+                <p className="player-since">{t('members.memberSince', { date: memberSince })}</p>
+              </div>
             </div>
 
-            {/* Highlight totals — Show da Computação */}
-            <div className="member-stat-highlights">
-              <div className="member-stat-hl">
-                <Trophy size={20} style={{ color: 'var(--color-partial)' }} />
-                <span className="member-stat-hl-val">{formatPrize(stats.bestPrize)}</span>
-                <span className="member-stat-hl-lbl">{t('members.bestPrize')}</span>
+            {/* Total winnings showcase */}
+            <div className="player-total">
+              <span className="player-total-label"><Coins size={15} /> {t('members.totalWinnings')}</span>
+              <span className="player-total-value">{formatPrize(stats.totalWinnings)}</span>
+            </div>
+
+            {/* Best-step progress */}
+            <div className="player-progress">
+              <div className="player-progress-head">
+                <span><Target size={14} /> {t('members.bestStep')}</span>
+                <strong>{stats.bestCleared}/{stats.totalSteps}</strong>
               </div>
-              <div className="member-stat-hl">
-                <Target size={20} style={{ color: 'var(--brand-teal)' }} />
-                <span className="member-stat-hl-val">{stats.bestCleared}/{stats.totalSteps}</span>
-                <span className="member-stat-hl-lbl">{t('members.bestStep')}</span>
+              <div className="player-progress-track">
+                <div className="player-progress-fill" style={{ width: `${pct}%` }} />
               </div>
-              <div className="member-stat-hl">
-                <Gamepad2 size={20} style={{ color: 'var(--brand-magenta)' }} />
-                <span className="member-stat-hl-val">{stats.runs}</span>
-                <span className="member-stat-hl-lbl">{t('members.runsPlayed')}</span>
+            </div>
+
+            {/* Stat tiles */}
+            <div className="player-tiles">
+              <div className="player-tile">
+                <Trophy size={18} />
+                <span className="player-tile-val">{formatPrize(stats.bestPrize)}</span>
+                <span className="player-tile-lbl">{t('members.bestPrize')}</span>
               </div>
-              <div className="member-stat-hl">
-                <Crown size={20} style={{ color: 'var(--brand-orange)' }} />
-                <span className="member-stat-hl-val">{stats.wins}</span>
-                <span className="member-stat-hl-lbl">{t('members.millionaire')}</span>
+              <div className="player-tile">
+                <Gamepad2 size={18} />
+                <span className="player-tile-val">{stats.runs}</span>
+                <span className="player-tile-lbl">{t('members.runsPlayed')}</span>
+              </div>
+              <div className="player-tile">
+                <Crown size={18} />
+                <span className="player-tile-val">{stats.wins}</span>
+                <span className="player-tile-lbl">{t('members.millionaire')}</span>
               </div>
             </div>
 
             {stats.wins > 0 && (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '1rem', textAlign: 'center', display: 'flex', gap: '0.4rem', justifyContent: 'center', alignItems: 'center' }}>
+              <p className="player-fastest">
                 <Clock size={14} /> {t('members.fastestWin', { time: formatDuration(stats.fastestMs) })}
               </p>
             )}
 
-            <button onClick={onClose} className="btn btn-secondary" style={{ width: '100%', marginTop: '1.5rem' }}>
+            <button onClick={onClose} className="btn btn-secondary" style={{ width: '100%', marginTop: '1.4rem' }}>
               {t('members.close')}
             </button>
           </>

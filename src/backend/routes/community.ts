@@ -52,12 +52,14 @@ router.get('/members/:id/stats', async (req, res) => {
       select: { status: true, prize: true, currentStep: true, durationMs: true },
     });
 
+    let totalWinnings = 0;
     let bestPrize = 0;
     let wins = 0;
     let bestCleared = 0;
     let fastestMs: number | null = null;
     for (const r of runs) {
       const cleared = r.status === 'won' ? LADDER_SIZE : Math.max(0, r.currentStep - 1);
+      totalWinnings += r.prize;
       bestPrize = Math.max(bestPrize, r.prize);
       bestCleared = Math.max(bestCleared, cleared);
       if (r.status === 'won') {
@@ -70,7 +72,7 @@ router.get('/members/:id/stats', async (req, res) => {
 
     return res.json({
       member,
-      stats: { runs: runs.length, wins, bestPrize, bestCleared, totalSteps: LADDER_SIZE, fastestMs },
+      stats: { runs: runs.length, wins, totalWinnings, bestPrize, bestCleared, totalSteps: LADDER_SIZE, fastestMs },
     });
   } catch (error) {
     console.error('Error in member stats API:', error);

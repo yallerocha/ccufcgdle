@@ -277,7 +277,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
               maxLength={25}
               required
             />
-            <span className="profile-field-hint">{t('profileEdit.nameHint')}</span>
           </div>
 
           <div className="profile-save-bar">

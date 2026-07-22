@@ -6,7 +6,7 @@ import { UserPlus, Camera, Trash2, User as UserIcon, Mail, Lock, LockKeyhole, Ma
 import { apiFetch, setToken } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
 import { PhotoCropModal } from '@/client/components/PhotoCropModal';
-import { isAllowedEmailDomain, isStrongPassword } from '@/shared/validation';
+import { isStrongPassword } from '@/shared/validation';
 import { PasswordInput } from '@/client/components/PasswordInput';
 import { Toast } from '@/client/components/Toast';
 import { GoogleSignInButton } from '@/client/components/GoogleSignInButton';
@@ -77,10 +77,6 @@ export function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFor
     e.preventDefault();
     setErrorMsg('');
 
-    if (!isAllowedEmailDomain(email)) {
-      setErrorMsg(t('register.errorEmailDomain'));
-      return;
-    }
     if (!isStrongPassword(password)) {
       setErrorMsg(t('register.errorPasswordWeak'));
       return;

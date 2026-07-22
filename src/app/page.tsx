@@ -367,7 +367,6 @@ export default function ShowPage() {
           <img className="show-hero-logo" src="/osdc-hero.svg" alt={t('show.title')} />
           <p className="show-tagline">{t('show.tagline')}</p>
           <div className="show-prize-target">
-            <Sparkles size={16} />
             <span>{t('show.topPrizeLabel')}</span>
             <strong>R$ 1.000.000</strong>
           </div>
@@ -420,16 +419,17 @@ export default function ShowPage() {
                 <SlidersHorizontal size={20} style={{ color: 'var(--gold)' }} /> {t('show.topicsTitle')}
               </h2>
               <p className="modal-subtitle" style={{ marginBottom: '1rem' }}>{t('show.topicsHint')}</p>
-              <div className="show-topic-list">
+              <div className="show-topic-chips">
                 {topics.map((tp) => (
-                  <label key={tp.id} className="show-topic-item">
-                    <input
-                      type="checkbox"
-                      checked={chosen.has(tp.id)}
-                      onChange={() => toggleTopic(tp.id)}
-                    />
-                    <span>{tp.id}</span>
-                  </label>
+                  <button
+                    key={tp.id}
+                    type="button"
+                    className={`show-topic-chip${chosen.has(tp.id) ? ' is-on' : ''}`}
+                    aria-pressed={chosen.has(tp.id)}
+                    onClick={() => toggleTopic(tp.id)}
+                  >
+                    {tp.id}
+                  </button>
                 ))}
               </div>
               <button onClick={() => setTopicsOpen(false)} className="btn show-final-btn" style={{ marginTop: '1.25rem' }}>
@@ -570,7 +570,7 @@ export default function ShowPage() {
 
         {/* Prize ladder */}
         <aside className="show-ladder card" aria-label={t('show.ladderTitle')}>
-          <h3 className="show-ladder-title"><Trophy size={16} /> {t('show.ladderTitle')}</h3>
+          <h3 className="show-ladder-title">{t('show.ladderTitle')}</h3>
           <ol className="show-ladder-list">
             {run.ladder.map((_, i) => {
               const step = run.ladder.length - i; // render top (15) → bottom (1)

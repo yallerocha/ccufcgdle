@@ -1,23 +1,14 @@
 // Shared validation for account fields (email, password, display name, photo),
 // enforced on the server so the database can't be filled with malformed values.
 
-// Only members of the Computing programs at UFCG may register.
-export const ALLOWED_EMAIL_DOMAINS = [
-  'ccc.ufcg.edu.br',
-  'computacao.ufcg.edu.br',
-  'copin.ufcg.edu.br',
-] as const;
-
 export function formatAllowedEmailDomains(): string {
-  return ALLOWED_EMAIL_DOMAINS.map((d) => `@${d}`).join(', ');
+  return '';
 }
 
-export function isAllowedEmailDomain(email: string): boolean {
-  if (typeof email !== 'string') return false;
-  const at = email.lastIndexOf('@');
-  if (at < 0) return false;
-  const domain = email.slice(at + 1).toLowerCase();
-  return (ALLOWED_EMAIL_DOMAINS as readonly string[]).includes(domain);
+// Registration is open to anyone — any valid email address is accepted. (Kept as
+// a helper so callers stay unchanged; format is validated separately.)
+export function isAllowedEmailDomain(_email: string): boolean {
+  return true;
 }
 
 // Password policy: at least 8 chars with an uppercase letter, a lowercase

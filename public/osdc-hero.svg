@@ -55,13 +55,13 @@
     <rect x="66" y="145" width="360" height="7" rx="3" fill="#5063f0" opacity="0.9"/>
     <text x="120" y="182" font-family="'Outfit','Segoe UI',Arial,sans-serif" font-size="18" font-weight="700" font-style="italic" fill="#fff2a8">da</text>
     <!-- 3D extruded lettering -->
-    <g font-family="'Arial Black','Archivo Black',Impact,sans-serif" font-weight="900" font-style="italic" text-anchor="middle" font-size="40">
-      <text x="287" y="188" fill="#5f3c00">COMPUTAÇÃO</text>
-      <text x="286" y="187" fill="#714800">COMPUTAÇÃO</text>
-      <text x="285" y="186" fill="#835400">COMPUTAÇÃO</text>
-      <text x="284" y="185" fill="#956100">COMPUTAÇÃO</text>
-      <text x="283.5" y="184.5" fill="#a76d00">COMPUTAÇÃO</text>
-      <text x="283" y="184" fill="url(#yellowT)" stroke="#5a3800" stroke-width="1.1" paint-order="stroke">COMPUTAÇÃO</text>
+    <g font-family="'Arial Black','Archivo Black',Impact,sans-serif" font-weight="900" font-style="italic" text-anchor="middle" font-size="36">
+      <text x="287" y="188" fill="#5f3c00" textLength="278" lengthAdjust="spacingAndGlyphs">COMPUTAÇÃO</text>
+      <text x="286" y="187" fill="#714800" textLength="278" lengthAdjust="spacingAndGlyphs">COMPUTAÇÃO</text>
+      <text x="285" y="186" fill="#835400" textLength="278" lengthAdjust="spacingAndGlyphs">COMPUTAÇÃO</text>
+      <text x="284" y="185" fill="#956100" textLength="278" lengthAdjust="spacingAndGlyphs">COMPUTAÇÃO</text>
+      <text x="283.5" y="184.5" fill="#a76d00" textLength="278" lengthAdjust="spacingAndGlyphs">COMPUTAÇÃO</text>
+      <text x="283" y="184" fill="url(#yellowT)" stroke="#5a3800" stroke-width="1.1" paint-order="stroke" textLength="278" lengthAdjust="spacingAndGlyphs">COMPUTAÇÃO</text>
     </g>
   </g>
 
