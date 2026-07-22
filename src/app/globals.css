@@ -154,7 +154,7 @@ html.theme-light * {
 
 /* Brand gradient classes */
 .brand-gradient-bg {
-  background: linear-gradient(90deg, #e0a800, #ffd23f, #fff0b0, #ffd23f, #e0a800);
+  background: linear-gradient(90deg, #b07d08, #ffd24a 28%, #3ce0e6 50%, #ffd24a 72%, #b07d08);
   background-size: 200% 100%;
   animation: gradientShift 6s ease infinite;
 }
@@ -218,7 +218,10 @@ body::before {
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  /* `none` (not translateY(0)): a persisted identity transform on `main` would
+     turn every position:fixed descendant into container-relative (clipping the
+     full-screen transition overlay + floating buttons). */
+  to { opacity: 1; transform: none; }
 }
 
 @keyframes scaleIn {
@@ -3938,7 +3941,9 @@ a:focus-visible,
 @media (max-width: 920px) {
   .show-layout { grid-template-columns: 1fr; }
   .show-main, .show-ladder { grid-column: auto; }
-  .show-ladder { order: -1; width: auto; justify-self: stretch; }
+  /* The full 15-rung ladder would push the question below the fold on phones;
+     the gold "Valendo R$X" chip in the meta row carries the stakes instead. */
+  .show-ladder { display: none; }
 }
 
 .show-qmeta {
@@ -4338,4 +4343,197 @@ input:focus, select:focus, textarea:focus {
   transform: translateX(2px);
   border-color: rgba(255, 210, 74, 0.4);
   background: rgba(255, 210, 74, 0.06);
+}
+
+/* ── Sound toggle + between-questions transition ──────────────────────────── */
+.show-mute {
+  position: fixed;
+  bottom: 1.1rem;
+  left: 1.1rem;
+  z-index: 60;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 210, 74, 0.3);
+  background: rgba(6, 12, 34, 0.72);
+  backdrop-filter: blur(6px);
+  color: var(--gold);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.show-mute:hover { transform: scale(1.08); border-color: var(--gold); background: rgba(255, 210, 74, 0.12); }
+
+@keyframes scTransIn {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes scTransPop {
+  0% { opacity: 0; transform: scale(0.85) translateY(12px); }
+  18% { opacity: 1; transform: scale(1) translateY(0); }
+  82% { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(1.04) translateY(-6px); }
+}
+.show-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(900px 600px at 50% 40%, rgba(46, 96, 226, 0.4), transparent 60%),
+    rgba(3, 7, 20, 0.93);
+  backdrop-filter: blur(4px);
+  animation: scTransIn 1.6s ease forwards;
+}
+.show-transition-inner {
+  text-align: center;
+  animation: scTransPop 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.show-transition-phrase {
+  font-size: clamp(1.6rem, 5vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 1rem;
+  background: linear-gradient(180deg, #fff6d8, var(--gold), var(--gold-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 22px rgba(255, 210, 74, 0.4));
+}
+.show-transition-prize {
+  font-size: clamp(1rem, 3vw, 1.3rem);
+  color: #9fb0dd;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0;
+}
+.show-transition-prize strong {
+  display: block;
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  letter-spacing: 0;
+  color: var(--gold);
+  text-shadow: 0 2px 24px rgba(255, 210, 74, 0.45);
+}
+
+/* ── Navbar + footer: match the cinematic studio ──────────────────────────── */
+.navbar {
+  background: linear-gradient(180deg, rgba(6, 12, 34, 0.9), rgba(6, 12, 34, 0.62)) !important;
+  backdrop-filter: blur(16px) saturate(1.15);
+  border-bottom: 1px solid rgba(255, 210, 74, 0.14) !important;
+  box-shadow: 0 14px 34px -22px rgba(0, 0, 0, 0.9);
+}
+/* accent line at the very bottom of the navbar, with a soft glow */
+.navbar-color-bar {
+  height: 3px;
+  box-shadow: 0 0 16px rgba(255, 210, 74, 0.5);
+  -webkit-mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+}
+.nav-logo img { filter: drop-shadow(0 0 12px rgba(255, 210, 74, 0.4)); }
+
+.site-footer {
+  background: linear-gradient(180deg, rgba(4, 8, 20, 0), rgba(3, 6, 15, 0.9)) !important;
+  border-top: 1px solid rgba(255, 210, 74, 0.1);
+}
+/* the footer's top accent bar (first child, .brand-gradient-bg) */
+.site-footer > .brand-gradient-bg {
+  height: 3px !important;
+  box-shadow: 0 0 16px rgba(255, 210, 74, 0.45);
+  -webkit-mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+}
+.site-footer-content { color: var(--text-muted); }
+.site-footer-content p { font-size: 0.82rem; letter-spacing: 0.2px; opacity: 0.85; }
+
+/* Hero banner logo (Show do Milhão homage) on the intro stage */
+.show-hero-logo {
+  width: min(460px, 94%);
+  height: auto;
+  filter: drop-shadow(0 12px 40px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 34px rgba(44, 64, 207, 0.35));
+  animation: scFloat 6s ease-in-out infinite;
+}
+
+/* ── UX pass: stakes chip, two-step answer, a11y ──────────────────────────── */
+.show-worth {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.18rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 210, 74, 0.1);
+  border: 1px solid rgba(255, 210, 74, 0.35);
+  color: var(--sc-muted);
+}
+.show-worth strong {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--gold);
+  letter-spacing: 0;
+}
+
+/* Picked-but-not-confirmed option: gold rim + lit interior, letter pulses */
+@keyframes scSelectedPulse {
+  0%, 100% { box-shadow: 0 0 18px -4px rgba(255, 210, 74, 0.55); }
+  50% { box-shadow: 0 0 30px -2px rgba(255, 210, 74, 0.85); }
+}
+.show-option.is-selected {
+  background:
+    linear-gradient(180deg, #2a3f7d, #16244f) padding-box,
+    linear-gradient(100deg, #ffe27a, var(--gold-deep)) border-box;
+  animation: scSelectedPulse 1.4s ease-in-out infinite;
+}
+.show-option.is-selected .show-option-letter {
+  background: linear-gradient(180deg, #ffffff, #ffe27a);
+}
+
+/* "Resposta final" lock-in button */
+.show-final-btn {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.9rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1a1200;
+  border: none;
+  background: linear-gradient(180deg, #ffe27a, var(--gold-deep));
+  box-shadow: 0 12px 30px -10px rgba(255, 210, 74, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  animation: scRise 0.25s ease both;
+}
+.show-final-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.04); }
+
+/* Keyboard/a11y focus rings on the interactive stage pieces */
+.show-option:focus-visible,
+.show-lifeline:focus-visible,
+.show-final-btn:focus-visible,
+.show-stop-btn:focus-visible,
+.show-mute:focus-visible {
+  outline: 2px solid var(--tech);
+  outline-offset: 2px;
+}
+
+/* Respect users who prefer less motion: kill the decorative loops */
+@media (prefers-reduced-motion: reduce) {
+  .show-stage-rings,
+  .show-badge-lg,
+  .show-hero-logo,
+  .show-rung.is-current,
+  .show-option,
+  .show-option.is-selected,
+  .show-intro-card,
+  .show-question-card,
+  .show-final-btn,
+  .brand-gradient-bg {
+    animation: none !important;
+  }
 }

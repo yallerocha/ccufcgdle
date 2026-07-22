@@ -3,13 +3,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles } from 'lucide-react';
+import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles, Volume2, VolumeX, Check } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { ShowResultModal } from '@/client/components/ShowResultModal';
+import {
+  unlockAudio, isMuted, toggleMuted,
+  sfxSelect, sfxCorrect, sfxWrong, sfxLifeline, sfxStart, sfxWin, sfxStop,
+  startMusic, stopMusic,
+} from '@/client/lib/sound';
 
 type LifelineType = 'fifty' | 'skip' | 'audience' | 'students';
 type ShowStatus = 'playing' | 'won' | 'stopped' | 'lost';
@@ -78,17 +83,25 @@ export default function ShowPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [result, setResult] = useState<ShowRun | null>(null);
+  const [muted, setMuted] = useState(false);
+  // Between-questions "host" transition card (phrase + next prize).
+  const [transition, setTransition] = useState<{ prize: number; phrase: string } | null>(null);
+  useEffect(() => setMuted(isMuted()), []);
+  useEffect(() => () => stopMusic(), []);
 
   // Per-question lifeline UI state (reset when the question changes).
   const [hidden, setHidden] = useState<number[]>([]);
   const [audience, setAudience] = useState<number[] | null>(null);
   const [studentsHint, setStudentsHint] = useState<string | null>(null);
   const [lifelineBusy, setLifelineBusy] = useState<LifelineType | null>(null);
+  // Two-step answering, like the show: pick an option, then lock it in.
+  const [selected, setSelected] = useState<number | null>(null);
 
   const resetQuestionAids = () => {
     setHidden([]);
     setAudience(null);
     setStudentsHint(null);
+    setSelected(null);
   };
 
   // Resume an in-progress run after a reload.
@@ -106,10 +119,12 @@ export default function ShowPage() {
   }, [authLoading, user]);
 
   const start = useCallback(async () => {
+    unlockAudio();
     setStarting(true);
     setErrorMsg('');
     setResult(null);
     setReveal(null);
+    setTransition(null);
     resetQuestionAids();
     try {
       const res = await apiFetch('/api/show/start', { method: 'POST' });
@@ -117,6 +132,8 @@ export default function ShowPage() {
       if (res.ok) {
         setRun(data);
         localStorage.setItem(RUN_KEY, data.runId);
+        sfxStart();
+        startMusic();
       } else {
         setErrorMsg(data.error || t('show.errorGeneric'));
       }
@@ -127,8 +144,16 @@ export default function ShowPage() {
     }
   }, [t]);
 
-  const answer = async (index: number) => {
-    if (!run?.question || reveal || submitting) return;
+  // Step 1: pick an option (reversible). Step 2 (confirmAnswer) locks it in.
+  const pick = (index: number) => {
+    if (reveal || submitting) return;
+    sfxSelect();
+    setSelected((cur) => (cur === index ? null : index));
+  };
+
+  const confirmAnswer = async () => {
+    const index = selected;
+    if (index == null || !run?.question || reveal || submitting) return;
     setSubmitting(true);
     setErrorMsg('');
     try {
@@ -138,6 +163,9 @@ export default function ShowPage() {
       });
       const data: AnswerResult = await res.json();
       if (res.ok) {
+        stopMusic();
+        if (data.correct) sfxCorrect(); else sfxWrong();
+        setSelected(null);
         setReveal({
           correct: data.correct,
           correctIndex: data.correctIndex,
@@ -159,12 +187,25 @@ export default function ShowPage() {
     if (!reveal) return;
     const next = reveal.nextRun;
     setReveal(null);
-    resetQuestionAids();
-    setRun(next);
     if (next.status !== 'playing') {
       localStorage.removeItem(RUN_KEY);
+      resetQuestionAids();
+      setRun(next);
+      if (next.status === 'won') sfxWin();
       setResult(next);
+      return;
     }
+    // Between-questions transition: a host phrase + the next prize, then advance.
+    const phrases = t('show.transitionPhrases', { returnObjects: true });
+    const list = Array.isArray(phrases) ? (phrases as string[]) : [];
+    const phrase = list.length ? list[Math.floor(Math.random() * list.length)] : '';
+    setTransition({ prize: next.ladder[next.currentStep - 1], phrase });
+    window.setTimeout(() => {
+      resetQuestionAids();
+      setRun(next);
+      setTransition(null);
+      startMusic();
+    }, 1600);
   };
 
   const stop = async () => {
@@ -177,6 +218,8 @@ export default function ShowPage() {
       });
       const data: ShowRun = await res.json();
       if (res.ok) {
+        stopMusic();
+        sfxStop();
         setRun(data);
         localStorage.removeItem(RUN_KEY);
         setResult(data);
@@ -204,6 +247,7 @@ export default function ShowPage() {
         setErrorMsg((data as unknown as { error?: string }).error || t('show.errorGeneric'));
         return;
       }
+      sfxLifeline();
       setRun((r) => (r ? { ...r, usedLifelines: data.usedLifelines } : r));
       if (type === 'fifty' && data.removedIndices) {
         setHidden(data.removedIndices);
@@ -223,6 +267,12 @@ export default function ShowPage() {
     }
   };
 
+  const toggleSound = () => {
+    const m = toggleMuted();
+    setMuted(m);
+    if (!m && run?.status === 'playing' && !reveal && !transition) startMusic();
+  };
+
   if (authLoading) return <LoadingState message={t('show.loading')} minHeight="50vh" />;
 
   // ── Intro / not playing ────────────────────────────────────────────────────
@@ -236,10 +286,8 @@ export default function ShowPage() {
 
         <section className="show-stage">
           <div className="show-stage-rings" aria-hidden />
-          <div className="show-badge-lg" aria-hidden>
-            <img src="/osdc-icon.svg" alt="" width={92} height={92} />
-          </div>
-          <h1 className="show-title">{t('show.title')}</h1>
+          <h1 className="sr-only">{t('show.title')}</h1>
+          <img className="show-hero-logo" src="/osdc-hero.svg" alt={t('show.title')} />
           <p className="show-tagline">{t('show.tagline')}</p>
           <div className="show-prize-target">
             <Sparkles size={16} />
@@ -279,6 +327,22 @@ export default function ShowPage() {
     <div className="show-page show-playing fade-in">
       <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
 
+      <button type="button" className="show-mute" onClick={toggleSound} title={muted ? t('show.soundOn') : t('show.soundOff')} aria-label={muted ? t('show.soundOn') : t('show.soundOff')}>
+        {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+      </button>
+
+      {/* Between-questions host transition */}
+      {transition && (
+        <div className="show-transition">
+          <div className="show-transition-inner">
+            {transition.phrase && <p className="show-transition-phrase">{transition.phrase}</p>}
+            <p className="show-transition-prize">
+              {t('show.worthLabel')} <strong>{formatPrize(transition.prize)}</strong>
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="show-layout">
         {/* Question + options */}
         <div className="show-main">
@@ -286,6 +350,9 @@ export default function ShowPage() {
             <span className="show-step">{t('show.stepOf', { step: q.step, total: q.totalSteps })}</span>
             <span className="show-area">{q.area}</span>
             {q.source && <span className="show-source">POSCOMP {q.source.year}</span>}
+            <span className="show-worth">
+              {t('show.worthLabel')} <strong>{formatPrize(run.ladder[run.currentStep - 1])}</strong>
+            </span>
           </div>
 
           <div className="card show-question-card">
@@ -300,6 +367,8 @@ export default function ShowPage() {
                 if (i === reveal.correctIndex) cls += ' is-correct';
                 else if (i === reveal.chosenIndex) cls += ' is-wrong';
                 else cls += ' is-dim';
+              } else if (i === selected) {
+                cls += ' is-selected';
               }
               return (
                 <button
@@ -307,7 +376,8 @@ export default function ShowPage() {
                   className={cls}
                   disabled={isHidden || !!reveal || submitting}
                   style={isHidden ? { visibility: 'hidden' } : undefined}
-                  onClick={() => answer(i)}
+                  onClick={() => pick(i)}
+                  aria-pressed={i === selected}
                 >
                   <span className="show-option-letter">{LETTERS[i]}</span>
                   <span className="show-option-text">{opt}</span>
@@ -318,6 +388,12 @@ export default function ShowPage() {
               );
             })}
           </div>
+
+          {selected != null && !reveal && (
+            <button onClick={confirmAnswer} disabled={submitting} className="btn show-final-btn">
+              <Check size={20} /> {t('show.finalAnswer', { letter: LETTERS[selected] })}
+            </button>
+          )}
 
           {studentsHint && !reveal && (
             <p className="show-hint"><GraduationCap size={16} /> {studentsHint}</p>
