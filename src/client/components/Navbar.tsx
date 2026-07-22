@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/client/context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { User, Users, Trophy, ShieldCheck, LogOut, Menu, X } from 'lucide-react';
-import LanguageToggle from '@/client/components/LanguageToggle';
 import { Logo } from '@/client/components/Logo';
 
 export default function Navbar() {
@@ -97,14 +96,9 @@ export default function Navbar() {
           <Logo variant="wide" alt="O Show da Computação" style={{ height: '32px', width: 'auto' }} />
         </Link>
 
-        <div className="nav-toolbar">
-          <LanguageToggle />
-        </div>
-
         <div className="nav-links nav-links--desktop">
           {navLinksMain}
           {logoutButton}
-          <LanguageToggle />
         </div>
       </div>
 

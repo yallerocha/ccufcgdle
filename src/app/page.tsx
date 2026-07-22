@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles, Volume2, VolumeX, Check, SlidersHorizontal, Flag } from 'lucide-react';
+import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';

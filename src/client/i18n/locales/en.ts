@@ -455,6 +455,7 @@ export const en: Dictionary = {
     unsavedLeave: 'Leave without saving',
     unsavedStay: 'Keep editing',
     settingsTitle: 'Settings',
+    languageLabel: 'Language',
     passwordTitle: 'Change Password',
     passwordSubtitle: 'If an admin gave you a temporary password, replace it here with your own.',
     currentPasswordLabel: 'Current password',

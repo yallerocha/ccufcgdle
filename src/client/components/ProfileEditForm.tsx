@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Camera, Save, AlertTriangle, Settings2, Settings, Trash2, KeyRound, User as UserIcon, Lock, LockKeyhole, ChevronRight, ArrowLeft, X } from 'lucide-react';
+import { Camera, Save, AlertTriangle, Settings2, Settings, Trash2, KeyRound, User as UserIcon, Lock, LockKeyhole, ChevronRight, ArrowLeft, X, Languages } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { User } from '@/client/context/AuthContext';
 import { isStrongPassword } from '@/shared/validation';
+import { LANG_STORAGE_KEY } from '@/client/i18n/I18nProvider';
 import { apiFetch, setToken } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
 import { PhotoCropModal } from '@/client/components/PhotoCropModal';
@@ -19,7 +20,7 @@ interface ProfileEditFormProps {
 }
 
 export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [name, setName] = useState(user.name);
   const [photoUrl, setPhotoUrl] = useState(user.photoUrl || '');
   const [savingPhoto, setSavingPhoto] = useState(false);
@@ -312,6 +313,34 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
             {settingsView === 'menu' && (
               <div className="settings-options">
+                <div className="settings-lang-row">
+                  <span className="settings-lang-label">
+                    <Languages size={18} style={{ color: 'var(--gold)' }} /> {t('profileEdit.languageLabel')}
+                  </span>
+                  <div className="settings-lang-seg" role="group" aria-label={t('profileEdit.languageLabel')}>
+                    {(['pt', 'en'] as const).map((lng) => {
+                      const active = (i18n.language?.startsWith('en') ? 'en' : 'pt') === lng;
+                      return (
+                        <button
+                          key={lng}
+                          type="button"
+                          className={`settings-lang-btn${active ? ' is-on' : ''}`}
+                          aria-pressed={active}
+                          onClick={() => {
+                            i18n.changeLanguage(lng);
+                            try {
+                              localStorage.setItem(LANG_STORAGE_KEY, lng);
+                              document.documentElement.lang = lng;
+                            } catch { /* ignore */ }
+                          }}
+                        >
+                          {lng.toUpperCase()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {(user.hasPassword ?? true) && (
                   <button type="button" className="settings-option" onClick={() => setSettingsView('password')}>
                     <KeyRound size={18} style={{ color: 'var(--gold)' }} />

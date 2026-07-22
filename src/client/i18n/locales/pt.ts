@@ -451,6 +451,7 @@ export const pt = {
     unsavedLeave: 'Sair sem salvar',
     unsavedStay: 'Continuar editando',
     settingsTitle: 'Configurações',
+    languageLabel: 'Idioma',
     passwordTitle: 'Alterar Senha',
     passwordSubtitle: 'Se recebeu uma senha temporária do admin, troque-a aqui por uma senha só sua.',
     currentPasswordLabel: 'Senha atual',
