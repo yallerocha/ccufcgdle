@@ -136,6 +136,9 @@ export const en: Dictionary = {
     topicsHint: 'If the chosen topics have fewer than 15 questions, we top up from the rest.',
     topicsDone: 'Done',
     topicsActive: '{{count}} of {{total}} topics selected',
+    quit: 'Quit the run',
+    quitConfirm: 'Click again to confirm',
+    backHome: 'Back to home',
     soundOn: 'Unmute',
     soundOff: 'Mute',
     transitionPhrases: [

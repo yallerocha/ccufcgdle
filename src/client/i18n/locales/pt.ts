@@ -132,6 +132,9 @@ export const pt = {
     topicsHint: 'Se os temas marcados não somarem 15 perguntas, completamos com os demais.',
     topicsDone: 'Pronto',
     topicsActive: '{{count}} de {{total}} temas selecionados',
+    quit: 'Desistir da partida',
+    quitConfirm: 'Clique de novo para confirmar',
+    backHome: 'Voltar ao início',
     soundOn: 'Ativar som',
     soundOff: 'Silenciar',
     transitionPhrases: [

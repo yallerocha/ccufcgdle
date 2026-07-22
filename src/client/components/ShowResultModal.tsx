@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, RotateCcw, PartyPopper, HandCoins, XCircle } from 'lucide-react';
+import { Trophy, RotateCcw, PartyPopper, HandCoins, XCircle, Home } from 'lucide-react';
 import { formatPrize } from '@/client/lib/format';
 import { ModalColorBar } from '@/client/components/ModalColorBar';
 import { useModalDismiss } from '@/client/hooks/useModalDismiss';
@@ -58,6 +58,9 @@ export function ShowResultModal({ run, onClose, onPlayAgain }: ShowResultModalPr
             <Link href="/podium" className="btn btn-secondary" style={{ width: '100%' }} onClick={onClose}>
               <Trophy size={18} /> {t('show.seeRanking')}
             </Link>
+            <button onClick={onClose} className="btn btn-secondary" style={{ width: '100%' }}>
+              <Home size={18} /> {t('show.backHome')}
+            </button>
           </div>
         </div>
         <ModalColorBar />

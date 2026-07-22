@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles, Volume2, VolumeX, Check, SlidersHorizontal } from 'lucide-react';
+import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles, Volume2, VolumeX, Check, SlidersHorizontal, Flag } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
@@ -95,6 +95,14 @@ export default function ShowPage() {
   useEffect(() => setMuted(isMuted()), []);
   useEffect(() => () => stopMusic(), []);
 
+  // While a run is live, lock the navbar (no wandering off mid-question — the
+  // stage is immersive, like the real show). The class drives CSS in globals.
+  const playing = !!run && run.status === 'playing';
+  useEffect(() => {
+    document.body.classList.toggle('show-live', playing);
+    return () => document.body.classList.remove('show-live');
+  }, [playing]);
+
   // Question-theme picker (intro): all topics start selected; a strict subset
   // is sent to /start, everything else means "all".
   const [topics, setTopics] = useState<{ id: string; count: number }[]>([]);
@@ -126,12 +134,15 @@ export default function ShowPage() {
   const [lifelineBusy, setLifelineBusy] = useState<LifelineType | null>(null);
   // Two-step answering, like the show: pick an option, then lock it in.
   const [selected, setSelected] = useState<number | null>(null);
+  // Quit needs a second click to confirm (it ends the run for good).
+  const [quitArmed, setQuitArmed] = useState(false);
 
   const resetQuestionAids = () => {
     setHidden([]);
     setAudience(null);
     setStudentsHint(null);
     setSelected(null);
+    setQuitArmed(false);
   };
 
   // Resume an in-progress run after a reload.
@@ -269,6 +280,36 @@ export default function ShowPage() {
     }
   };
 
+  // Give up: ends the run (banking whatever is secured, like stop) but goes
+  // straight back to the intro — no celebration modal.
+  const quit = async () => {
+    if (!run || reveal || submitting) return;
+    if (!quitArmed) {
+      setQuitArmed(true);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await apiFetch('/api/show/stop', {
+        method: 'POST',
+        body: JSON.stringify({ runId: run.runId }),
+      });
+      if (res.ok) {
+        stopMusic();
+        localStorage.removeItem(RUN_KEY);
+        resetQuestionAids();
+        setRun(null);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg((data as { error?: string }).error || t('show.errorGeneric'));
+      }
+    } catch {
+      setErrorMsg(t('show.errorGeneric'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const spendLifeline = async (type: LifelineType) => {
     if (!run || reveal || lifelineBusy || run.usedLifelines.includes(type)) return;
     setLifelineBusy(type);
@@ -379,17 +420,16 @@ export default function ShowPage() {
                 <SlidersHorizontal size={20} style={{ color: 'var(--gold)' }} /> {t('show.topicsTitle')}
               </h2>
               <p className="modal-subtitle" style={{ marginBottom: '1rem' }}>{t('show.topicsHint')}</p>
-              <div className="show-topic-chips">
+              <div className="show-topic-list">
                 {topics.map((tp) => (
-                  <button
-                    key={tp.id}
-                    type="button"
-                    className={`show-topic-chip${chosen.has(tp.id) ? ' is-on' : ''}`}
-                    aria-pressed={chosen.has(tp.id)}
-                    onClick={() => toggleTopic(tp.id)}
-                  >
-                    {tp.id} <span className="count">{tp.count}</span>
-                  </button>
+                  <label key={tp.id} className="show-topic-item">
+                    <input
+                      type="checkbox"
+                      checked={chosen.has(tp.id)}
+                      onChange={() => toggleTopic(tp.id)}
+                    />
+                    <span>{tp.id}</span>
+                  </label>
                 ))}
               </div>
               <button onClick={() => setTopicsOpen(false)} className="btn show-final-btn" style={{ marginTop: '1.25rem' }}>
@@ -438,9 +478,6 @@ export default function ShowPage() {
             <span className="show-step">{t('show.stepOf', { step: q.step, total: q.totalSteps })}</span>
             <span className="show-area">{q.topic}</span>
             {q.source && <span className="show-source">POSCOMP {q.source.year}</span>}
-            <span className="show-worth">
-              {t('show.worthLabel')} <strong>{formatPrize(run.ladder[run.currentStep - 1])}</strong>
-            </span>
           </div>
 
           <div className="card show-question-card">
@@ -518,6 +555,14 @@ export default function ShowPage() {
               </div>
               <button onClick={stop} disabled={submitting || run.currentStep === 1} className="btn btn-secondary show-stop-btn">
                 <HandCoins size={18} /> {t('show.stopWith', { prize: formatPrize(run.securedPrize) })}
+              </button>
+              <button
+                onClick={quit}
+                disabled={submitting}
+                className={`show-quit-btn${quitArmed ? ' is-armed' : ''}`}
+                onBlur={() => setQuitArmed(false)}
+              >
+                <Flag size={15} /> {quitArmed ? t('show.quitConfirm') : t('show.quit')}
               </button>
             </div>
           )}

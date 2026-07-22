@@ -4463,22 +4463,6 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── UX pass: stakes chip, two-step answer, a11y ──────────────────────────── */
-.show-worth {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.18rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(255, 210, 74, 0.1);
-  border: 1px solid rgba(255, 210, 74, 0.35);
-  color: var(--sc-muted);
-}
-.show-worth strong {
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
-  color: var(--gold);
-  letter-spacing: 0;
-}
 
 /* Picked-but-not-confirmed option: gold rim + lit interior, letter pulses */
 @keyframes scSelectedPulse {
@@ -4710,14 +4694,18 @@ input:focus, select:focus, textarea:focus {
 .show-start-row {
   position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
   gap: 0.6rem;
   margin-top: 0.5rem;
 }
+.show-start-row .show-start-btn {
+  margin-top: 0;
+}
 .show-edit-btn {
   position: relative;
-  width: 56px;
+  width: 52px;
+  height: 52px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4755,4 +4743,83 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.78rem;
   color: var(--tech);
   font-family: var(--font-mono);
+}
+
+/* Topic picker: native checkboxes in a two-column list */
+.show-topic-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.3rem 1rem;
+  text-align: left;
+}
+@media (max-width: 480px) {
+  .show-topic-list { grid-template-columns: 1fr; }
+}
+.show-topic-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.show-topic-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+.show-topic-item input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--gold);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.show-topic-item input:checked + span {
+  color: #ffe9a8;
+}
+
+/* ── Live-run lockdown: hide navigation while a question is on stage ──────── */
+.show-live .nav-links--desktop,
+.show-live .nav-toolbar,
+.show-live .nav-menu-btn {
+  display: none !important;
+}
+.show-live .nav-logo {
+  pointer-events: none;
+}
+
+/* ── Quit button: discreet, arms on first click ───────────────────────────── */
+.show-quit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  align-self: center;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: transparent;
+  color: #f0a0a0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.show-quit-btn:hover:not(:disabled) {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+}
+.show-quit-btn.is-armed {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+  animation: scSelectedPulse 1.2s ease-in-out infinite;
+}
+.show-quit-btn:focus-visible {
+  outline: 2px solid var(--tech);
+  outline-offset: 2px;
 }
