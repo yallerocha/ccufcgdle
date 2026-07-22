@@ -5,6 +5,7 @@ import {
   startRun,
   getRunState,
   answerRun,
+  timeoutRun,
   stopRun,
   useLifeline,
   ALL_LIFELINES,
@@ -33,7 +34,8 @@ router.post('/start', requireAuth, async (req, res) => {
     const topics = Array.isArray(raw)
       ? raw.filter((x): x is string => typeof x === 'string' && TOPICS.includes(x)).slice(0, 24)
       : undefined;
-    const run = await startRun(req.auth!.userId, topics);
+    const noLifelines = req.body?.noLifelines === true;
+    const run = await startRun(req.auth!.userId, { topics, noLifelines });
     return res.json(run);
   } catch (error) {
     console.error('Error starting show run:', error);
@@ -69,6 +71,25 @@ router.post('/answer', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error answering show run:', error);
     return res.status(500).json({ error: 'Erro ao registrar a resposta.' });
+  }
+});
+
+// POST /api/show/timeout — the 200s question timer ran out. { runId }
+router.post('/timeout', requireAuth, async (req, res) => {
+  try {
+    const { runId } = req.body ?? {};
+    if (typeof runId !== 'string') {
+      return res.status(400).json({ error: 'Requisição inválida.' });
+    }
+    const result = await timeoutRun(runId, req.auth!.userId);
+    if ('error' in result) {
+      const code = result.error === 'not-found' ? 404 : 409;
+      return res.status(code).json({ error: 'Não foi possível encerrar por tempo.' });
+    }
+    return res.json(result);
+  } catch (error) {
+    console.error('Error timing out show run:', error);
+    return res.status(500).json({ error: 'Erro ao encerrar por tempo.' });
   }
 });
 

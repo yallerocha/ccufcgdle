@@ -4906,3 +4906,91 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-muted);
 }
 .player-fastest svg { color: var(--tech); }
+
+/* ── Game settings: lifelines toggle + section headings ───────────────────── */
+.show-setting-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(120, 160, 255, 0.18);
+  background: rgba(10, 22, 60, 0.5);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.show-setting-toggle:hover { border-color: rgba(255, 210, 74, 0.4); }
+.show-setting-text { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
+.show-setting-text strong { font-size: 0.95rem; }
+.show-setting-text small { font-size: 0.78rem; color: var(--text-muted); }
+.show-setting-toggle.is-off .show-setting-text small { color: #f0a0a0; }
+
+.show-switch {
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  position: relative;
+  transition: background 0.2s ease;
+}
+.show-setting-toggle.is-off .show-switch { background: rgba(255, 255, 255, 0.14); }
+.show-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 23px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s ease;
+}
+.show-setting-toggle.is-off .show-switch-knob { left: 3px; }
+
+.show-setting-heading {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 0.3rem;
+}
+.show-setting-sub { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 0.9rem; }
+
+/* ── Per-question timer ───────────────────────────────────────────────────── */
+.show-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+.show-timer-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.show-timer-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 1s linear, background 0.3s ease;
+}
+.show-timer-count {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 3ch;
+  text-align: right;
+}
+.show-timer--ok .show-timer-fill { background: linear-gradient(90deg, var(--tech), #4ade80); }
+.show-timer--ok .show-timer-count { color: var(--tech); }
+.show-timer--warn .show-timer-fill { background: linear-gradient(90deg, var(--gold), #f59e0b); }
+.show-timer--warn .show-timer-count { color: var(--gold); }
+.show-timer--danger .show-timer-fill { background: linear-gradient(90deg, #f87171, #ef4444); }
+.show-timer--danger .show-timer-count { color: #f87171; animation: scTimerBlink 1s steps(2) infinite; }
+@keyframes scTimerBlink { 50% { opacity: 0.35; } }

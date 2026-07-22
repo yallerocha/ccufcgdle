@@ -171,9 +171,20 @@ function toView(run: RunRow): ShowRunView {
 
 // ── run lifecycle ─────────────────────────────────────────────────────────────
 
-export async function startRun(playerId: string, topics?: string[]): Promise<ShowRunView> {
+export async function startRun(
+  playerId: string,
+  opts?: { topics?: string[]; noLifelines?: boolean }
+): Promise<ShowRunView> {
   const run = await prisma.showRun.create({
-    data: { playerId, questionIds: pickLadder(topics).join(','), currentStep: 1, prize: 0 },
+    data: {
+      playerId,
+      questionIds: pickLadder(opts?.topics).join(','),
+      currentStep: 1,
+      prize: 0,
+      // Disabling lifelines is modelled as "all already spent" — no schema change,
+      // and the play endpoint already rejects spending a used one.
+      usedLifelines: opts?.noLifelines ? ALL_LIFELINES.join(',') : '',
+    },
   });
   return toView(run);
 }
@@ -253,6 +264,31 @@ export async function stopRun(
     },
   });
   return toView(updated);
+}
+
+// Running out of time on a question ends the run exactly like a wrong answer:
+// banks the guaranteed floor and reveals the correct option.
+export async function timeoutRun(
+  runId: string,
+  playerId: string
+): Promise<AnswerResult | { error: string }> {
+  const run = await loadRun(runId, playerId);
+  if (!run) return { error: 'not-found' };
+  if (run.status !== 'playing') return { error: 'finished' };
+  const ids = parseIds(run.questionIds);
+  const q = QUESTION_BY_ID.get(ids[run.currentStep - 1]);
+  if (!q) return { error: 'bad-state' };
+  const now = new Date();
+  const updated = await prisma.showRun.update({
+    where: { id: run.id },
+    data: {
+      status: 'lost',
+      prize: guaranteedFloor(run.currentStep - 1),
+      endedAt: now,
+      durationMs: now.getTime() - run.startedAt.getTime(),
+    },
+  });
+  return { correct: false, correctIndex: q.answer, explanation: q.explanation, run: toView(updated) };
 }
 
 // ── lifelines ─────────────────────────────────────────────────────────────────

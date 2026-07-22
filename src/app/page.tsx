@@ -63,9 +63,11 @@ interface Reveal {
   chosenIndex: number;
   explanation: string;
   nextRun: ShowRun;
+  timedOut?: boolean;
 }
 
 const RUN_KEY = 'show-run-id';
+const QUESTION_SECONDS = 200;
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 const LIFELINES: { type: LifelineType; icon: React.ElementType }[] = [
@@ -108,6 +110,7 @@ export default function ShowPage() {
   const [topics, setTopics] = useState<{ id: string; count: number }[]>([]);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [topicsOpen, setTopicsOpen] = useState(false);
+  const [noLifelines, setNoLifelines] = useState(false);
   useEffect(() => {
     apiFetch('/api/show/topics')
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
@@ -126,6 +129,8 @@ export default function ShowPage() {
       return next;
     });
   };
+  const topicsFiltered = chosen.size > 0 && chosen.size < topics.length;
+  const settingsChanged = topicsFiltered || noLifelines;
 
   // Per-question lifeline UI state (reset when the question changes).
   const [hidden, setHidden] = useState<number[]>([]);
@@ -136,6 +141,8 @@ export default function ShowPage() {
   const [selected, setSelected] = useState<number | null>(null);
   // Quit needs a second click to confirm (it ends the run for good).
   const [quitArmed, setQuitArmed] = useState(false);
+  // Per-question countdown (server enforces the actual timeout end).
+  const [timeLeft, setTimeLeft] = useState(QUESTION_SECONDS);
 
   const resetQuestionAids = () => {
     setHidden([]);
@@ -169,8 +176,9 @@ export default function ShowPage() {
     resetQuestionAids();
     try {
       // Send topics only when a strict, non-empty subset is picked (= filter on).
-      const body =
-        chosen.size > 0 && chosen.size < topics.length ? { topics: [...chosen] } : {};
+      const body: { topics?: string[]; noLifelines?: boolean } = {};
+      if (chosen.size > 0 && chosen.size < topics.length) body.topics = [...chosen];
+      if (noLifelines) body.noLifelines = true;
       const res = await apiFetch('/api/show/start', {
         method: 'POST',
         body: JSON.stringify(body),
@@ -189,7 +197,7 @@ export default function ShowPage() {
     } finally {
       setStarting(false);
     }
-  }, [t, chosen, topics.length]);
+  }, [t, chosen, topics.length, noLifelines]);
 
   // Step 1: pick an option (reversible). Step 2 (confirmAnswer) locks it in.
   const pick = (index: number) => {
@@ -254,6 +262,48 @@ export default function ShowPage() {
       startMusic();
     }, 1600);
   };
+
+  const handleTimeout = useCallback(async () => {
+    if (!run || reveal || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await apiFetch('/api/show/timeout', {
+        method: 'POST',
+        body: JSON.stringify({ runId: run.runId }),
+      });
+      const data: AnswerResult = await res.json();
+      if (res.ok) {
+        stopMusic();
+        sfxWrong();
+        setSelected(null);
+        setReveal({
+          correct: false,
+          correctIndex: data.correctIndex,
+          chosenIndex: -1,
+          explanation: data.explanation,
+          nextRun: data.run,
+          timedOut: true,
+        });
+      }
+    } catch {
+      /* leave the question up; the server is the source of truth */
+    } finally {
+      setSubmitting(false);
+    }
+  }, [run, reveal, submitting]);
+
+  // Per-question countdown: (re)starts on each fresh question, pauses on reveal /
+  // transition, and fires the server timeout when it hits zero.
+  const timerActive = playing && !reveal && !transition;
+  useEffect(() => {
+    if (!timerActive) return;
+    setTimeLeft(QUESTION_SECONDS);
+    const id = window.setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearInterval(id);
+  }, [timerActive, run?.runId, run?.currentStep]);
+  useEffect(() => {
+    if (timerActive && timeLeft === 0) handleTimeout();
+  }, [timeLeft, timerActive, handleTimeout]);
 
   const stop = async () => {
     if (!run || reveal || submitting) return;
@@ -386,17 +436,20 @@ export default function ShowPage() {
                 type="button"
                 className="show-edit-btn"
                 onClick={() => setTopicsOpen(true)}
-                title={t('show.topicsTitle')}
-                aria-label={t('show.topicsTitle')}
+                title={t('show.settingsTitle')}
+                aria-label={t('show.settingsTitle')}
               >
                 <SlidersHorizontal size={20} />
-                {chosen.size > 0 && chosen.size < topics.length && <span className="show-edit-dot" />}
+                {settingsChanged && <span className="show-edit-dot" />}
               </button>
             )}
           </div>
-          {chosen.size > 0 && chosen.size < topics.length && (
+          {settingsChanged && (
             <p className="show-topics-summary">
-              {t('show.topicsActive', { count: chosen.size, total: topics.length })}
+              {[
+                topicsFiltered ? t('show.topicsActive', { count: chosen.size, total: topics.length }) : null,
+                noLifelines ? t('show.lifelinesOffShort') : null,
+              ].filter(Boolean).join(' · ')}
             </p>
           )}
         </section>
@@ -411,14 +464,30 @@ export default function ShowPage() {
           </ul>
         </div>
 
-        {/* Topic picker modal */}
+        {/* Game settings modal: lifelines toggle + question themes */}
         {mounted && topicsOpen && createPortal(
           <div className="modal-overlay" onClick={() => setTopicsOpen(false)}>
             <div className="modal-content" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
               <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                <SlidersHorizontal size={20} style={{ color: 'var(--gold)' }} /> {t('show.topicsTitle')}
+                <SlidersHorizontal size={20} style={{ color: 'var(--gold)' }} /> {t('show.settingsTitle')}
               </h2>
-              <p className="modal-subtitle" style={{ marginBottom: '1rem' }}>{t('show.topicsHint')}</p>
+
+              <button
+                type="button"
+                className={`show-setting-toggle${noLifelines ? ' is-off' : ''}`}
+                role="switch"
+                aria-checked={!noLifelines}
+                onClick={() => setNoLifelines((v) => !v)}
+              >
+                <span className="show-setting-text">
+                  <strong>{t('show.lifelinesLabel')}</strong>
+                  <small>{noLifelines ? t('show.lifelinesOff') : t('show.lifelinesOn')}</small>
+                </span>
+                <span className="show-switch" aria-hidden><span className="show-switch-knob" /></span>
+              </button>
+
+              <h3 className="show-setting-heading">{t('show.topicsTitle')}</h3>
+              <p className="show-setting-sub">{t('show.topicsHint')}</p>
               <div className="show-topic-chips">
                 {topics.map((tp) => (
                   <button
@@ -480,6 +549,17 @@ export default function ShowPage() {
             {q.source && <span className="show-source">POSCOMP {q.source.year}</span>}
           </div>
 
+          {(() => {
+            const pct = (timeLeft / QUESTION_SECONDS) * 100;
+            const level = timeLeft <= 15 ? 'danger' : timeLeft <= 45 ? 'warn' : 'ok';
+            return (
+              <div className={`show-timer show-timer--${level}`} role="timer" aria-label={t('show.timeLeft')}>
+                <div className="show-timer-track"><div className="show-timer-fill" style={{ width: `${reveal ? 100 : pct}%` }} /></div>
+                <span className="show-timer-count">{reveal ? '—' : `${timeLeft}s`}</span>
+              </div>
+            );
+          })()}
+
           <div className="card show-question-card">
             <p className="show-question">{q.question}</p>
           </div>
@@ -527,7 +607,7 @@ export default function ShowPage() {
           {reveal ? (
             <div className={`show-reveal ${reveal.correct ? 'is-correct' : 'is-wrong'}`}>
               <p className="show-reveal-verdict">
-                {reveal.correct ? t('show.correct') : t('show.wrong')}
+                {reveal.timedOut ? t('show.timeUp') : reveal.correct ? t('show.correct') : t('show.wrong')}
               </p>
               <p className="show-explanation">{reveal.explanation}</p>
               <button onClick={proceed} className="btn show-continue-btn">
@@ -536,6 +616,7 @@ export default function ShowPage() {
             </div>
           ) : (
             <div className="show-actions">
+              {run.usedLifelines.length < LIFELINES.length && (
               <div className="show-lifelines">
                 {LIFELINES.map(({ type, icon: Icon }) => {
                   const used = run.usedLifelines.includes(type);
@@ -553,6 +634,7 @@ export default function ShowPage() {
                   );
                 })}
               </div>
+              )}
               <button onClick={stop} disabled={submitting || run.currentStep === 1} className="btn btn-secondary show-stop-btn">
                 <HandCoins size={18} /> {t('show.stopWith', { prize: formatPrize(run.securedPrize) })}
               </button>
