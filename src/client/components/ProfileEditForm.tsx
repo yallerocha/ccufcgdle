@@ -317,28 +317,31 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
                   <span className="settings-lang-label">
                     <Languages size={18} style={{ color: 'var(--gold)' }} /> {t('profileEdit.languageLabel')}
                   </span>
-                  <div className="settings-lang-seg" role="group" aria-label={t('profileEdit.languageLabel')}>
-                    {(['pt', 'en'] as const).map((lng) => {
-                      const active = (i18n.language?.startsWith('en') ? 'en' : 'pt') === lng;
-                      return (
-                        <button
-                          key={lng}
-                          type="button"
-                          className={`settings-lang-btn${active ? ' is-on' : ''}`}
-                          aria-pressed={active}
-                          onClick={() => {
-                            i18n.changeLanguage(lng);
-                            try {
-                              localStorage.setItem(LANG_STORAGE_KEY, lng);
-                              document.documentElement.lang = lng;
-                            } catch { /* ignore */ }
-                          }}
-                        >
-                          {lng.toUpperCase()}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {(() => {
+                    const current = i18n.language?.startsWith('en') ? 'en' : 'pt';
+                    const next = current === 'en' ? 'pt' : 'en';
+                    return (
+                      <button
+                        type="button"
+                        className={`settings-lang-toggle${current === 'en' ? ' is-en' : ''}`}
+                        role="switch"
+                        aria-checked={current === 'en'}
+                        aria-label={t('profileEdit.languageLabel')}
+                        title={t('profileEdit.languageLabel')}
+                        onClick={() => {
+                          i18n.changeLanguage(next);
+                          try {
+                            localStorage.setItem(LANG_STORAGE_KEY, next);
+                            document.documentElement.lang = next;
+                          } catch { /* ignore */ }
+                        }}
+                      >
+                        <span className="settings-lang-opt">PT</span>
+                        <span className="settings-lang-opt">EN</span>
+                        <span className="settings-lang-knob" aria-hidden="true" />
+                      </button>
+                    );
+                  })()}
                 </div>
 
                 {(user.hasPassword ?? true) && (
