@@ -2,7 +2,6 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
-import { PROJECT_OTHER_NAME } from '../shared/validation.js';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -13,13 +12,6 @@ export const DEFAULT_ADMIN = {
   email: 'yalle.silva@ccc.ufcg.edu.br',
   password: 'Yalle@04112002',
   name: 'Yalle Rocha',
-  gender: 'Masculino',
-  role: 'Graduando',
-  entrySemester: '2021.2',
-  isColab: 'Não',
-  area: ['Sistemas Distribuídos / Redes'],
-  projects: [PROJECT_OTHER_NAME],
-  likesCoffee: 'Não',
 } as const;
 
 /**
@@ -42,13 +34,6 @@ export async function ensureDefaultAdmin(): Promise<void> {
       email: DEFAULT_ADMIN.email,
       passwordHash,
       name: DEFAULT_ADMIN.name,
-      gender: DEFAULT_ADMIN.gender,
-      role: DEFAULT_ADMIN.role,
-      entrySemester: DEFAULT_ADMIN.entrySemester,
-      isColab: DEFAULT_ADMIN.isColab,
-      area: [...DEFAULT_ADMIN.area],
-      projects: [...DEFAULT_ADMIN.projects],
-      likesCoffee: DEFAULT_ADMIN.likesCoffee,
       isAdmin: true,
       emailVerifiedAt: now,
       lastLogin: now,

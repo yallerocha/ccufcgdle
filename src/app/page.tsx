@@ -7,7 +7,6 @@ import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, S
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
-import { Logo } from '@/client/components/Logo';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { ShowResultModal } from '@/client/components/ShowResultModal';
@@ -229,36 +228,44 @@ export default function ShowPage() {
   // ── Intro / not playing ────────────────────────────────────────────────────
   if (!run || run.status !== 'playing') {
     return (
-      <div className="show-page fade-in">
+      <div className="show-page show-intro fade-in">
         <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
         {result && (
           <ShowResultModal run={result} onClose={() => setResult(null)} onPlayAgain={start} />
         )}
-        <section className="hero show-hero">
-          <Logo alt="O Show da Computação" style={{ width: '160px', maxWidth: '100%', marginBottom: '1rem' }} />
-          <h1 className="show-title"><Sparkles size={26} /> {t('show.title')}</h1>
-          <p style={{ textAlign: 'center', maxWidth: '620px', color: 'var(--text-muted)' }}>
-            {t('show.tagline')}
-          </p>
+
+        <section className="show-stage">
+          <div className="show-stage-rings" aria-hidden />
+          <div className="show-badge-lg" aria-hidden>
+            <img src="/osdc-icon.svg" alt="" width={92} height={92} />
+          </div>
+          <h1 className="show-title">{t('show.title')}</h1>
+          <p className="show-tagline">{t('show.tagline')}</p>
+          <div className="show-prize-target">
+            <Sparkles size={16} />
+            <span>{t('show.topPrizeLabel')}</span>
+            <strong>R$ 1.000.000</strong>
+          </div>
+
+          {user ? (
+            <button onClick={start} disabled={starting} className="btn show-start-btn">
+              <Play size={22} /> {starting ? t('show.starting') : t('show.start')}
+            </button>
+          ) : (
+            <Link href="/profile" className="btn show-start-btn">
+              <Play size={22} /> {t('show.loginToPlay')}
+            </Link>
+          )}
         </section>
 
         <div className="card show-intro-card">
-          <h2 className="card-title"><Trophy size={20} style={{ color: 'var(--primary)' }} /> {t('show.howToTitle')}</h2>
+          <h2 className="card-title"><Trophy size={20} /> {t('show.howToTitle')}</h2>
           <ul className="show-rules">
             <li>{t('show.rule1')}</li>
             <li>{t('show.rule2')}</li>
             <li>{t('show.rule3')}</li>
             <li>{t('show.rule4')}</li>
           </ul>
-          {user ? (
-            <button onClick={start} disabled={starting} className="btn show-start-btn">
-              <Play size={20} /> {starting ? t('show.starting') : t('show.start')}
-            </button>
-          ) : (
-            <Link href="/profile" className="btn show-start-btn">
-              <Play size={20} /> {t('show.loginToPlay')}
-            </Link>
-          )}
         </div>
       </div>
     );

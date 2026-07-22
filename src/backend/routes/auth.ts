@@ -3,8 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../../server/db';
 import { signToken } from '../../server/auth';
 import { requireAuth } from '../middleware/auth';
-import { validateCharacterFields, validateCharacterFieldValues, validatePhoto, isAllowedEmailDomain, isStrongPassword, validateDisplayName, formatAllowedEmailDomains } from '../../shared/validation';
-import { getAllowedProjectNames } from '../../server/projects';
+import { validatePhoto, isAllowedEmailDomain, isStrongPassword, validateDisplayName, formatAllowedEmailDomains } from '../../shared/validation';
 import { isEmailVerified, issueVerificationToken, consumeVerificationToken, findUnverifiedUserByEmail } from '../../server/email-verification';
 import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../../server/email-verification-config';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../../server/email';
@@ -181,13 +180,6 @@ router.post('/google', async (req, res) => {
           email: profile.email,
           googleId: profile.googleId,
           name,
-          gender: '',
-          role: '',
-          entrySemester: '',
-          isColab: '',
-          area: [],
-          projects: [],
-          likesCoffee: '',
           photoUrl: photoDataUrl,
           lastLogin: new Date(),
           isActive: true,
@@ -303,13 +295,6 @@ router.post('/register', async (req, res) => {
         email: email.toLowerCase(),
         passwordHash,
         name,
-        gender: '',
-        role: '',
-        entrySemester: '',
-        isColab: '',
-        area: [],
-        projects: [],
-        likesCoffee: '',
         photoUrl: photoUrl || null,
         lastLogin: new Date(),
         isActive: true,
@@ -563,18 +548,7 @@ router.get('/me', requireAuth, async (req, res) => {
 // PUT /api/auth/me — updates the authenticated user's game attributes.
 router.put('/me', requireAuth, async (req, res) => {
   try {
-    const {
-      name,
-      gender,
-      role,
-      entrySemester,
-      isColab,
-      area,
-      projects,
-      likesCoffee,
-      photoUrl,
-      complete,
-    } = req.body ?? {};
+    const { name, photoUrl } = req.body ?? {};
 
     const current = await prisma.user.findUnique({
       where: { id: req.auth!.userId },
@@ -605,45 +579,18 @@ router.put('/me', requireAuth, async (req, res) => {
       nextName = trimmed;
     }
 
-    const photoUnchanged = photoUrl !== undefined && (photoUrl || '') === (current.photoUrl || '');
-
-    const merged = {
-      gender: typeof gender === 'string' ? gender : current.gender,
-      role: typeof role === 'string' ? role : current.role,
-      entrySemester: typeof entrySemester === 'string' ? entrySemester : current.entrySemester,
-      isColab: typeof isColab === 'string' ? isColab : current.isColab,
-      area: Array.isArray(area) ? area : current.area,
-      projects: Array.isArray(projects) ? projects : current.projects,
-      likesCoffee: typeof likesCoffee === 'string' ? likesCoffee : current.likesCoffee,
-      photoUrl: photoUrl !== undefined ? photoUrl : current.photoUrl,
-    };
-
-    const allowedProjects = await getAllowedProjectNames();
-    const fieldError = complete
-      ? validateCharacterFields(
-          { ...merged, photoUrl: photoUnchanged ? null : merged.photoUrl },
-          { allowedProjects },
-        )
-      : validateCharacterFieldValues(
-          { ...merged, photoUrl: photoUnchanged ? null : merged.photoUrl },
-          { allowedProjects },
-        );
-    if (fieldError) {
-      return res.status(400).json({ error: fieldError });
+    if (photoUrl !== undefined) {
+      const photoError = validatePhoto(photoUrl);
+      if (photoError) {
+        return res.status(400).json({ error: photoError });
+      }
     }
 
     const updatedUser = await prisma.user.update({
       where: { id: req.auth!.userId },
       data: {
         name: nextName,
-        gender: merged.gender,
-        role: merged.role,
-        entrySemester: merged.entrySemester,
-        isColab: merged.isColab,
-        area: merged.area,
-        projects: merged.projects,
-        likesCoffee: merged.likesCoffee,
-        ...(photoUrl !== undefined ? { photoUrl: merged.photoUrl } : {}),
+        ...(photoUrl !== undefined ? { photoUrl: photoUrl || null } : {}),
         lastLogin: new Date(),
       },
     });

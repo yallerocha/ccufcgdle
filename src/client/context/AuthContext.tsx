@@ -7,13 +7,6 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  gender: string;
-  role: string;
-  entrySemester: string;
-  isColab: string;
-  area: string[];
-  projects: string[];
-  likesCoffee: string;
   lastLogin: string;
   isActive: boolean;
   isAdmin: boolean;

@@ -12,15 +12,6 @@ model User {
   passwordHash     String?
   googleId         String?          @unique
   name             String           @unique // Player's display name / nickname
-
-  // Profile attributes (community directory)
-  gender           String           // "Masculino", "Feminino", "Outro"
-  role             String           // "Professor", "Graduando", "Mestrando", "Doutorando", "Pesquisador", "Funcionário"
-  entrySemester    String           // e.g. "2020.1", "2023.2", "Antes de 2018"
-  isColab          String           // "Sim", "Não" — se a pessoa é do Colabs
-  area             String[]         // Áreas de interesse (multivalor)
-  projects         String[]         // Um único projeto do usuário (armazenado como array de 1)
-  likesCoffee      String           // "Sim", "Não", "Só energético"
   photoUrl         String?          // Base64 data URL or photo URL
 
   // Metadata & Activity Tracking
@@ -32,7 +23,6 @@ model User {
   updatedAt        DateTime         @updatedAt
 
   showRuns         ShowRun[]
-  createdProjects  Project[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
 }
@@ -57,17 +47,6 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
-}
-
-// Catalog of research projects/lines. Users pick from this list (and may
-// propose new entries). `User.projects` stores the selected names; member counts
-// are derived by aggregating active users' project arrays.
-model Project {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  createdById String?
-  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
 }
 
 // Simple key/value store for admin-tunable runtime settings (e.g. whether the

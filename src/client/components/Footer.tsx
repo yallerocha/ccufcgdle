@@ -16,16 +16,9 @@ export default function Footer() {
         position: 'relative'
       }}
     >
-      {/* Faixa colorida sólida baseada na logo */}
-      <div style={{ display: 'flex', height: '8px', width: '100%' }}>
-        <div style={{ flex: 1, backgroundColor: 'var(--brand-teal)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--brand-blue)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--brand-purple)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--brand-magenta)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--brand-red)' }}></div>
-        <div style={{ flex: 1, backgroundColor: 'var(--brand-orange)' }}></div>
-      </div>
-      
+      {/* Faixa dourada do estúdio */}
+      <div className="brand-gradient-bg" style={{ height: '4px', width: '100%' }} />
+
       <div className="site-footer-content">
         <p>
           {t('footer.line1')}

@@ -96,6 +96,7 @@ export const pt = {
     tagline: 'O Show do Milhão da computação: responda perguntas do POSCOMP de dificuldade crescente, use suas ajudas e tente chegar ao R$ 1.000.000.',
     loading: 'Carregando o show...',
     howToTitle: 'Como jogar',
+    topPrizeLabel: 'Prêmio máximo',
     rule1: 'São 15 perguntas de computação com prêmio crescente até R$ 1.000.000.',
     rule2: 'Cada resposta certa sobe um degrau. Errou, a partida acaba.',
     rule3: 'Há "portas" de garantia: passando o degrau 5 você leva ao menos R$ 5.000, e passando o 10, ao menos R$ 50.000.',

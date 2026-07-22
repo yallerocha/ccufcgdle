@@ -6,7 +6,6 @@ import authRouter from './routes/auth';
 import showRouter from './routes/show';
 import communityRouter from './routes/community';
 import adminRouter from './routes/admin';
-import { bootstrapProjectCatalog } from '../server/projects';
 import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../server/email-verification-config';
 import { isSmtpConfigured } from '../server/mail-transport';
 
@@ -70,15 +69,7 @@ app.use('/api/show', showRouter);
 app.use('/api/community', communityRouter);
 app.use('/api/admin', adminRouter);
 
-async function start() {
-  try {
-    const count = await bootstrapProjectCatalog();
-    console.log(`[api] Project catalog ready (${count} entries).`);
-  } catch (err) {
-    console.error('[api] Failed to sync project catalog:', err);
-    process.exit(1);
-  }
-
+function start() {
   app.listen(PORT, () => {
     console.log(`[api] listening on ${PORT} (CORS: ${CORS_ORIGIN || '*'})`);
     const emailOn = isEmailVerificationRequired();

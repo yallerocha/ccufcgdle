@@ -3,31 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Clock, Camera, Save, AlertTriangle, Settings2, Trash2, FolderGit2, Layers, KeyRound, User as UserIcon, Briefcase, CalendarDays, Users, Coffee, Lock, LockKeyhole } from 'lucide-react';
+import { Camera, Save, AlertTriangle, Settings2, Trash2, KeyRound, User as UserIcon, Lock, LockKeyhole } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { User } from '@/client/context/AuthContext';
-import { INACTIVITY_DAYS } from '@/shared/utils';
 import { isStrongPassword } from '@/shared/validation';
 import { apiFetch, setToken } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
 import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { Toast } from '@/client/components/Toast';
 import { PasswordInput } from '@/client/components/PasswordInput';
-import { AreaPicker } from '@/client/components/AreaPicker';
-import { ProjectPicker } from '@/client/components/ProjectPicker';
-
-const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'];
-const ROLE_OPTIONS = ['Professor', 'Graduando', 'Mestrando', 'Doutorando', 'Pesquisador', 'Funcionário'];
-const ENTRY_OPTIONS = [
-  'Antes de 2018',
-  '2018.1', '2018.2', '2019.1', '2019.2',
-  '2020.1', '2020.2', '2021.1', '2021.2',
-  '2022.1', '2022.2', '2023.1', '2023.2',
-  '2024.1', '2024.2', '2025.1', '2025.2',
-  '2026.1'
-];
-const COLAB_OPTIONS = ['Sim', 'Não'];
-const COFFEE_OPTIONS = ['Sim', 'Não'];
 
 interface ProfileEditFormProps {
   user: User;
@@ -37,14 +21,6 @@ interface ProfileEditFormProps {
 export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const { t } = useTranslation();
   const [name, setName] = useState(user.name);
-  const [gender, setGender] = useState(user.gender);
-  const [role, setRole] = useState(user.role);
-  const [entrySemester, setEntrySemester] = useState(user.entrySemester);
-  const [isColab, setIsColab] = useState(user.isColab);
-  const [area, setArea] = useState<string[]>(user.area ?? []);
-  const [projects, setProjects] = useState<string[]>(user.projects?.slice(0, 1) ?? []);
-
-  const [likesCoffee, setLikesCoffee] = useState(user.likesCoffee);
   const [photoUrl, setPhotoUrl] = useState(user.photoUrl || '');
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [photoMsg, setPhotoMsg] = useState('');
@@ -62,43 +38,20 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [changingPassword, setChangingPassword] = useState(false);
 
   const router = useRouter();
-  // Pending navigation held back by the unsaved-changes guard, surfaced through
-  // the confirmation modal. `null` means no prompt is open.
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     setName(user.name);
-    setGender(user.gender);
-    setRole(user.role);
-    setEntrySemester(user.entrySemester);
-    setIsColab(user.isColab);
-    setArea(user.area ?? []);
-    setProjects(user.projects?.slice(0, 1) ?? []);
-    setLikesCoffee(user.likesCoffee);
     setPhotoUrl(user.photoUrl || '');
   }, [user]);
 
-  // True when the form differs from the saved user (so we know to warn on exit).
-  const isDirty =
-    name !== user.name ||
-    gender !== user.gender ||
-    role !== user.role ||
-    entrySemester !== user.entrySemester ||
-    isColab !== user.isColab ||
-    area.length !== (user.area?.length ?? 0) ||
-    area.some((a) => !(user.area ?? []).includes(a)) ||
-    likesCoffee !== user.likesCoffee ||
-    projects.length !== (user.projects?.length ?? 0) ||
-    projects.some((p) => !(user.projects ?? []).includes(p));
-
-  // Keep the latest dirty flag in a ref so the (once-registered) DOM listeners
-  // always read the current value.
+  // Photo saves immediately, so the only unsaved change is the name.
+  const isDirty = name !== user.name;
   const dirtyRef = useRef(isDirty);
   dirtyRef.current = isDirty;
 
-  // Warn on full-page exits (closing the tab, reload, external navigation).
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!dirtyRef.current) return;
@@ -109,8 +62,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, []);
 
-  // Intercept in-app navigation (clicks on <a>/<Link>) while there are unsaved
-  // changes, so we can show the confirmation modal instead of leaving.
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (!dirtyRef.current) return;
@@ -119,7 +70,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
       if (!anchor) return;
       const href = anchor.getAttribute('href');
       if (!href || href.startsWith('#') || anchor.target === '_blank') return;
-      // Don't intercept clicks within the profile page itself.
       if (href === window.location.pathname) return;
       e.preventDefault();
       setPendingHref(href);
@@ -131,7 +81,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const confirmLeave = () => {
     const href = pendingHref;
     setPendingHref(null);
-    dirtyRef.current = false; // allow the navigation through
+    dirtyRef.current = false;
     if (href) router.push(href);
   };
 
@@ -140,23 +90,13 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     setPhotoMsg(msg);
   };
 
-  // Photo saves immediately so it never blocks navigation or the attribute form.
   const savePhotoImmediately = async (nextPhotoUrl: string) => {
     setSavingPhoto(true);
     setPhotoMsg('');
     try {
       const res = await apiFetch('/api/auth/me', {
         method: 'PUT',
-        body: JSON.stringify({
-          gender: user.gender,
-          role: user.role,
-          entrySemester: user.entrySemester,
-          isColab: user.isColab,
-          area: user.area ?? [],
-          projects: user.projects?.slice(0, 1) ?? [],
-          likesCoffee: user.likesCoffee,
-          photoUrl: nextPhotoUrl,
-        }),
+        body: JSON.stringify({ photoUrl: nextPhotoUrl }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -203,7 +143,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     try {
       const res = await apiFetch('/api/auth/me', {
         method: 'PUT',
-        body: JSON.stringify({ name: name.trim(), gender, role, entrySemester, isColab, area, projects, likesCoffee, photoUrl })
+        body: JSON.stringify({ name: name.trim() }),
       });
       const data = await res.json();
       setSubmitting(false);
@@ -213,7 +153,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         dirtyRef.current = false;
         refreshUser();
       } else { setErrorMsg(data.error || t('profileEdit.error')); }
-    } catch (err) { setSubmitting(false); setErrorMsg(t('profileEdit.errorConn')); }
+    } catch { setSubmitting(false); setErrorMsg(t('profileEdit.errorConn')); }
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -260,9 +200,8 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
   return (
     <div className="profile-page fade-in">
-      {/* Hero: banner + avatar + name + status */}
+      {/* Hero: avatar + name */}
       <div className="card profile-hero">
-        <div className="profile-hero-banner brand-gradient-bg" />
         <div className="profile-hero-body">
           <div className="profile-avatar-wrap">
             {photoUrl ? (
@@ -292,33 +231,19 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
             )}
           </div>
 
-          <Toast
-            message={photoMsg}
-            type={photoMsgType}
-            onClose={() => setPhotoMsg('')}
-          />
+          <Toast message={photoMsg} type={photoMsgType} onClose={() => setPhotoMsg('')} />
 
           <div className="profile-hero-info">
             <h2 className="profile-hero-name">{name}</h2>
-            <span className="badge badge-active">{t('profileEdit.activeBadge')}</span>
           </div>
-
-          <p className="profile-hero-status">
-            {t('profileEdit.statusBody', { name, days: INACTIVITY_DAYS })}
-          </p>
-
         </div>
       </div>
 
-      {/* Attributes form */}
+      {/* Name */}
       <div className="card">
         <h2 className="card-title">
           <Settings2 size={22} style={{ color: 'var(--primary)' }} /> {t('profileEdit.attrTitle')}
         </h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{t('profileEdit.attrSubtitle')}</p>
-        <p className="profile-change-note">
-          <Clock size={14} style={{ flexShrink: 0 }} /> {t('profileEdit.changeNote')}
-        </p>
 
         <Toast
           message={errorMsg || successMsg}
@@ -342,57 +267,6 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
               required
             />
             <span className="profile-field-hint">{t('profileEdit.nameHint')}</span>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="profile-field-label">
-                <UserIcon size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.genderLabel')}
-              </label>
-              <select value={gender} onChange={(e) => setGender(e.target.value)}>{GENDER_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
-            </div>
-            <div className="form-group">
-              <label className="profile-field-label">
-                <Briefcase size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.roleLabel')}
-              </label>
-              <select value={role} onChange={(e) => setRole(e.target.value)}>{ROLE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="profile-field-label">
-                <CalendarDays size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.entryLabel')}
-              </label>
-              <select value={entrySemester} onChange={(e) => setEntrySemester(e.target.value)}>{ENTRY_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
-            </div>
-            <div className="form-group">
-              <label className="profile-field-label">
-                <Users size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.colabsLabel')}
-              </label>
-              <select value={isColab} onChange={(e) => setIsColab(e.target.value)}>{COLAB_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
-            </div>
-          </div>
-
-          <div className="profile-projects-section">
-            <label className="profile-field-label">
-              <Layers size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.areaLabel')}
-            </label>
-            <AreaPicker selected={area} onChange={setArea} />
-          </div>
-
-          <div className="profile-projects-section">
-            <label className="profile-field-label">
-              <FolderGit2 size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.labLabel')}
-            </label>
-            <p className="profile-field-hint">{t('projects.singleHint')}</p>
-            <ProjectPicker selected={projects} onChange={setProjects} savedProjects={user.projects?.slice(0, 1) ?? []} allowCreate />
-          </div>
-
-          <div className="form-group">
-            <label className="profile-field-label">
-              <Coffee size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.coffeeLabel')}
-            </label>
-            <select value={likesCoffee} onChange={(e) => setLikesCoffee(e.target.value)}>{COFFEE_OPTIONS.map(o => <option key={o}>{o}</option>)}</select>
           </div>
 
           <div className="profile-save-bar">

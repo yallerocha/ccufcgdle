@@ -1,4 +1,3 @@
-export const INACTIVITY_DAYS = 30;
 
 export function getLocalDateString(date?: Date): string {
   const d = date ?? new Date();

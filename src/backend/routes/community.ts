@@ -1,9 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../../server/db';
 import { computeLeaderboard } from '../../server/score';
-import { createProject, listProjectsWithCounts } from '../../server/projects';
 import { LADDER_SIZE } from '../../server/show';
-import { requireAuth } from '../middleware/auth';
 
 // Community/infra endpoints shared by the members directory, the podium and the
 // registration/profile flow. Not part of the game itself, hence its own router.
@@ -80,38 +78,5 @@ router.get('/members/:id/stats', async (req, res) => {
   }
 });
 
-// GET /api/community/projects — catalog with how many active members chose each.
-router.get('/projects', async (_req, res) => {
-  try {
-    const projects = await listProjectsWithCounts();
-    return res.json({ projects });
-  } catch (error) {
-    console.error('Error loading projects:', error);
-    return res.status(500).json({ error: 'Erro ao carregar os projetos.' });
-  }
-});
-
-// POST /api/community/projects — authenticated users may propose a new project.
-router.post('/projects', requireAuth, async (req, res) => {
-  try {
-    const { name } = req.body ?? {};
-    if (typeof name !== 'string' || name.trim() === '') {
-      return res.status(400).json({ error: 'Informe o nome do projeto.' });
-    }
-    const result = await createProject(name, req.auth!.userId);
-    if ('error' in result) {
-      return res.status(400).json({ error: result.error });
-    }
-    const projects = await listProjectsWithCounts();
-    const entry = projects.find((p) => p.id === result.project.id);
-    return res.status(result.created ? 201 : 200).json({
-      project: entry ?? { ...result.project, memberCount: 0 },
-      created: result.created,
-    });
-  } catch (error) {
-    console.error('Error creating project:', error);
-    return res.status(500).json({ error: 'Erro ao criar o projeto.' });
-  }
-});
 
 export default router;

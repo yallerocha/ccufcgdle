@@ -100,6 +100,7 @@ export const en: Dictionary = {
     tagline: "Computer science's 'Who Wants to Be a Millionaire': answer POSCOMP questions of increasing difficulty, use your lifelines and try to reach R$ 1,000,000.",
     loading: 'Loading the show...',
     howToTitle: 'How to play',
+    topPrizeLabel: 'Top prize',
     rule1: '15 computer-science questions with a growing prize up to R$ 1,000,000.',
     rule2: 'Each correct answer climbs one rung. A wrong answer ends the run.',
     rule3: 'There are safety nets: clearing step 5 guarantees at least R$ 5,000, and clearing step 10 at least R$ 50,000.',
