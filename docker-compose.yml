@@ -38,8 +38,10 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ccdle}?schema=public
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET nao definido. Copie .env.example para .env e defina um valor.}
       PORT: 3001
-      # Origem do front liberada no CORS
-      CORS_ORIGIN: http://localhost:${WEB_PORT:-3003}
+      # Origem do front liberada no CORS. "*" por padrão para permitir acesso
+      # de qualquer dispositivo na rede local (cada um acessa por um IP/host
+      # diferente); defina um valor explícito no .env para restringir.
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
       APP_URL: http://localhost:${WEB_PORT:-3003}
       ENSURE_DEFAULT_ADMIN: "true"
       ALLOW_LOCAL_SEED: "true"
@@ -59,14 +61,17 @@ services:
       mailpit:
         condition: service_started
 
-  # Frontend Next.js (UI only) — chama a API pelo browser via NEXT_PUBLIC_API_URL
+  # Frontend Next.js (UI only) — chama a API pelo browser usando o mesmo
+  # host/IP da página + NEXT_PUBLIC_API_PORT (ver NEXT_PUBLIC_API_PORT abaixo)
   web:
     build:
       context: .
       dockerfile: Dockerfile.web
       args:
-        # URL da API acessível pelo BROWSER (não o hostname interno do Docker)
-        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3001}
+        # Porta da API; o host/IP é resolvido em tempo de execução no browser
+        # a partir do endereço usado para abrir a página (funciona tanto em
+        # localhost quanto acessando pelo IP da máquina na rede local).
+        NEXT_PUBLIC_API_PORT: ${API_PORT:-3001}
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
     container_name: ccdle-web
     restart: always

@@ -1,8 +1,20 @@
 'use client';
 
-// Base URL of the standalone backend. Inlined at build time by Next, so it must
-// be the URL reachable from the browser (e.g. http://localhost:3001).
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+// Base URL of the standalone backend. NEXT_PUBLIC_API_URL is inlined at build
+// time and takes precedence when set (Vercel, custom domains). Otherwise, if
+// NEXT_PUBLIC_API_PORT is set (Docker/LAN local dev), the API host is derived
+// from whatever hostname/IP the browser used to load the page, so the app
+// works from any machine on the local network without hardcoding an IP.
+function resolveApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  const apiPort = process.env.NEXT_PUBLIC_API_PORT;
+  if (apiPort && typeof window !== 'undefined') {
+    return `${window.location.protocol}//${window.location.hostname}:${apiPort}`;
+  }
+  return '';
+}
+
+const API_BASE = resolveApiBase();
 
 const TOKEN_KEY = 'show_token';
 

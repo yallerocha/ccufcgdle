@@ -18,10 +18,15 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# NEXT_PUBLIC_* vars are inlined at build time, so the backend URL the browser
-# will call must be provided here as a build arg.
+# NEXT_PUBLIC_* vars are inlined at build time. NEXT_PUBLIC_API_URL pins an
+# exact backend URL (Vercel/custom domains). For Docker/LAN local dev, leave
+# it unset and pass NEXT_PUBLIC_API_PORT instead: the browser then derives the
+# API host from whatever hostname/IP was used to load the page, so the same
+# image works from localhost and from any machine on the local network.
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_API_PORT
+ENV NEXT_PUBLIC_API_PORT=$NEXT_PUBLIC_API_PORT
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
