@@ -24,6 +24,7 @@ interface ShowQuestion {
   step: number;
   totalSteps: number;
   area: string;
+  topic: string;
   question: string;
   options: string[];
   difficulty: number;
@@ -94,6 +95,29 @@ export default function ShowPage() {
   useEffect(() => setMuted(isMuted()), []);
   useEffect(() => () => stopMusic(), []);
 
+  // Question-theme picker (intro): all topics start selected; a strict subset
+  // is sent to /start, everything else means "all".
+  const [topics, setTopics] = useState<{ id: string; count: number }[]>([]);
+  const [chosen, setChosen] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    apiFetch('/api/show/topics')
+      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
+      .then((data: { topics: { id: string; count: number }[] }) => {
+        setTopics(data.topics);
+        setChosen(new Set(data.topics.map((tp) => tp.id)));
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleTopic = (id: string) => {
+    setChosen((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   // Per-question lifeline UI state (reset when the question changes).
   const [hidden, setHidden] = useState<number[]>([]);
   const [audience, setAudience] = useState<number[] | null>(null);
@@ -132,7 +156,13 @@ export default function ShowPage() {
     setTransition(null);
     resetQuestionAids();
     try {
-      const res = await apiFetch('/api/show/start', { method: 'POST' });
+      // Send topics only when a strict, non-empty subset is picked (= filter on).
+      const body =
+        chosen.size > 0 && chosen.size < topics.length ? { topics: [...chosen] } : {};
+      const res = await apiFetch('/api/show/start', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
       const data = await res.json();
       if (res.ok) {
         setRun(data);
@@ -147,7 +177,7 @@ export default function ShowPage() {
     } finally {
       setStarting(false);
     }
-  }, [t]);
+  }, [t, chosen, topics.length]);
 
   // Step 1: pick an option (reversible). Step 2 (confirmAnswer) locks it in.
   const pick = (index: number) => {
@@ -319,6 +349,26 @@ export default function ShowPage() {
             <li>{t('show.rule3')}</li>
             <li>{t('show.rule4')}</li>
           </ul>
+
+          {topics.length > 0 && (
+            <div className="show-topics">
+              <h3 className="show-topics-title"><Sparkles size={14} /> {t('show.topicsTitle')}</h3>
+              <div className="show-topic-chips">
+                {topics.map((tp) => (
+                  <button
+                    key={tp.id}
+                    type="button"
+                    className={`show-topic-chip${chosen.has(tp.id) ? ' is-on' : ''}`}
+                    aria-pressed={chosen.has(tp.id)}
+                    onClick={() => toggleTopic(tp.id)}
+                  >
+                    {tp.id} <span className="count">{tp.count}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="show-topics-hint">{t('show.topicsHint')}</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -357,7 +407,7 @@ export default function ShowPage() {
         <div className="show-main">
           <div className="show-qmeta">
             <span className="show-step">{t('show.stepOf', { step: q.step, total: q.totalSteps })}</span>
-            <span className="show-area">{q.area}</span>
+            <span className="show-area">{q.topic}</span>
             {q.source && <span className="show-source">POSCOMP {q.source.year}</span>}
             <span className="show-worth">
               {t('show.worthLabel')} <strong>{formatPrize(run.ladder[run.currentStep - 1])}</strong>

@@ -11,16 +11,29 @@ import {
   type LifelineType,
 } from '../../server/show';
 import { requireAuth } from '../middleware/auth';
+import { QUIZ_QUESTIONS, TOPICS } from '../../server/quiz-questions';
 
 // O Show da Computação — the whole run is server-authoritative (see server/show.ts),
 // so playing requires a logged-in user and the score is derived here, never sent
 // by the client.
 const router = Router();
 
-// POST /api/show/start — begin a new run.
+// GET /api/show/topics — question themes with counts (for the pre-run picker).
+router.get('/topics', (_req, res) => {
+  const counts: Record<string, number> = {};
+  for (const q of QUIZ_QUESTIONS) counts[q.topic] = (counts[q.topic] ?? 0) + 1;
+  return res.json({ topics: TOPICS.map((id) => ({ id, count: counts[id] ?? 0 })) });
+});
+
+// POST /api/show/start — begin a new run. Optional { topics: string[] } filters
+// the question themes (topped up from the rest when they can't fill the ladder).
 router.post('/start', requireAuth, async (req, res) => {
   try {
-    const run = await startRun(req.auth!.userId);
+    const raw = req.body?.topics;
+    const topics = Array.isArray(raw)
+      ? raw.filter((x): x is string => typeof x === 'string' && TOPICS.includes(x)).slice(0, 24)
+      : undefined;
+    const run = await startRun(req.auth!.userId, topics);
     return res.json(run);
   } catch (error) {
     console.error('Error starting show run:', error);

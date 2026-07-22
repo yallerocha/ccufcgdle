@@ -4580,3 +4580,128 @@ input:focus, select:focus, textarea:focus {
   -webkit-mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
   mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
 }
+
+/* ── Navbar: marquee treatment to match the stage ─────────────────────────── */
+.navbar {
+  background: linear-gradient(180deg, rgba(4, 9, 26, 0.96), rgba(6, 12, 34, 0.82)) !important;
+}
+.navbar-content {
+  padding: 0.65rem 0;
+}
+/* Uppercase, letter-spaced show-style links; gold underline lights up */
+.nav-links--desktop .nav-link {
+  position: relative;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  color: #93a6d6;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+}
+.nav-links--desktop .nav-link::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  bottom: 1px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  transition: left 0.18s ease, right 0.18s ease;
+}
+.nav-links--desktop .nav-link:hover {
+  color: #f2f6ff;
+  background: none;
+}
+.nav-links--desktop .nav-link:hover::after {
+  left: 10%;
+  right: 10%;
+}
+.nav-links--desktop .nav-link.active {
+  color: var(--gold);
+  background: none;
+  text-shadow: 0 0 14px rgba(255, 210, 74, 0.45);
+}
+.nav-links--desktop .nav-link.active::after {
+  left: 10%;
+  right: 10%;
+  box-shadow: 0 0 10px rgba(255, 210, 74, 0.6);
+}
+/* Sign-in CTA: the gold stage button */
+.nav-links--desktop .nav-link-cta {
+  background: linear-gradient(180deg, #ffe27a, var(--gold-deep)) !important;
+  color: #1a1200 !important;
+  box-shadow: 0 6px 18px -6px rgba(255, 210, 74, 0.6);
+}
+.nav-links--desktop .nav-link-cta::after { display: none; }
+.nav-links--desktop .nav-link-cta:hover { filter: brightness(1.05); }
+/* Language pill matches the studio chrome */
+.theme-toggle {
+  background: rgba(10, 22, 60, 0.6);
+  border-color: rgba(120, 160, 255, 0.18);
+}
+.theme-toggle:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Question-theme picker (intro) ────────────────────────────────────────── */
+.show-topics {
+  margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(120, 160, 255, 0.12);
+}
+.show-topics-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 0.7rem;
+}
+.show-topic-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+}
+.show-topic-chip {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 160, 255, 0.2);
+  background: rgba(10, 22, 60, 0.5);
+  color: var(--sc-muted, #93a6d6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+.show-topic-chip:hover {
+  border-color: var(--tech);
+  transform: translateY(-1px);
+}
+.show-topic-chip.is-on {
+  border-color: rgba(255, 210, 74, 0.55);
+  background: rgba(255, 210, 74, 0.12);
+  color: #ffe9a8;
+}
+.show-topic-chip .count {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  opacity: 0.6;
+  margin-left: 0.25rem;
+}
+.show-topic-chip:focus-visible {
+  outline: 2px solid var(--tech);
+  outline-offset: 2px;
+}
+.show-topics-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: center;
+}

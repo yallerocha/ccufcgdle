@@ -128,6 +128,8 @@ export const pt = {
     errorGeneric: 'Algo deu errado. Tente novamente.',
     worthLabel: 'Valendo',
     finalAnswer: 'Resposta final: {{letter}}!',
+    topicsTitle: 'Temas das perguntas',
+    topicsHint: 'Se os temas marcados não somarem 15 perguntas, completamos com os demais.',
     soundOn: 'Ativar som',
     soundOff: 'Silenciar',
     transitionPhrases: [

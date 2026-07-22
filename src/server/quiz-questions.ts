@@ -23,9 +23,11 @@ export interface QuizQuestion {
   // prize ladder from easy to hard. Assigned per id in DIFFICULTY_BY_ID below;
   // absent ids default to 3. Values are an initial estimate, refinable later.
   difficulty: number;
+  // Fine-grained theme (players can filter runs by it) — see TOPIC_BY_ID below.
+  topic: string;
 }
 
-const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty'>[] = [
+const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty' | 'topic'>[] = [
   // ── Matemática — lógica e conceitos (POSCOMP) ──────────────────────────────
   // Somente questões teóricas/conceituais (lógica, quantificadores). Questões de
   // cálculo (determinantes, limites, integrais, combinatória, geometria
@@ -719,10 +721,52 @@ const DIFFICULTY_BY_ID: Record<string, number> = {
   'tec-2024-58': 2,
 };
 
+// Fine-grained theme per question (players can filter the run by these). Same
+// compact-map pattern as DIFFICULTY_BY_ID; unlisted ids fall into 'Outros'.
+const TOPIC_BY_ID: Record<string, string> = {
+  // Lógica
+  'mat-2019-15': 'Lógica', 'mat-2022-11': 'Lógica', 'mat-2019-12': 'Lógica', 'mat-2024-13': 'Lógica',
+  // Algoritmos e Complexidade
+  'fun-2019-21': 'Algoritmos e Complexidade', 'fun-2019-22': 'Algoritmos e Complexidade',
+  'fun-2019-24': 'Algoritmos e Complexidade', 'fun-2019-25': 'Algoritmos e Complexidade',
+  'fun-2010-27': 'Algoritmos e Complexidade', 'fun-2022-21': 'Algoritmos e Complexidade',
+  'fun-2022-22': 'Algoritmos e Complexidade', 'fun-2022-26': 'Algoritmos e Complexidade',
+  'fun-2024-22': 'Algoritmos e Complexidade', 'fun-2024-23': 'Algoritmos e Complexidade',
+  'fun-2022-25': 'Algoritmos e Complexidade', 'fun-2024-21': 'Algoritmos e Complexidade',
+  // Estruturas de Dados
+  'fun-2019-23': 'Estruturas de Dados', 'fun-2010-21': 'Estruturas de Dados',
+  'fun-2010-26': 'Estruturas de Dados', 'fun-2024-24': 'Estruturas de Dados',
+  'fun-2022-24': 'Estruturas de Dados',
+  // Teoria da Computação (inclui grafos)
+  'fun-2010-50': 'Teoria da Computação', 'fun-2010-46': 'Teoria da Computação', 'fun-2024-48': 'Teoria da Computação',
+  // Programação e Compiladores
+  'fun-2022-28': 'Programação e Compiladores', 'fun-2024-25': 'Programação e Compiladores', 'tec-2024-54': 'Programação e Compiladores',
+  // Sistemas Operacionais e Arquitetura
+  'tec-2022-50': 'SO e Arquitetura', 'tec-2019-45': 'SO e Arquitetura', 'tec-2019-46': 'SO e Arquitetura',
+  'tec-2022-46': 'SO e Arquitetura', 'tec-2019-43': 'SO e Arquitetura',
+  // Redes
+  'tec-2019-54': 'Redes', 'tec-2019-60': 'Redes', 'tec-2022-54': 'Redes',
+  // Banco de Dados
+  'tec-2010-47': 'Banco de Dados', 'tec-2010-49': 'Banco de Dados', 'tec-2024-51': 'Banco de Dados',
+  'tec-2024-52': 'Banco de Dados', 'tec-2024-53': 'Banco de Dados',
+  // IA e Ciência de Dados
+  'tec-2019-52': 'IA e Dados', 'tec-2022-52': 'IA e Dados',
+  // Sistemas Distribuídos
+  'tec-2019-64': 'Sistemas Distribuídos', 'tec-2019-62': 'Sistemas Distribuídos',
+  // Computação Gráfica
+  'tec-2019-57': 'Computação Gráfica', 'tec-2019-58': 'Computação Gráfica', 'tec-2019-61': 'Computação Gráfica',
+  // Engenharia de Software
+  'tec-2024-59': 'Engenharia de Software', 'tec-2024-58': 'Engenharia de Software',
+};
+
 export const QUIZ_QUESTIONS: QuizQuestion[] = RAW_QUESTIONS.map((q) => ({
   ...q,
   difficulty: DIFFICULTY_BY_ID[q.id] ?? 3,
+  topic: TOPIC_BY_ID[q.id] ?? 'Outros',
 }));
+
+/** Distinct topics, in a sensible display order. */
+export const TOPICS: string[] = [...new Set(Object.values(TOPIC_BY_ID))];
 
 export const QUESTION_BY_ID = new Map(QUIZ_QUESTIONS.map((q) => [q.id, q]));
 

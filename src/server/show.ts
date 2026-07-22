@@ -38,6 +38,7 @@ export interface ShowQuestionView {
   step: number; // 1-based ladder position
   totalSteps: number;
   area: string;
+  topic: string;
   question: string;
   options: string[];
   difficulty: number;
@@ -81,17 +82,26 @@ function guaranteedFloor(cleared: number): number {
 // Builds a ladder of LADDER_SIZE question ids ramping from easy to hard: each step
 // targets a difficulty (1..5) proportional to its position and takes an unused
 // question of the nearest available difficulty. Random within a difficulty, so
-// runs vary.
-function pickLadder(): string[] {
+// runs vary. When `topics` is given, questions from those topics are preferred;
+// if they can't fill all 15 steps, the rest of the bank tops the ladder up.
+function bucketize(pool: QuizQuestion[]): Map<number, QuizQuestion[]> {
   const byDiff = new Map<number, QuizQuestion[]>();
   for (let d = 1; d <= 5; d++) {
-    byDiff.set(d, shuffle(QUIZ_QUESTIONS.filter((q) => q.difficulty === d)));
+    byDiff.set(d, shuffle(pool.filter((q) => q.difficulty === d)));
   }
+  return byDiff;
+}
+
+function pickLadder(topics?: string[]): string[] {
+  const wanted = topics && topics.length ? new Set(topics) : null;
+  const primary = bucketize(wanted ? QUIZ_QUESTIONS.filter((q) => wanted.has(q.topic)) : QUIZ_QUESTIONS);
+  const fallback = bucketize(wanted ? QUIZ_QUESTIONS.filter((q) => !wanted.has(q.topic)) : []);
+
   const used = new Set<string>();
-  const takeNearest = (target: number): string | null => {
+  const takeNearest = (buckets: Map<number, QuizQuestion[]>, target: number): string | null => {
     for (let radius = 0; radius <= 4; radius++) {
       for (const d of [target - radius, target + radius]) {
-        const pool = byDiff.get(d);
+        const pool = buckets.get(d);
         if (!pool) continue;
         const next = pool.find((q) => !used.has(q.id));
         if (next) return next.id;
@@ -102,7 +112,7 @@ function pickLadder(): string[] {
   const ladder: string[] = [];
   for (let step = 1; step <= LADDER_SIZE; step++) {
     const target = Math.min(5, Math.max(1, Math.ceil((step / LADDER_SIZE) * 5)));
-    const id = takeNearest(target);
+    const id = takeNearest(primary, target) ?? takeNearest(fallback, target);
     if (id) {
       used.add(id);
       ladder.push(id);
@@ -126,6 +136,7 @@ function questionView(id: string, step: number): ShowQuestionView | null {
     step,
     totalSteps: LADDER_SIZE,
     area: q.area,
+    topic: q.topic,
     question: q.question,
     options: q.options,
     difficulty: q.difficulty,
@@ -160,9 +171,9 @@ function toView(run: RunRow): ShowRunView {
 
 // ── run lifecycle ─────────────────────────────────────────────────────────────
 
-export async function startRun(playerId: string): Promise<ShowRunView> {
+export async function startRun(playerId: string, topics?: string[]): Promise<ShowRunView> {
   const run = await prisma.showRun.create({
-    data: { playerId, questionIds: pickLadder().join(','), currentStep: 1, prize: 0 },
+    data: { playerId, questionIds: pickLadder(topics).join(','), currentStep: 1, prize: 0 },
   });
   return toView(run);
 }

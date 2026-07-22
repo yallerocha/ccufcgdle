@@ -132,6 +132,8 @@ export const en: Dictionary = {
     errorGeneric: 'Something went wrong. Please try again.',
     worthLabel: 'Playing for',
     finalAnswer: 'Final answer: {{letter}}!',
+    topicsTitle: 'Question topics',
+    topicsHint: 'If the chosen topics have fewer than 15 questions, we top up from the rest.',
     soundOn: 'Unmute',
     soundOff: 'Mute',
     transitionPhrases: [
