@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Camera, Save, AlertTriangle, Settings2, Trash2, KeyRound, User as UserIcon, Lock, LockKeyhole } from 'lucide-react';
+import { Camera, Save, AlertTriangle, Settings2, Settings, Trash2, KeyRound, User as UserIcon, Lock, LockKeyhole, ChevronRight, ArrowLeft, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { User } from '@/client/context/AuthContext';
 import { isStrongPassword } from '@/shared/validation';
@@ -39,6 +39,8 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
   const router = useRouter();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  // Settings modal: null (closed) | 'menu' (option list) | 'password' (change form).
+  const [settingsView, setSettingsView] = useState<'menu' | 'password' | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -200,8 +202,17 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
   return (
     <div className="profile-page fade-in">
-      {/* Hero: avatar + name */}
+      {/* Hero: avatar + name + settings gear */}
       <div className="card profile-hero">
+        <button
+          type="button"
+          className="profile-gear"
+          onClick={() => setSettingsView('menu')}
+          title={t('profileEdit.settingsTitle')}
+          aria-label={t('profileEdit.settingsTitle')}
+        >
+          <Settings size={18} />
+        </button>
         <div className="profile-hero-body">
           <div className="profile-avatar-wrap">
             {photoUrl ? (
@@ -282,73 +293,97 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         </form>
       </div>
 
-      {/* Password change — hidden for Google-only accounts */}
-      {(user.hasPassword ?? true) && (
-      <div className="card">
-        <h2 className="card-title">
-          <KeyRound size={22} style={{ color: 'var(--primary)' }} /> {t('profileEdit.passwordTitle')}
-        </h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-          {t('profileEdit.passwordSubtitle')}
-        </p>
-
-        <Toast
-          message={passwordErrorMsg || passwordSuccessMsg}
-          type={passwordErrorMsg ? 'error' : 'success'}
-          onClose={() => { setPasswordErrorMsg(''); setPasswordSuccessMsg(''); }}
-        />
-
-        <form onSubmit={handlePasswordSubmit}>
-          <div className="form-group">
-            <label className="profile-field-label" htmlFor="profile-current-password">
-              <Lock size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.currentPasswordLabel')}
-            </label>
-            <PasswordInput
-              id="profile-current-password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder={t('profileEdit.currentPasswordPlaceholder')}
-              autoComplete="current-password"
-              required
-            />
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="profile-field-label" htmlFor="profile-new-password">
-                <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.newPasswordLabel')}
-              </label>
-              <PasswordInput
-                id="profile-new-password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder={t('profileEdit.newPasswordPlaceholder')}
-                autoComplete="new-password"
-                required
-                minLength={8}
-              />
+      {/* Settings modal: option menu → change-password form */}
+      {mounted && settingsView && createPortal(
+        <div className="modal-overlay" onClick={() => setSettingsView(null)}>
+          <div className="modal-content" style={{ maxWidth: '480px', textAlign: 'left' }} onClick={(e) => e.stopPropagation()}>
+            <div className="settings-modal-head">
+              {settingsView === 'password' ? (
+                <button type="button" className="settings-back" onClick={() => setSettingsView('menu')} aria-label={t('common.back')}>
+                  <ArrowLeft size={18} />
+                </button>
+              ) : <span />}
+              <h2 className="modal-title" style={{ margin: 0, fontSize: '1.4rem' }}>
+                {settingsView === 'password' ? t('profileEdit.passwordTitle') : t('profileEdit.settingsTitle')}
+              </h2>
+              <button type="button" className="settings-back" onClick={() => setSettingsView(null)} aria-label={t('common.close')}>
+                <X size={18} />
+              </button>
             </div>
-            <div className="form-group">
-              <label className="profile-field-label" htmlFor="profile-confirm-password">
-                <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.confirmPasswordLabel')}
-              </label>
-              <PasswordInput
-                id="profile-confirm-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder={t('profileEdit.confirmPasswordPlaceholder')}
-                autoComplete="new-password"
-                required
-                minLength={8}
-              />
-            </div>
+
+            {settingsView === 'menu' && (
+              <div className="settings-options">
+                {(user.hasPassword ?? true) && (
+                  <button type="button" className="settings-option" onClick={() => setSettingsView('password')}>
+                    <KeyRound size={18} style={{ color: 'var(--gold)' }} />
+                    <span>{t('profileEdit.passwordTitle')}</span>
+                    <ChevronRight size={16} style={{ marginLeft: 'auto', color: 'var(--text-dim)' }} />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {settingsView === 'password' && (
+              <>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0.75rem 0 1.25rem' }}>
+                  {t('profileEdit.passwordSubtitle')}
+                </p>
+                <Toast
+                  message={passwordErrorMsg || passwordSuccessMsg}
+                  type={passwordErrorMsg ? 'error' : 'success'}
+                  onClose={() => { setPasswordErrorMsg(''); setPasswordSuccessMsg(''); }}
+                />
+                <form onSubmit={handlePasswordSubmit}>
+                  <div className="form-group">
+                    <label className="profile-field-label" htmlFor="profile-current-password">
+                      <Lock size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.currentPasswordLabel')}
+                    </label>
+                    <PasswordInput
+                      id="profile-current-password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder={t('profileEdit.currentPasswordPlaceholder')}
+                      autoComplete="current-password"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="profile-field-label" htmlFor="profile-new-password">
+                      <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.newPasswordLabel')}
+                    </label>
+                    <PasswordInput
+                      id="profile-new-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder={t('profileEdit.newPasswordPlaceholder')}
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="profile-field-label" htmlFor="profile-confirm-password">
+                      <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.confirmPasswordLabel')}
+                    </label>
+                    <PasswordInput
+                      id="profile-confirm-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder={t('profileEdit.confirmPasswordPlaceholder')}
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                    />
+                  </div>
+                  <button type="submit" disabled={changingPassword} className="btn profile-save-btn" style={{ width: '100%', marginTop: '0.5rem' }}>
+                    <KeyRound size={18} /> {changingPassword ? t('profileEdit.changingPassword') : t('profileEdit.changePassword')}
+                  </button>
+                </form>
+              </>
+            )}
           </div>
-          <div className="profile-save-bar">
-            <button type="submit" disabled={changingPassword} className="btn profile-save-btn">
-              <KeyRound size={18} /> {changingPassword ? t('profileEdit.changingPassword') : t('profileEdit.changePassword')}
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>,
+        document.body
       )}
 
       {/* Unsaved-changes confirmation */}

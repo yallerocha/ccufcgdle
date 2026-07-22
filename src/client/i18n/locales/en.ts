@@ -7,6 +7,7 @@ export const en: Dictionary = {
   common: {
     retry: 'Try again',
     close: 'Close',
+    back: 'Back',
   },
   nav: {
     play: 'Play',
@@ -425,6 +426,7 @@ export const en: Dictionary = {
     unsavedBody: "You edited your profile but didn't save. If you leave now, your changes will be lost.",
     unsavedLeave: 'Leave without saving',
     unsavedStay: 'Keep editing',
+    settingsTitle: 'Settings',
     passwordTitle: 'Change Password',
     passwordSubtitle: 'If an admin gave you a temporary password, replace it here with your own.',
     currentPasswordLabel: 'Current password',

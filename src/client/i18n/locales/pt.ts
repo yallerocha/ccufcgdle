@@ -3,6 +3,7 @@ export const pt = {
   common: {
     retry: 'Tentar novamente',
     close: 'Fechar',
+    back: 'Voltar',
   },
   nav: {
     play: 'Jogar',
@@ -421,6 +422,7 @@ export const pt = {
     unsavedBody: 'Você editou seu perfil mas não salvou. Se sair agora, as alterações serão perdidas.',
     unsavedLeave: 'Sair sem salvar',
     unsavedStay: 'Continuar editando',
+    settingsTitle: 'Configurações',
     passwordTitle: 'Alterar Senha',
     passwordSubtitle: 'Se recebeu uma senha temporária do admin, troque-a aqui por uma senha só sua.',
     currentPasswordLabel: 'Senha atual',
