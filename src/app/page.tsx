@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag } from 'lucide-react';
+import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
@@ -69,13 +69,18 @@ interface Reveal {
 const RUN_KEY = 'show-run-id';
 const QUESTION_SECONDS = 200;
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+const CARD_SUITS = ['♠', '♥', '♦', '♣'];
 
 const LIFELINES: { type: LifelineType; icon: React.ElementType }[] = [
-  { type: 'fifty', icon: Scissors },
+  { type: 'fifty', icon: Layers },
   { type: 'skip', icon: SkipForward },
   { type: 'audience', icon: Users },
   { type: 'students', icon: GraduationCap },
 ];
+// How many times each lifeline can be spent (mirrors LIFELINE_USES on the server).
+const LIFELINE_USES: Record<LifelineType, number> = { fifty: 1, skip: 3, audience: 1, students: 1 };
+const usesLeft = (used: LifelineType[], type: LifelineType) =>
+  LIFELINE_USES[type] - used.filter((t) => t === type).length;
 
 export default function ShowPage() {
   const { t } = useTranslation();
@@ -137,6 +142,11 @@ export default function ShowPage() {
   const [audience, setAudience] = useState<number[] | null>(null);
   const [studentsHint, setStudentsHint] = useState<string | null>(null);
   const [lifelineBusy, setLifelineBusy] = useState<LifelineType | null>(null);
+  // Card lifeline (former 50:50): 4 cards, each worth a random 1–4 eliminations.
+  // The player flips ONE; it removes that many wrong options from `cardPool`.
+  const [cards, setCards] = useState<number[] | null>(null); // per-card count 1..4
+  const [cardPool, setCardPool] = useState<number[]>([]); // shuffled wrong displayed indices
+  const [picked, setPicked] = useState<number | null>(null); // index of the flipped card
   // Two-step answering, like the show: pick an option, then lock it in.
   const [selected, setSelected] = useState<number | null>(null);
   // Quit needs a second click to confirm (it ends the run for good).
@@ -150,6 +160,9 @@ export default function ShowPage() {
     setStudentsHint(null);
     setSelected(null);
     setQuitArmed(false);
+    setCards(null);
+    setCardPool([]);
+    setPicked(null);
   };
 
   // Resume an in-progress run after a reload.
@@ -361,7 +374,7 @@ export default function ShowPage() {
   };
 
   const spendLifeline = async (type: LifelineType) => {
-    if (!run || reveal || lifelineBusy || run.usedLifelines.includes(type)) return;
+    if (!run || reveal || lifelineBusy || usesLeft(run.usedLifelines, type) <= 0) return;
     setLifelineBusy(type);
     setErrorMsg('');
     try {
@@ -377,7 +390,12 @@ export default function ShowPage() {
       sfxLifeline();
       setRun((r) => (r ? { ...r, usedLifelines: data.usedLifelines } : r));
       if (type === 'fifty' && data.removedIndices) {
-        setHidden(data.removedIndices);
+        // 4 cards, each worth a random 1–4 eliminations (capped at the pool).
+        const pool = data.removedIndices;
+        const counts = Array.from({ length: 4 }, () => 1 + Math.floor(Math.random() * pool.length));
+        setCardPool(pool);
+        setCards(counts);
+        setPicked(null);
       } else if (type === 'audience' && data.distribution) {
         setAudience(data.distribution);
       } else if (type === 'students') {
@@ -393,6 +411,14 @@ export default function ShowPage() {
       setLifelineBusy(null);
     }
   };
+
+  const flipCard = (i: number) => {
+    if (!cards || picked !== null) return; // only one card may be flipped
+    sfxSelect();
+    setPicked(i);
+    setHidden(cardPool.slice(0, cards[i]));
+  };
+  const cardsDone = cards ? picked !== null : true;
 
   const toggleSound = () => {
     const m = toggleMuted();
@@ -540,6 +566,60 @@ export default function ShowPage() {
         document.body
       )}
 
+      {mounted && cards && createPortal(
+        <div className="show-cards-overlay" role="dialog" aria-modal="true" aria-label={t('show.cards.title')}>
+          <div className="show-cards-box">
+            <h3 className="show-cards-title">{t('show.cards.title')}</h3>
+            <p className="show-cards-hint">
+              {picked !== null ? t('show.cards.done', { count: cards[picked] }) : t('show.cards.flip')}
+            </p>
+            <div className="show-cards-row">
+              {cards.map((count, i) => {
+                const isPicked = picked === i;
+                const suit = CARD_SUITS[i % CARD_SUITS.length];
+                const red = suit === '♥' || suit === '♦';
+                // Reveal only the chosen card; the rest stay face-down (one flip only).
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`show-card${isPicked ? ' is-flipped' : ''}${red ? ' is-red' : ''}${picked !== null && !isPicked ? ' is-dimmed' : ''}`}
+                    onClick={() => flipCard(i)}
+                    disabled={picked !== null}
+                    aria-label={t('show.cards.flipOne')}
+                  >
+                    <span className="show-card-inner">
+                      <span className="show-card-face show-card-back" aria-hidden="true" />
+                      <span className="show-card-face show-card-front">
+                        <span className="show-card-corner show-card-corner--tl">
+                          <b>{count}</b><span className="show-card-suit">{suit}</span>
+                        </span>
+                        <span className="show-card-center">
+                          <Scissors size={20} />
+                          <em>−{count}</em>
+                        </span>
+                        <span className="show-card-corner show-card-corner--br">
+                          <b>{count}</b><span className="show-card-suit">{suit}</span>
+                        </span>
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary show-cards-close"
+              onClick={() => { setCards(null); setCardPool([]); setPicked(null); }}
+              disabled={!cardsDone}
+            >
+              {t('show.cards.close')}
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
       <div className="show-layout">
         {/* Question + options */}
         <div className="show-main">
@@ -616,10 +696,11 @@ export default function ShowPage() {
             </div>
           ) : (
             <div className="show-actions">
-              {run.usedLifelines.length < LIFELINES.length && (
+              {LIFELINES.some(({ type }) => usesLeft(run.usedLifelines, type) > 0) && (
               <div className="show-lifelines">
                 {LIFELINES.map(({ type, icon: Icon }) => {
-                  const used = run.usedLifelines.includes(type);
+                  const left = usesLeft(run.usedLifelines, type);
+                  const used = left <= 0;
                   return (
                     <button
                       key={type}
@@ -630,6 +711,7 @@ export default function ShowPage() {
                     >
                       <Icon size={18} />
                       <span>{t(`show.lifeline.${type}`)}</span>
+                      {LIFELINE_USES[type] > 1 && <span className="show-lifeline-count">{left}</span>}
                     </button>
                   );
                 })}

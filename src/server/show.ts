@@ -31,6 +31,9 @@ const CHECKPOINT_FLOORS: { clearedAtLeast: number; floor: number }[] = [
 
 export type LifelineType = 'fifty' | 'skip' | 'audience' | 'students';
 export const ALL_LIFELINES: LifelineType[] = ['fifty', 'skip', 'audience', 'students'];
+// How many times each lifeline can be spent in a run. Most are once; "skip" is
+// generous (up to 3). Encoded by repeating the type in the usedLifelines CSV.
+export const LIFELINE_USES: Record<LifelineType, number> = { fifty: 1, skip: 3, audience: 1, students: 1 };
 
 export type ShowStatus = 'playing' | 'won' | 'stopped' | 'lost';
 
@@ -207,8 +210,11 @@ export async function startRun(
       currentStep: 1,
       prize: 0,
       // Disabling lifelines is modelled as "all already spent" — no schema change,
-      // and the play endpoint already rejects spending a used one.
-      usedLifelines: opts?.noLifelines ? ALL_LIFELINES.join(',') : '',
+      // and the play endpoint already rejects spending a used one. Each type is
+      // repeated up to its max uses so even multi-use aids (skip) start exhausted.
+      usedLifelines: opts?.noLifelines
+        ? ALL_LIFELINES.flatMap((t) => Array<LifelineType>(LIFELINE_USES[t]).fill(t)).join(',')
+        : '',
     },
   });
   return toView(run);
@@ -364,7 +370,7 @@ export async function useLifeline(
   if (run.status !== 'playing') return { error: 'finished' };
 
   const used = parseLifelines(run.usedLifelines);
-  if (used.includes(type)) return { error: 'already-used' };
+  if (used.filter((t) => t === type).length >= LIFELINE_USES[type]) return { error: 'already-used' };
 
   const ids = parseIds(run.questionIds);
   const q = QUESTION_BY_ID.get(ids[run.currentStep - 1]);
@@ -378,9 +384,13 @@ export async function useLifeline(
   const correctDisplayed = perm.indexOf(q.answer);
 
   if (type === 'fifty') {
-    // Hide two wrong options (by displayed index).
-    const wrong = perm.map((_, disp) => disp).filter((disp) => disp !== correctDisplayed);
-    result.removedIndices = shuffle(wrong).slice(0, 2);
+    // Card system: the player flips ONE of 4 cards; that card removes a random
+    // 1–4 wrong options. We return the full shuffled pool of wrong displayed
+    // indices — how many the chosen card actually removes is decided client-side
+    // (a pure visual hint; the graded answer stays server-authoritative).
+    result.removedIndices = shuffle(
+      perm.map((_, disp) => disp).filter((disp) => disp !== correctDisplayed)
+    );
   } else if (type === 'audience') {
     const share = 45 + Math.floor(Math.random() * 25); // 45–69% on the correct one
     result.distribution = biasedDistribution(q.options.length, correctDisplayed, share);

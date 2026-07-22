@@ -4093,6 +4093,7 @@ a:focus-visible,
 .show-lifelines { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
 @media (max-width: 520px) { .show-lifelines { grid-template-columns: repeat(2, 1fr); } }
 .show-lifeline {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4109,6 +4110,24 @@ a:focus-visible,
   transition: transform 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
 }
 .show-lifeline svg { color: var(--sc-tech); }
+.show-lifeline-count {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: #1a1200;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.show-lifeline.is-used .show-lifeline-count { display: none; }
 .show-lifeline:hover:not(:disabled) {
   transform: translateY(-2px);
   border-color: var(--sc-tech);
@@ -4378,6 +4397,115 @@ input:focus, select:focus, textarea:focus {
   82% { opacity: 1; transform: scale(1) translateY(0); }
   100% { opacity: 0; transform: scale(1.04) translateY(-6px); }
 }
+/* Card lifeline modal */
+.show-cards-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(3, 7, 20, 0.9);
+  backdrop-filter: blur(4px);
+}
+.show-cards-box {
+  width: min(520px, 100%);
+  text-align: center;
+  padding: 1.6rem 1.4rem;
+  border-radius: 16px;
+  border: 1px solid rgba(60, 224, 230, 0.28);
+  background: linear-gradient(180deg, rgba(12, 26, 66, 0.96), rgba(6, 14, 38, 0.96));
+}
+.show-cards-title {
+  margin: 0 0 0.3rem;
+  font-size: 1.35rem;
+  color: var(--gold);
+}
+.show-cards-hint {
+  margin: 0 0 1.2rem;
+  font-size: 0.9rem;
+  color: var(--sc-muted);
+  min-height: 2.4em;
+}
+.show-cards-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.7rem;
+  margin-bottom: 1.4rem;
+}
+.show-card {
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  perspective: 700px;
+}
+.show-card:disabled { cursor: default; }
+.show-card-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-style: preserve-3d;
+}
+.show-card.is-flipped .show-card-inner { transform: rotateY(180deg); }
+.show-card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.7);
+}
+/* Card back: classic patterned deck back. */
+.show-card-back {
+  border: 3px solid #f4f1e8;
+  background-color: #b11226;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 4px, transparent 4px 8px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.16) 0 4px, transparent 4px 8px),
+    radial-gradient(circle at center, rgba(0, 0, 0, 0.25), transparent 70%);
+}
+.show-card:hover:not(:disabled) .show-card-back { border-color: var(--gold); }
+/* Card front: white playing card with corner ranks + centre suit. */
+.show-card-front {
+  transform: rotateY(180deg);
+  border: 2px solid #e7e2d4;
+  background: #fbfaf5;
+  color: #1a1a1a;
+  font-family: Georgia, "Times New Roman", serif;
+}
+.show-card.is-red .show-card-front { color: #c0102a; }
+.show-card-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.9;
+  font-weight: 700;
+}
+.show-card-corner b { font-size: 1rem; }
+.show-card-corner .show-card-suit { font-size: 0.85rem; }
+.show-card-corner--tl { top: 5px; left: 6px; }
+.show-card-corner--br { bottom: 5px; right: 6px; transform: rotate(180deg); }
+.show-card-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+}
+.show-card-center svg { color: inherit; opacity: 0.85; }
+.show-card-center em { font-style: normal; font-weight: 800; font-size: 1.1rem; }
+.show-card.is-dimmed { opacity: 0.4; }
+.show-cards-close:disabled { opacity: 0.45; cursor: default; }
+
 .show-transition {
   position: fixed;
   inset: 0;
