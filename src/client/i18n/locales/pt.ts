@@ -21,7 +21,7 @@ export const pt = {
   podium: {
     nav: 'Pódio',
     title: 'Pódio Geral',
-    subtitle: 'Ranking do Show da Computação. Quem levou o maior prêmio fica no topo.',
+    subtitle: 'Ranking do Show da Computação. Soma de tudo que cada jogador já ganhou no palco.',
     loading: 'Carregando classificação...',
     empty: 'Ninguém pontuou ainda. Seja o primeiro a levar um prêmio!',
     error: 'Erro ao carregar a classificação.',
@@ -31,9 +31,9 @@ export const pt = {
     thRank: '#',
     thPlayer: 'Jogador',
     thWins: 'Milhões',
-    thPoints: 'Maior prêmio',
+    thPoints: 'Total ganho',
     howTitle: 'Como pontua?',
-    howBody: 'Sua posição é o maior prêmio que você já bancou em uma partida do Show da Computação. Empates são desempatados pela partida mais rápida. Chegar ao milhão vale destaque de "milionário".',
+    howBody: 'Sua posição é a soma de todos os prêmios que você já bancou nas partidas do Show da Computação. Empates são desempatados por quem chegou mais vezes ao milhão.',
   },
   members: {
     title: 'Membros',

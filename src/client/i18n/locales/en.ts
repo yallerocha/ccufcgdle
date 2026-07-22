@@ -25,7 +25,7 @@ export const en: Dictionary = {
   podium: {
     nav: 'Podium',
     title: 'Overall Podium',
-    subtitle: 'The Show da Computação ranking. Whoever banked the biggest prize tops the list.',
+    subtitle: 'The Show da Computação ranking. The sum of everything each player has ever won on stage.',
     loading: 'Loading ranking...',
     empty: 'No one has scored yet. Be the first to bank a prize!',
     error: 'Failed to load the ranking.',
@@ -35,9 +35,9 @@ export const en: Dictionary = {
     thRank: '#',
     thPlayer: 'Player',
     thWins: 'Millions',
-    thPoints: 'Best prize',
+    thPoints: 'Total won',
     howTitle: 'How scoring works',
-    howBody: 'Your position is the biggest prize you have ever banked in a run of the Show da Computação. Ties are broken by the fastest run. Reaching the million earns a "millionaire" badge.',
+    howBody: 'Your position is the sum of every prize you have banked across your Show da Computação runs. Ties are broken by who reached the million more times.',
   },
   members: {
     title: 'Members',
