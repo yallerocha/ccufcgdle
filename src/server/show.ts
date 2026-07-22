@@ -129,16 +129,41 @@ function parseLifelines(csv: string): LifelineType[] {
   return csv ? (csv.split(',') as LifelineType[]) : [];
 }
 
-function questionView(id: string, step: number): ShowQuestionView | null {
+// Deterministic option permutation for a (run, question) pair: perm[displayed] =
+// originalIndex. Stable across reloads (seeded by ids), so the shuffled order and
+// the correctness check always agree without storing anything extra.
+function optionPerm(runId: string, questionId: string, n: number): number[] {
+  let h = 2166136261 >>> 0;
+  const seed = `${runId}:${questionId}`;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const rand = () => {
+    h += 0x6d2b79f5;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function questionView(id: string, step: number, runId: string): ShowQuestionView | null {
   const q = QUESTION_BY_ID.get(id);
   if (!q) return null;
+  const perm = optionPerm(runId, id, q.options.length);
   return {
     step,
     totalSteps: LADDER_SIZE,
     area: q.area,
     topic: q.topic,
     question: q.question,
-    options: q.options,
+    options: perm.map((k) => q.options[k]),
     difficulty: q.difficulty,
     source: questionSource(q),
   };
@@ -165,7 +190,7 @@ function toView(run: RunRow): ShowRunView {
     securedPrize: run.prize,
     ladder: PRIZE_LADDER,
     usedLifelines: parseLifelines(run.usedLifelines),
-    question: playing ? questionView(ids[run.currentStep - 1], run.currentStep) : null,
+    question: playing ? questionView(ids[run.currentStep - 1], run.currentStep, run.id) : null,
   };
 }
 
@@ -220,7 +245,11 @@ export async function answerRun(
   const q = QUESTION_BY_ID.get(ids[run.currentStep - 1]);
   if (!q) return { error: 'bad-state' };
 
-  const correct = optionIndex === q.answer;
+  // Map the player's shuffled-option index back to the original to check it.
+  const perm = optionPerm(run.id, q.id, q.options.length);
+  const chosenOriginal = optionIndex >= 0 && optionIndex < perm.length ? perm[optionIndex] : -1;
+  const correct = chosenOriginal === q.answer;
+  const correctIndex = perm.indexOf(q.answer); // displayed index of the right option
   const now = new Date();
   const durationMs = now.getTime() - run.startedAt.getTime();
 
@@ -243,7 +272,7 @@ export async function answerRun(
   }
 
   const updated = await prisma.showRun.update({ where: { id: run.id }, data });
-  return { correct, correctIndex: q.answer, explanation: q.explanation, run: toView(updated) };
+  return { correct, correctIndex, explanation: q.explanation, run: toView(updated) };
 }
 
 export async function stopRun(
@@ -288,7 +317,8 @@ export async function timeoutRun(
       durationMs: now.getTime() - run.startedAt.getTime(),
     },
   });
-  return { correct: false, correctIndex: q.answer, explanation: q.explanation, run: toView(updated) };
+  const correctIndex = optionPerm(run.id, q.id, q.options.length).indexOf(q.answer);
+  return { correct: false, correctIndex, explanation: q.explanation, run: toView(updated) };
 }
 
 // ── lifelines ─────────────────────────────────────────────────────────────────
@@ -343,17 +373,21 @@ export async function useLifeline(
   const result: LifelineResult = { type, usedLifelines: [...used, type] };
   let questionIds = run.questionIds;
 
+  // Work in DISPLAYED index space (the options the player actually sees).
+  const perm = optionPerm(run.id, q.id, q.options.length);
+  const correctDisplayed = perm.indexOf(q.answer);
+
   if (type === 'fifty') {
-    // Hide two wrong options.
-    const wrong = q.options.map((_, i) => i).filter((i) => i !== q.answer);
+    // Hide two wrong options (by displayed index).
+    const wrong = perm.map((_, disp) => disp).filter((disp) => disp !== correctDisplayed);
     result.removedIndices = shuffle(wrong).slice(0, 2);
   } else if (type === 'audience') {
     const share = 45 + Math.floor(Math.random() * 25); // 45–69% on the correct one
-    result.distribution = biasedDistribution(q.options.length, q.answer, share);
+    result.distribution = biasedDistribution(q.options.length, correctDisplayed, share);
   } else if (type === 'students') {
     const share = 60 + Math.floor(Math.random() * 25); // 60–84% confidence
-    result.distribution = biasedDistribution(q.options.length, q.answer, share);
-    const letter = String.fromCharCode(65 + q.answer);
+    result.distribution = biasedDistribution(q.options.length, correctDisplayed, share);
+    const letter = String.fromCharCode(65 + correctDisplayed);
     result.hint = `A galera dos universitários fechou na alternativa ${letter} — mas confira você mesmo!`;
   } else if (type === 'skip') {
     // Swap the current question for an unused one of similar difficulty.
@@ -366,9 +400,9 @@ export async function useLifeline(
       const newIds = [...ids];
       newIds[run.currentStep - 1] = replacement.id;
       questionIds = newIds.join(',');
-      result.question = questionView(replacement.id, run.currentStep) ?? undefined;
+      result.question = questionView(replacement.id, run.currentStep, run.id) ?? undefined;
     } else {
-      result.question = questionView(q.id, run.currentStep) ?? undefined; // nothing left to swap to
+      result.question = questionView(q.id, run.currentStep, run.id) ?? undefined; // nothing left to swap to
     }
   }
 
