@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles, Volume2, VolumeX, Check } from 'lucide-react';
+import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles, Volume2, VolumeX, Check, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
@@ -99,6 +99,7 @@ export default function ShowPage() {
   // is sent to /start, everything else means "all".
   const [topics, setTopics] = useState<{ id: string; count: number }[]>([]);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
+  const [topicsOpen, setTopicsOpen] = useState(false);
   useEffect(() => {
     apiFetch('/api/show/topics')
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
@@ -330,14 +331,33 @@ export default function ShowPage() {
             <strong>R$ 1.000.000</strong>
           </div>
 
-          {user ? (
-            <button onClick={start} disabled={starting} className="btn show-start-btn">
-              <Play size={22} /> {starting ? t('show.starting') : t('show.start')}
-            </button>
-          ) : (
-            <Link href="/profile" className="btn show-start-btn">
-              <Play size={22} /> {t('show.loginToPlay')}
-            </Link>
+          <div className="show-start-row">
+            {user ? (
+              <button onClick={start} disabled={starting} className="btn show-start-btn">
+                <Play size={22} /> {starting ? t('show.starting') : t('show.start')}
+              </button>
+            ) : (
+              <Link href="/profile" className="btn show-start-btn">
+                <Play size={22} /> {t('show.loginToPlay')}
+              </Link>
+            )}
+            {topics.length > 0 && (
+              <button
+                type="button"
+                className="show-edit-btn"
+                onClick={() => setTopicsOpen(true)}
+                title={t('show.topicsTitle')}
+                aria-label={t('show.topicsTitle')}
+              >
+                <SlidersHorizontal size={20} />
+                {chosen.size > 0 && chosen.size < topics.length && <span className="show-edit-dot" />}
+              </button>
+            )}
+          </div>
+          {chosen.size > 0 && chosen.size < topics.length && (
+            <p className="show-topics-summary">
+              {t('show.topicsActive', { count: chosen.size, total: topics.length })}
+            </p>
           )}
         </section>
 
@@ -349,10 +369,16 @@ export default function ShowPage() {
             <li>{t('show.rule3')}</li>
             <li>{t('show.rule4')}</li>
           </ul>
+        </div>
 
-          {topics.length > 0 && (
-            <div className="show-topics">
-              <h3 className="show-topics-title"><Sparkles size={14} /> {t('show.topicsTitle')}</h3>
+        {/* Topic picker modal */}
+        {mounted && topicsOpen && createPortal(
+          <div className="modal-overlay" onClick={() => setTopicsOpen(false)}>
+            <div className="modal-content" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <SlidersHorizontal size={20} style={{ color: 'var(--gold)' }} /> {t('show.topicsTitle')}
+              </h2>
+              <p className="modal-subtitle" style={{ marginBottom: '1rem' }}>{t('show.topicsHint')}</p>
               <div className="show-topic-chips">
                 {topics.map((tp) => (
                   <button
@@ -366,10 +392,13 @@ export default function ShowPage() {
                   </button>
                 ))}
               </div>
-              <p className="show-topics-hint">{t('show.topicsHint')}</p>
+              <button onClick={() => setTopicsOpen(false)} className="btn show-final-btn" style={{ marginTop: '1.25rem' }}>
+                <Check size={18} /> {t('show.topicsDone')}
+              </button>
             </div>
-          )}
-        </div>
+          </div>,
+          document.body
+        )}
       </div>
     );
   }

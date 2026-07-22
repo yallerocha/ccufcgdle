@@ -130,6 +130,8 @@ export const pt = {
     finalAnswer: 'Resposta final: {{letter}}!',
     topicsTitle: 'Temas das perguntas',
     topicsHint: 'Se os temas marcados não somarem 15 perguntas, completamos com os demais.',
+    topicsDone: 'Pronto',
+    topicsActive: '{{count}} de {{total}} temas selecionados',
     soundOn: 'Ativar som',
     soundOff: 'Silenciar',
     transitionPhrases: [

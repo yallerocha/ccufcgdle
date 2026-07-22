@@ -134,6 +134,8 @@ export const en: Dictionary = {
     finalAnswer: 'Final answer: {{letter}}!',
     topicsTitle: 'Question topics',
     topicsHint: 'If the chosen topics have fewer than 15 questions, we top up from the rest.',
+    topicsDone: 'Done',
+    topicsActive: '{{count}} of {{total}} topics selected',
     soundOn: 'Unmute',
     soundOff: 'Mute',
     transitionPhrases: [
