@@ -4537,3 +4537,46 @@ input:focus, select:focus, textarea:focus {
     animation: none !important;
   }
 }
+
+/* ── Modal restyle: cinematic studio panels ───────────────────────────────── */
+.modal-overlay {
+  background: rgba(2, 5, 14, 0.8);
+  backdrop-filter: blur(10px);
+}
+.modal-content {
+  position: relative;
+  background: linear-gradient(180deg, #111e49 0%, #0a1432 55%, #070f26 100%);
+  border: 1px solid rgba(120, 160, 255, 0.16);
+  border-radius: 18px;
+  box-shadow: 0 32px 90px -24px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+/* gold hairline along the top edge (mirrors the question card's light edge) */
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.85;
+  pointer-events: none;
+}
+/* calmer typography: white title, gold stays reserved for prizes/accents */
+.modal-title {
+  font-size: 1.55rem;
+  color: var(--text-primary);
+  text-shadow: none;
+  letter-spacing: 0.2px;
+  margin-bottom: 0.6rem;
+}
+.modal-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+/* bottom accent: faded gold hairline instead of a heavy bar */
+.modal-color-bar {
+  height: 3px;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}

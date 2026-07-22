@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Trophy, Play, HandCoins, Scissors, SkipForward, Users, GraduationCap, Sparkles, Volume2, VolumeX, Check } from 'lucide-react';
@@ -86,6 +87,10 @@ export default function ShowPage() {
   const [muted, setMuted] = useState(false);
   // Between-questions "host" transition card (phrase + next prize).
   const [transition, setTransition] = useState<{ prize: number; phrase: string } | null>(null);
+  // Portal target readiness (fixed overlays render on document.body so no
+  // ancestor transform/filter can clip them to the container).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   useEffect(() => setMuted(isMuted()), []);
   useEffect(() => () => stopMusic(), []);
 
@@ -327,12 +332,15 @@ export default function ShowPage() {
     <div className="show-page show-playing fade-in">
       <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
 
-      <button type="button" className="show-mute" onClick={toggleSound} title={muted ? t('show.soundOn') : t('show.soundOff')} aria-label={muted ? t('show.soundOn') : t('show.soundOff')}>
-        {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-      </button>
+      {mounted && createPortal(
+        <button type="button" className="show-mute" onClick={toggleSound} title={muted ? t('show.soundOn') : t('show.soundOff')} aria-label={muted ? t('show.soundOn') : t('show.soundOff')}>
+          {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </button>,
+        document.body
+      )}
 
-      {/* Between-questions host transition */}
-      {transition && (
+      {/* Between-questions host transition (portaled: true full-screen) */}
+      {mounted && transition && createPortal(
         <div className="show-transition">
           <div className="show-transition-inner">
             {transition.phrase && <p className="show-transition-phrase">{transition.phrase}</p>}
@@ -340,7 +348,8 @@ export default function ShowPage() {
               {t('show.worthLabel')} <strong>{formatPrize(transition.prize)}</strong>
             </p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className="show-layout">
@@ -439,7 +448,7 @@ export default function ShowPage() {
         <aside className="show-ladder card" aria-label={t('show.ladderTitle')}>
           <h3 className="show-ladder-title"><Trophy size={16} /> {t('show.ladderTitle')}</h3>
           <ol className="show-ladder-list">
-            {run.ladder.map((prize, i) => {
+            {run.ladder.map((_, i) => {
               const step = run.ladder.length - i; // render top (15) → bottom (1)
               const value = run.ladder[step - 1];
               const isCurrent = step === run.currentStep;
