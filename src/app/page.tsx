@@ -39,6 +39,8 @@ interface ShowRun {
   ladder: number[];
   usedLifelines: LifelineType[];
   question: ShowQuestion | null;
+  // Effect of single-use aids already spent on the current step (for reload restore).
+  aids?: { removedIndices?: number[]; distribution?: number[]; hint?: string };
 }
 
 interface AnswerResult {
@@ -142,10 +144,9 @@ export default function ShowPage() {
   const [audience, setAudience] = useState<number[] | null>(null);
   const [studentsHint, setStudentsHint] = useState<string | null>(null);
   const [lifelineBusy, setLifelineBusy] = useState<LifelineType | null>(null);
-  // Card lifeline (former 50:50): 4 cards, each worth a random 1–4 eliminations.
-  // The player flips ONE; it removes that many wrong options from `cardPool`.
-  const [cards, setCards] = useState<number[] | null>(null); // per-card count 1..4
-  const [cardPool, setCardPool] = useState<number[]>([]); // shuffled wrong displayed indices
+  // Card lifeline (former 50:50): 4 cards, the player flips ONE. The server sends
+  // the actual cut (removedIndices, 1–4 wrong options); flipping reveals & applies it.
+  const [cardCut, setCardCut] = useState<number[] | null>(null); // displayed indices to remove
   const [picked, setPicked] = useState<number | null>(null); // index of the flipped card
   // Two-step answering, like the show: pick an option, then lock it in.
   const [selected, setSelected] = useState<number | null>(null);
@@ -160,8 +161,7 @@ export default function ShowPage() {
     setStudentsHint(null);
     setSelected(null);
     setQuitArmed(false);
-    setCards(null);
-    setCardPool([]);
+    setCardCut(null);
     setPicked(null);
   };
 
@@ -173,8 +173,14 @@ export default function ShowPage() {
     apiFetch(`/api/show/run/${savedId}`)
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data: ShowRun) => {
-        if (data.status === 'playing') setRun(data);
-        else localStorage.removeItem(RUN_KEY);
+        if (data.status === 'playing') {
+          setRun(data);
+          // Restore aids already spent on this step (eliminated options / audience
+          // / students), so a reload doesn't waste a used lifeline.
+          if (data.aids?.removedIndices) setHidden(data.aids.removedIndices);
+          if (data.aids?.distribution) setAudience(data.aids.distribution);
+          if (data.aids?.hint) setStudentsHint(data.aids.hint);
+        } else localStorage.removeItem(RUN_KEY);
       })
       .catch(() => localStorage.removeItem(RUN_KEY));
   }, [authLoading, user]);
@@ -390,11 +396,7 @@ export default function ShowPage() {
       sfxLifeline();
       setRun((r) => (r ? { ...r, usedLifelines: data.usedLifelines } : r));
       if (type === 'fifty' && data.removedIndices) {
-        // 4 cards, each worth a random 1–4 eliminations (capped at the pool).
-        const pool = data.removedIndices;
-        const counts = Array.from({ length: 4 }, () => 1 + Math.floor(Math.random() * pool.length));
-        setCardPool(pool);
-        setCards(counts);
+        setCardCut(data.removedIndices);
         setPicked(null);
       } else if (type === 'audience' && data.distribution) {
         setAudience(data.distribution);
@@ -413,12 +415,12 @@ export default function ShowPage() {
   };
 
   const flipCard = (i: number) => {
-    if (!cards || picked !== null) return; // only one card may be flipped
+    if (!cardCut || picked !== null) return; // only one card may be flipped
     sfxSelect();
     setPicked(i);
-    setHidden(cardPool.slice(0, cards[i]));
+    setHidden(cardCut);
   };
-  const cardsDone = cards ? picked !== null : true;
+  const cardsDone = cardCut ? picked !== null : true;
 
   const toggleSound = () => {
     const m = toggleMuted();
@@ -566,15 +568,15 @@ export default function ShowPage() {
         document.body
       )}
 
-      {mounted && cards && createPortal(
+      {mounted && cardCut && createPortal(
         <div className="show-cards-overlay" role="dialog" aria-modal="true" aria-label={t('show.cards.title')}>
           <div className="show-cards-box">
             <h3 className="show-cards-title">{t('show.cards.title')}</h3>
             <p className="show-cards-hint">
-              {picked !== null ? t('show.cards.done', { count: cards[picked] }) : t('show.cards.flip')}
+              {picked !== null ? t('show.cards.done', { count: cardCut.length }) : t('show.cards.flip')}
             </p>
             <div className="show-cards-row">
-              {cards.map((count, i) => {
+              {[0, 1, 2, 3].map((i) => {
                 const isPicked = picked === i;
                 const suit = CARD_SUITS[i % CARD_SUITS.length];
                 const red = suit === '♥' || suit === '♦';
@@ -592,14 +594,14 @@ export default function ShowPage() {
                       <span className="show-card-face show-card-back" aria-hidden="true" />
                       <span className="show-card-face show-card-front">
                         <span className="show-card-corner show-card-corner--tl">
-                          <b>{count}</b><span className="show-card-suit">{suit}</span>
+                          <b>{cardCut.length}</b><span className="show-card-suit">{suit}</span>
                         </span>
                         <span className="show-card-center">
                           <Scissors size={20} />
-                          <em>−{count}</em>
+                          <em>−{cardCut.length}</em>
                         </span>
                         <span className="show-card-corner show-card-corner--br">
-                          <b>{count}</b><span className="show-card-suit">{suit}</span>
+                          <b>{cardCut.length}</b><span className="show-card-suit">{suit}</span>
                         </span>
                       </span>
                     </span>
@@ -610,7 +612,7 @@ export default function ShowPage() {
             <button
               type="button"
               className="btn btn-primary show-cards-close"
-              onClick={() => { setCards(null); setCardPool([]); setPicked(null); }}
+              onClick={() => { setCardCut(null); setPicked(null); }}
               disabled={!cardsDone}
             >
               {t('show.cards.close')}

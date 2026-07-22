@@ -56,6 +56,9 @@ export interface ShowRunView {
   ladder: number[];
   usedLifelines: LifelineType[];
   question: ShowQuestionView | null; // null once the run has ended
+  // On-screen effect of single-use aids already spent ON THE CURRENT step, so a
+  // reload restores them (eliminated options, audience/students results).
+  aids?: AidResult;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -70,14 +73,14 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 // Prize secured after clearing `cleared` steps (0 → 0, 1 → first rung, …).
-function prizeForCleared(cleared: number): number {
+export function prizeForCleared(cleared: number): number {
   if (cleared <= 0) return 0;
   return PRIZE_LADDER[Math.min(cleared, LADDER_SIZE) - 1];
 }
 
 // Guaranteed floor after clearing `cleared` steps (used when a wrong answer ends
 // the run).
-function guaranteedFloor(cleared: number): number {
+export function guaranteedFloor(cleared: number): number {
   for (const c of CHECKPOINT_FLOORS) if (cleared >= c.clearedAtLeast) return c.floor;
   return 0;
 }
@@ -95,7 +98,7 @@ function bucketize(pool: QuizQuestion[]): Map<number, QuizQuestion[]> {
   return byDiff;
 }
 
-function pickLadder(topics?: string[]): string[] {
+export function pickLadder(topics?: string[]): string[] {
   const wanted = topics && topics.length ? new Set(topics) : null;
   const primary = bucketize(wanted ? QUIZ_QUESTIONS.filter((q) => wanted.has(q.topic)) : QUIZ_QUESTIONS);
   const fallback = bucketize(wanted ? QUIZ_QUESTIONS.filter((q) => !wanted.has(q.topic)) : []);
@@ -128,32 +131,54 @@ function parseIds(csv: string): string[] {
   return csv ? csv.split(',') : [];
 }
 
+// Tokens are `type` or `type@step` (the step it was spent on, used to restore the
+// aid's on-screen effect after a reload). This strips the step for the used-count.
 function parseLifelines(csv: string): LifelineType[] {
-  return csv ? (csv.split(',') as LifelineType[]) : [];
+  return csv ? csv.split(',').map((t) => t.split('@')[0] as LifelineType) : [];
 }
 
-// Deterministic option permutation for a (run, question) pair: perm[displayed] =
-// originalIndex. Stable across reloads (seeded by ids), so the shuffled order and
-// the correctness check always agree without storing anything extra.
-function optionPerm(runId: string, questionId: string, n: number): number[] {
+// The step a single-use aid was spent on (null if unused or a legacy token).
+function lifelineStep(csv: string, type: LifelineType): number | null {
+  for (const tok of csv ? csv.split(',') : []) {
+    const [t, s] = tok.split('@');
+    if (t === type) {
+      const n = Number(s);
+      return Number.isFinite(n) ? n : null;
+    }
+  }
+  return null;
+}
+
+// A small seeded PRNG (FNV-1a hash of the seed → mulberry32). Deterministic, so
+// anything derived from it is stable across reloads without persisting extra state.
+function makeRng(seed: string): () => number {
   let h = 2166136261 >>> 0;
-  const seed = `${runId}:${questionId}`;
   for (let i = 0; i < seed.length; i++) {
     h ^= seed.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
-  const rand = () => {
+  return () => {
     h += 0x6d2b79f5;
     let t = Math.imul(h ^ (h >>> 15), 1 | h);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  const arr = Array.from({ length: n }, (_, i) => i);
-  for (let i = n - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+}
+
+function seededShuffle<T>(arr: T[], rng: () => number): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return arr;
+  return a;
+}
+
+// Deterministic option permutation for a (run, question) pair: perm[displayed] =
+// originalIndex. Stable across reloads (seeded by ids), so the shuffled order and
+// the correctness check always agree without storing anything extra.
+export function optionPerm(runId: string, questionId: string, n: number): number[] {
+  return seededShuffle(Array.from({ length: n }, (_, i) => i), makeRng(`${runId}:${questionId}`));
 }
 
 function questionView(id: string, step: number, runId: string): ShowQuestionView | null {
@@ -186,6 +211,21 @@ type RunRow = {
 function toView(run: RunRow): ShowRunView {
   const ids = parseIds(run.questionIds);
   const playing = run.status === 'playing';
+  const q = playing ? QUESTION_BY_ID.get(ids[run.currentStep - 1]) : undefined;
+
+  // Restore the visual effect of any single-use aid spent on the current step.
+  let aids: AidResult | undefined;
+  if (q) {
+    const correctDisplayed = optionPerm(run.id, q.id, q.options.length).indexOf(q.answer);
+    const merged: AidResult = {};
+    for (const type of ['fifty', 'audience', 'students'] as const) {
+      if (lifelineStep(run.usedLifelines, type) === run.currentStep) {
+        Object.assign(merged, resolveAid(type, run.id, q, correctDisplayed));
+      }
+    }
+    if (Object.keys(merged).length) aids = merged;
+  }
+
   return {
     runId: run.id,
     status: run.status as ShowStatus,
@@ -194,6 +234,7 @@ function toView(run: RunRow): ShowRunView {
     ladder: PRIZE_LADDER,
     usedLifelines: parseLifelines(run.usedLifelines),
     question: playing ? questionView(ids[run.currentStep - 1], run.currentStep, run.id) : null,
+    aids,
   };
 }
 
@@ -341,13 +382,13 @@ export interface LifelineResult {
 // Distributes 100% over `count` options with `correctIndex` getting the biggest
 // share (`correctShare`), so the aid points (softly) at the right answer. The
 // remaining percentage is split with a little jitter over the wrong options and
-// always sums to exactly 100.
-function biasedDistribution(count: number, correctIndex: number, correctShare: number): number[] {
+// always sums to exactly 100. The jitter is drawn from `rng`, so it's reproducible.
+function biasedDistribution(count: number, correctIndex: number, correctShare: number, rng: () => number): number[] {
   const dist = new Array<number>(count).fill(0);
   dist[correctIndex] = correctShare;
   const remaining = 100 - correctShare;
   const wrongIdx = dist.map((_, i) => i).filter((i) => i !== correctIndex);
-  const weights = wrongIdx.map(() => 1 + Math.random());
+  const weights = wrongIdx.map(() => 1 + rng());
   const wsum = weights.reduce((a, b) => a + b, 0);
   let assigned = 0;
   wrongIdx.forEach((idx, k) => {
@@ -357,6 +398,37 @@ function biasedDistribution(count: number, correctIndex: number, correctShare: n
     assigned += dist[idx];
   });
   return dist;
+}
+
+// The on-screen effect of a single-use aid, computed deterministically from the
+// (run, question) pair so it can be recomputed on resume without persisting it.
+export interface AidResult {
+  removedIndices?: number[]; // fifty (cards)
+  distribution?: number[]; // audience/students
+  hint?: string; // students
+}
+
+export function resolveAid(type: LifelineType, runId: string, q: QuizQuestion, correctDisplayed: number): AidResult {
+  const rng = makeRng(`${runId}:${q.id}:${type}`);
+  const n = q.options.length;
+  if (type === 'fifty') {
+    // 4 cards, one flip: removes a random 1..(n-1) wrong options — seeded, so a
+    // reload restores exactly the same cut instead of losing the aid.
+    const wrong = Array.from({ length: n }, (_, disp) => disp).filter((disp) => disp !== correctDisplayed);
+    const hits = 1 + Math.floor(rng() * wrong.length);
+    return { removedIndices: seededShuffle(wrong, rng).slice(0, hits) };
+  }
+  if (type === 'audience') {
+    const share = 45 + Math.floor(rng() * 25); // 45–69% on the correct one
+    return { distribution: biasedDistribution(n, correctDisplayed, share, rng) };
+  }
+  if (type === 'students') {
+    const share = 60 + Math.floor(rng() * 25); // 60–84% confidence
+    const distribution = biasedDistribution(n, correctDisplayed, share, rng);
+    const letter = String.fromCharCode(65 + correctDisplayed);
+    return { distribution, hint: `A galera dos universitários fechou na alternativa ${letter} — mas confira você mesmo!` };
+  }
+  return {};
 }
 
 export async function useLifeline(
@@ -383,22 +455,8 @@ export async function useLifeline(
   const perm = optionPerm(run.id, q.id, q.options.length);
   const correctDisplayed = perm.indexOf(q.answer);
 
-  if (type === 'fifty') {
-    // Card system: the player flips ONE of 4 cards; that card removes a random
-    // 1–4 wrong options. We return the full shuffled pool of wrong displayed
-    // indices — how many the chosen card actually removes is decided client-side
-    // (a pure visual hint; the graded answer stays server-authoritative).
-    result.removedIndices = shuffle(
-      perm.map((_, disp) => disp).filter((disp) => disp !== correctDisplayed)
-    );
-  } else if (type === 'audience') {
-    const share = 45 + Math.floor(Math.random() * 25); // 45–69% on the correct one
-    result.distribution = biasedDistribution(q.options.length, correctDisplayed, share);
-  } else if (type === 'students') {
-    const share = 60 + Math.floor(Math.random() * 25); // 60–84% confidence
-    result.distribution = biasedDistribution(q.options.length, correctDisplayed, share);
-    const letter = String.fromCharCode(65 + correctDisplayed);
-    result.hint = `A galera dos universitários fechou na alternativa ${letter} — mas confira você mesmo!`;
+  if (type === 'fifty' || type === 'audience' || type === 'students') {
+    Object.assign(result, resolveAid(type, run.id, q, correctDisplayed));
   } else if (type === 'skip') {
     // Swap the current question for an unused one of similar difficulty.
     const usedSet = new Set(ids);
@@ -416,9 +474,13 @@ export async function useLifeline(
     }
   }
 
+  // Append `type@step` so a reload can tell which step the aid was spent on and
+  // restore its on-screen effect (deterministic via resolveAid).
+  const newToken = `${type}@${run.currentStep}`;
+  const newCsv = run.usedLifelines ? `${run.usedLifelines},${newToken}` : newToken;
   await prisma.showRun.update({
     where: { id: run.id },
-    data: { usedLifelines: result.usedLifelines.join(','), questionIds },
+    data: { usedLifelines: newCsv, questionIds },
   });
   return result;
 }
