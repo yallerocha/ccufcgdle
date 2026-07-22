@@ -701,6 +701,372 @@ const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty' | 'topic'>[] = [
     explanation:
       'Software de qualidade simplifica (e não complica) os processos de negócio — os demais itens são benefícios apontados pelos autores.',
   },
+
+  // ── Matemática — lógica e grafos (POSCOMP 2024) ────────────────────────────
+  {
+    id: 'mat-2024-05',
+    area: 'Matemática',
+    question:
+      'Em um grafo simples não direcionado com n vértices, a quantidade máxima de arestas é n(n−1)/2. Qual é o número máximo de arestas que um grafo não direcionado G com 7 vértices pode ter sem formar um ciclo?',
+    options: ['6', '7', '10', '11', '21'],
+    answer: 0,
+    explanation:
+      'Um grafo sem ciclos é uma floresta; o máximo de arestas ocorre quando ele é uma árvore, com n−1 arestas. Para n=7, são 6 arestas.',
+  },
+  {
+    id: 'mat-2024-14',
+    area: 'Matemática',
+    question:
+      'Dadas duas proposições lógicas q e p, a proposição lógica ∼(p ∨ q) é verdadeira se, e somente se, for falsa a proposição:',
+    options: ['p ∧ q', '∼p', '∼p → q', '∼p → ∼q', '∼q'],
+    answer: 2,
+    explanation:
+      '∼(p ∨ q) é verdadeira exatamente quando p ∨ q é falsa. Como ∼p → q ≡ p ∨ q, essa é a proposição que precisa ser falsa.',
+  },
+  {
+    id: 'mat-2024-15',
+    area: 'Matemática',
+    question:
+      'Considere as premissas verdadeiras: (1) Se Ana Paula joga vôlei ou Joaquim joga videogame, então Victória vai à praia. (2) Hoje, Victória não foi à praia. (3) Se hoje é sábado, então Ana Paula joga vôlei e Caio treina boxe. É correto afirmar que:',
+    options: [
+      'Hoje é sábado e Ana Paula jogou vôlei.',
+      'Hoje não é sábado e Joaquim não jogou videogame.',
+      'Ana Paula jogou vôlei ou Joaquim jogou videogame.',
+      'Hoje é sábado e Joaquim jogou videogame.',
+      'Hoje não é sábado e Ana Paula jogou vôlei.',
+    ],
+    answer: 1,
+    explanation:
+      'De (2) e (1), por modus tollens, nem Ana jogou vôlei nem Joaquim jogou videogame. Por (3), como Ana não jogou vôlei, hoje não é sábado.',
+  },
+
+  // ── Fundamentos da Computação (POSCOMP 2024) ───────────────────────────────
+  {
+    id: 'fun-2024-26',
+    area: 'Fundamentos da Computação',
+    question:
+      'No caminhamento _______ de uma árvore T, a raiz de T é visitada em primeiro lugar, e então as subárvores enraizadas nos seus filhos são percorridas recursivamente. Assinale a alternativa que preenche corretamente a lacuna.',
+    options: ['simétrico', 'em largura', 'central', 'pré-fixado', 'pós-fixado'],
+    answer: 3,
+    explanation:
+      'No percurso pré-fixado (pré-ordem) a raiz é visitada antes das subárvores dos filhos.',
+  },
+  {
+    id: 'fun-2024-28',
+    area: 'Fundamentos da Computação',
+    question:
+      'Sobre a ponte norte e a ponte sul de uma placa-mãe, analise: I. A ponte norte comunica o processador com dispositivos de E/S de baixa velocidade, e a ponte sul conecta a RAM e a placa de vídeo. II. A ponte sul conecta o processador diretamente à RAM e à placa de vídeo, e a ponte norte lida com armazenamento e periféricos de E/S. III. A ponte norte faz a interface entre o processador e componentes de alta velocidade como a RAM e a placa de vídeo, e a ponte sul gerencia dispositivos de E/S de menor velocidade. IV. As duas pontes são substituíveis e podem ser usadas indistintamente. Quais estão corretas?',
+    options: ['Apenas I.', 'Apenas II.', 'Apenas III.', 'Apenas I e II.', 'Apenas III e IV.'],
+    answer: 2,
+    explanation:
+      'A ponte norte conecta o processador aos componentes de alta velocidade (RAM, GPU); a ponte sul cuida dos dispositivos de E/S mais lentos. Apenas a assertiva III está correta.',
+  },
+  {
+    id: 'fun-2024-29',
+    area: 'Fundamentos da Computação',
+    question:
+      'Qual dos seguintes métodos permite a transferência de dados entre um dispositivo de entrada e saída e a memória principal sem o intermédio da CPU?',
+    options: ['Polling.', 'Interrupções.', 'E/S mapeada em memória.', 'Direct Memory Access (DMA).', 'E/S programada.'],
+    answer: 3,
+    explanation:
+      'O DMA (Direct Memory Access) permite que dispositivos transfiram dados de/para a memória principal sem passar pela CPU, liberando o processador.',
+  },
+  {
+    id: 'fun-2024-36',
+    area: 'Fundamentos da Computação',
+    question: 'Qual das seguintes linguagens pode ser gerada por uma gramática regular?',
+    options: [
+      "{w ∈ {a,b}* | o número de a's em w é maior que o número de b's}",
+      "{w ∈ {a,b}* | o número de a's em w é o dobro do número de b's}",
+      "{w ∈ {a,b}* | o número de a's em w é divisível por 3 e o número de b's é ímpar}",
+      "{w ∈ {a,b}* | w contém o mesmo número de a's e b's}",
+      "{w ∈ {a,b}* | w contém números diferentes de a's e b's}",
+    ],
+    answer: 2,
+    explanation:
+      "Contar divisibilidade/paridade exige apenas memória finita (estados) e é regular. As demais comparam quantidades de a's e b's, o que não é regular (exigiria uma pilha).",
+  },
+  {
+    id: 'fun-2024-38',
+    area: 'Fundamentos da Computação',
+    question:
+      'O _______, de _______, demonstra limitações dos sistemas formais e a impossibilidade de provar certas afirmações dentro deles. Já o _______, de _______, pergunta se um determinado programa irá eventualmente parar ou entrar em loop infinito para uma entrada dada. Preencha correta e respectivamente as lacunas.',
+    options: [
+      'Teorema da Incompletude – Alan Turing – Problema da Parada – Kurt Gödel',
+      'Teorema da Incompletude – Kurt Gödel – Problema da Parada – Alan Turing',
+      'Problema da Parada – Alan Turing – Teorema da Incompletude – Kurt Gödel',
+      'Problema da Parada – Kurt Gödel – Teorema da Incompletude – Alonzo Church',
+      'Teorema da Incompletude – Alonzo Church – Problema da Parada – Alan Turing',
+    ],
+    answer: 1,
+    explanation:
+      'O Teorema da Incompletude é de Kurt Gödel; o Problema da Parada (Halting Problem) é de Alan Turing.',
+  },
+  {
+    id: 'fun-2024-39',
+    area: 'Fundamentos da Computação',
+    question:
+      'Considerando arquivos e registros, assinale a alternativa correta sobre a estrutura de armazenamento e recuperação de informações em memória secundária.',
+    options: [
+      'Um arquivo é um conjunto de dados de diferentes tipos, e cada item individual dentro de um arquivo é chamado de byte.',
+      'Um programa não pode ser considerado um arquivo, pois é executável e não segue a mesma estrutura de arquivos de dados.',
+      'Na memória secundária, o sistema operacional armazena informações em grupos, chamados blocos, para aumentar a eficiência na transferência de dados entre a memória secundária e a principal.',
+      'A estrutura de armazenamento em memória secundária não utiliza arquivos e registros, mas sim páginas e segmentos.',
+      'Na memória secundária os dados são armazenados exclusivamente em formato não hierárquico, o que impede a organização em pastas ou diretórios.',
+    ],
+    answer: 2,
+    explanation:
+      'Os dados em memória secundária são organizados em blocos, a unidade de transferência entre disco e memória principal, para maior eficiência de E/S.',
+  },
+  {
+    id: 'fun-2024-40',
+    area: 'Fundamentos da Computação',
+    question: 'Considerando a compressão de dados, assinale a alternativa correta.',
+    options: [
+      'A compressão pode ser alcançada atribuindo descrições curtas aos resultados mais frequentes da fonte e descrições mais longas aos menos frequentes.',
+      'A compressão pode ser alcançada atribuindo descrições de comprimento uniforme a todos os resultados da fonte de dados.',
+      'A desigualdade de Kraft afirma que os comprimentos dos códigos não precisam seguir qualquer padrão específico.',
+      'A codificação de Huffman minimiza o tamanho da mensagem codificada, porém sempre com perda de informação.',
+      'A compressão de dados sempre resulta em perda de qualidade, independentemente do algoritmo utilizado.',
+    ],
+    answer: 0,
+    explanation:
+      'A compressão eficiente (ex.: Huffman) atribui códigos curtos aos símbolos mais frequentes e códigos mais longos aos menos frequentes, reduzindo o tamanho médio.',
+  },
+  {
+    id: 'fun-2024-42',
+    area: 'Fundamentos da Computação',
+    question:
+      'O gerenciamento de E/S é implementado em camadas. Um dispositivo notifica que realizou uma operação comunicando-se com a camada de _______ (usualmente via APIC), que informa a camada de _______ sobre o resultado. Quando o SO precisa programar o dispositivo, a camada de _______ se comunica diretamente com ele. Preencha correta e respectivamente as lacunas.',
+    options: [
+      'controladores de dispositivo – chamada de sistemas – tratadores de interrupção',
+      'tratadores de interrupção – controladores de dispositivo – chamada de sistemas',
+      'software independente de dispositivo – tratadores de interrupção – controladores de dispositivo',
+      'controladores de dispositivo – software independente de dispositivo – chamada de sistemas',
+      'tratadores de interrupção – controladores de dispositivo – controladores de dispositivo',
+    ],
+    answer: 4,
+    explanation:
+      'O dispositivo sinaliza (via APIC) os tratadores de interrupção, que informam os controladores de dispositivo; para programar o hardware, é a camada de controladores de dispositivo que fala diretamente com ele.',
+  },
+  {
+    id: 'fun-2024-45',
+    area: 'Fundamentos da Computação',
+    question: 'Sobre os tipos de dados básicos, assinale a alternativa correta.',
+    options: [
+      'As variáveis do tipo inteiro armazenam valores sem parte fracionária, positivos e negativos.',
+      'O tipo caractere permite armazenar strings ou conjuntos de caracteres em uma única variável do tipo caractere.',
+      'Por padrão, uma variável do tipo inteiro admite somente valores positivos; para negativos é necessário um comando específico da linguagem.',
+      'As variáveis do tipo vetor são utilizadas para armazenar valores numéricos com parte fracionária.',
+      'O conjunto de operações do tipo caractere inclui soma, subtração, multiplicação, divisão inteira e resto da divisão.',
+    ],
+    answer: 0,
+    explanation:
+      'O tipo inteiro armazena números sem parte fracionária, podendo ser positivos ou negativos.',
+  },
+
+  // ── Tecnologia da Computação (POSCOMP 2024) ────────────────────────────────
+  {
+    id: 'tec-2024-46',
+    area: 'Tecnologia da Computação',
+    question:
+      'Sobre estruturas (structs) em linguagens de programação, analise: I. Uma estrutura agrupa uma ou mais variáveis sob um único nome, para facilitar a referência. II. A declaração de uma estrutura corresponde unicamente à definição de um novo tipo, e não à declaração de variáveis desse tipo. III. Uma estrutura pode conter, na sua definição, variáveis simples, vetores, ponteiros ou mesmo outras estruturas. IV. As estruturas permitem agrupar diversos componentes, de tipos distintos, em uma única variável. Quais estão corretas?',
+    options: ['Apenas I e II.', 'Apenas III e IV.', 'Apenas I, II e III.', 'Apenas II, III e IV.', 'I, II, III e IV.'],
+    answer: 4,
+    explanation:
+      'Todas descrevem corretamente structs: agrupam variáveis (possivelmente de tipos distintos) sob um nome, definem um novo tipo e podem conter simples, vetores, ponteiros ou outras estruturas.',
+  },
+  {
+    id: 'tec-2024-47',
+    area: 'Tecnologia da Computação',
+    question:
+      'Um programa lê um salário e mostra o imposto: se o salário for negativo ou zero, mostra o erro; se for maior que 1000 paga 10% de imposto, senão paga apenas 5%. Qual instrução deve ser utilizada?',
+    options: ['Laço encadeado.', 'Atribuição composta.', 'Laço infinito.', 'Condicional encadeada.', 'Atribuição simples.'],
+    answer: 3,
+    explanation:
+      'As múltiplas faixas de decisão (≤ 0, > 1000, caso contrário) exigem condicionais aninhadas/encadeadas (if / else if / else).',
+  },
+  {
+    id: 'tec-2024-49',
+    area: 'Tecnologia da Computação',
+    question:
+      'A definição de um grafo agrupa arestas como uma coleção, não como um conjunto, permitindo que duas arestas não dirigidas tenham os mesmos pontos finais e que duas arestas dirigidas tenham a mesma origem e o mesmo destino. Tais arestas são chamadas de:',
+    options: ['Paralelas.', 'Laços.', 'Adjacentes.', 'Incidentes.', 'Finais.'],
+    answer: 0,
+    explanation:
+      'Arestas com os mesmos extremos (mesma origem e destino) são chamadas de arestas paralelas (ou múltiplas), característica de multigrafos.',
+  },
+  {
+    id: 'tec-2024-50',
+    area: 'Tecnologia da Computação',
+    question:
+      'Um _______ é um caminho em que os vértices de início e fim são os mesmos. Assinale a alternativa que preenche corretamente a lacuna.',
+    options: ['arco', 'ciclo', 'caminho simples', 'laço', 'k-cubo'],
+    answer: 1,
+    explanation: 'Um ciclo é um caminho fechado, cujos vértices de início e fim coincidem.',
+  },
+  {
+    id: 'tec-2024-55',
+    area: 'Tecnologia da Computação',
+    question:
+      'Sobre representação intermediária (RI) na construção de compiladores, analise: I. Árvores sintáticas e código de três endereços são dois tipos de RI. II. Os enunciados de código de três endereços têm a forma geral x := y op z, em que x, y e z são nomes, constantes ou temporários criados pelo compilador; outras formas (desvios condicionais e incondicionais etc.) também são usadas. III. RIs podem ser produzidas usando Definições Dirigidas pela Sintaxe. IV. Autômatos finitos definem RIs, com os estados representando as variáveis do programa e as transições, instruções do código intermediário. Quais estão corretas?',
+    options: ['Apenas I.', 'Apenas I e II.', 'Apenas II e IV.', 'Apenas I, II e III.', 'I, II, III e IV.'],
+    answer: 3,
+    explanation:
+      'Árvores sintáticas e código de três endereços são RIs (I), a forma x := y op z e suas variações estão corretas (II) e RIs podem ser geradas por Definições Dirigidas pela Sintaxe (III). A assertiva IV é falsa.',
+  },
+  {
+    id: 'tec-2024-57',
+    area: 'Tecnologia da Computação',
+    question:
+      'Sobre técnicas de renderização e iluminação, analise: I. Ray Tracing simula a propagação da luz e é frequentemente usada em jogos por sua renderização eficiente em tempo real. II. Z-Buffer armazena a profundidade dos objetos e é usada para gerar as cenas ultrarrealistas do cinema, por representar o estado da arte da geração 3D. III. O Modelo de Reflexão de Phong combina reflexão difusa, especular e ambiente; por ser iluminação global que calcula incidência direta e indireta, não é muito usada em tempo real. Assinale a alternativa correta.',
+    options: [
+      'Todas as assertivas estão corretas.',
+      'Todas as assertivas estão incorretas.',
+      'Apenas as assertivas I e II estão corretas.',
+      'Apenas as assertivas I e III estão corretas.',
+      'Apenas as assertivas II e III estão corretas.',
+    ],
+    answer: 1,
+    explanation:
+      'Ray Tracing é custoso (não é o padrão de tempo real por velocidade); Z-Buffer resolve visibilidade, não gera o realismo cinematográfico; e o modelo de Phong é iluminação local (não global) e é usado em tempo real. Todas estão incorretas.',
+  },
+  {
+    id: 'tec-2024-60',
+    area: 'Tecnologia da Computação',
+    question:
+      'Sobre gerenciamento de configuração de software, analise: I. Os elementos que constituem todas as informações geradas durante o processo de software são conhecidos coletivamente como configuração de software. II. À medida que o trabalho de engenharia de software progride, forma-se uma hierarquia de itens de configuração de software. III. O gerenciamento de configuração é um conjunto de atividades para administrar as mudanças ao longo de todo o ciclo de vida do software. Quais estão corretas?',
+    options: [
+      'Todas as assertivas estão corretas.',
+      'Todas as assertivas estão incorretas.',
+      'Apenas as assertivas I e II estão corretas.',
+      'Apenas as assertivas I e III estão corretas.',
+      'Apenas as assertivas II e III estão corretas.',
+    ],
+    answer: 0,
+    explanation:
+      'As três afirmações descrevem corretamente a configuração de software, sua hierarquia de itens e o gerenciamento de mudanças ao longo do ciclo de vida.',
+  },
+  {
+    id: 'tec-2024-61',
+    area: 'Tecnologia da Computação',
+    question: 'Em um Algoritmo Genético (AG), o operador de crossover é responsável por:',
+    options: [
+      'Avaliar a aptidão de cada indivíduo na população.',
+      'Manter os melhores indivíduos de uma geração para a próxima.',
+      'Modificar aleatoriamente os genes de um indivíduo para explorar novas soluções.',
+      'Selecionar os indivíduos que participarão do processo de reprodução.',
+      'Combinar partes dos cromossomos de dois pais para criar descendentes.',
+    ],
+    answer: 4,
+    explanation:
+      'O crossover (recombinação) combina material genético de dois pais para gerar descendentes; avaliação, elitismo, mutação e seleção são operadores distintos.',
+  },
+  {
+    id: 'tec-2024-62',
+    area: 'Tecnologia da Computação',
+    question: 'Em relação aos Sistemas Especialistas, assinale a alternativa que melhor descreve o papel do motor de inferência.',
+    options: [
+      'Atua principalmente na otimização de algoritmos de aprendizado de máquina dentro do sistema.',
+      'É responsável por gerenciar a interface de usuário do sistema.',
+      'Utiliza as regras da base de conhecimento para derivar conclusões a partir de fatos específicos, simulando o raciocínio humano especializado.',
+      'Substitui a necessidade de uma base de conhecimento, operando com base em dados brutos e estatísticas.',
+      'Serve exclusivamente para a manutenção e atualização automática da base de dados.',
+    ],
+    answer: 2,
+    explanation:
+      'O motor de inferência aplica as regras da base de conhecimento sobre os fatos para derivar novas conclusões, emulando o raciocínio de um especialista.',
+  },
+  {
+    id: 'tec-2024-63',
+    area: 'Tecnologia da Computação',
+    question:
+      'Uma imagem digital é criada por digitalização em duas etapas: a _______, que discretiza as coordenadas no domínio espacial, e a _______, que discretiza os valores de amplitude dos pixels. Preencha correta e respectivamente as lacunas.',
+    options: [
+      'interpolação – ampliação',
+      'modulação – codificação',
+      'quantização – amostragem',
+      'amostragem – quantização',
+      'codificação – modulação',
+    ],
+    answer: 3,
+    explanation:
+      'A amostragem discretiza as coordenadas espaciais; a quantização discretiza os valores de amplitude (intensidade) dos pixels.',
+  },
+  {
+    id: 'tec-2024-64',
+    area: 'Tecnologia da Computação',
+    question:
+      'Sobre filtragem de imagens digitais, analise: I. Um filtro espacial de média resulta na suavização da imagem. II. Um filtro de frequência passa-baixa resulta no aguçamento da imagem. III. Um filtro espacial com o operador laplaciano resulta no aguçamento da imagem. IV. Para suavização usam-se apenas filtros no domínio espacial e para aguçamento apenas filtros no domínio das frequências. Quais estão corretas?',
+    options: ['Apenas I e II.', 'Apenas I e III.', 'Apenas II e III.', 'Apenas II e IV.', 'I, II, III e IV.'],
+    answer: 1,
+    explanation:
+      'O filtro de média suaviza (I) e o laplaciano aguça (III). O passa-baixa suaviza (não aguça), e ambos os efeitos podem ser obtidos tanto no domínio espacial quanto no de frequências.',
+  },
+  {
+    id: 'tec-2024-65',
+    area: 'Tecnologia da Computação',
+    question:
+      'Um roteador recebe um pacote com IP de origem 13.1.2.3 e IP de destino 11.1.2.5. Em qual rota ele encaminhará o pacote?',
+    options: ['13.0.0.0/8', '13.1.0.0/16', '11.1.0.0/16', '13.1.2.0/24', '11.1.2.0/24'],
+    answer: 4,
+    explanation:
+      'O encaminhamento usa o IP de destino (11.1.2.5) e o critério do prefixo mais longo (longest prefix match): 11.1.2.0/24 é a rota mais específica que casa com o destino.',
+  },
+  {
+    id: 'tec-2024-66',
+    area: 'Tecnologia da Computação',
+    question: 'Sobre o protocolo IP, assinale a alternativa correta.',
+    options: [
+      'O protocolo IP é baseado em datagramas e orientado à conexão.',
+      'O protocolo IP funciona segundo o melhor esforço possível, garantindo a entrega de mensagens.',
+      'O protocolo IP é conhecido como a cola da Internet porque permite que outros protocolos sejam usados no seu lugar.',
+      'Várias cópias de um pacote IP podem ser entregues.',
+      'O datagrama IP identifica o destinatário através dos campos porta de destino e número IP de destino.',
+    ],
+    answer: 3,
+    explanation:
+      'O IP é sem conexão e não confiável (best-effort): não garante entrega nem ordem e duplicatas podem ocorrer. Portas são da camada de transporte, não do IP.',
+  },
+  {
+    id: 'tec-2024-67',
+    area: 'Tecnologia da Computação',
+    question: 'Qual protocolo da camada de transporte o DNS (Domain Name Service) utiliza para consultas regulares?',
+    options: ['TCP', 'TCP/IP', 'HTTP', 'CoAP', 'UDP'],
+    answer: 4,
+    explanation:
+      'Consultas DNS regulares usam UDP (porta 53), por serem rápidas e de baixa sobrecarga; o TCP é reservado a casos como transferência de zona ou respostas grandes.',
+  },
+  {
+    id: 'tec-2024-68',
+    area: 'Tecnologia da Computação',
+    question:
+      'Os clientes não devem conhecer a distribuição de arquivos: um único conjunto de operações atende arquivos locais e remotos, e programas escritos para arquivos locais acessam arquivos remotos sem modificação. Qual é o requisito de transparência descrito para serviços de arquivos em sistemas distribuídos?',
+    options: ['Localização.', 'Acesso.', 'Mobilidade.', 'Desempenho.', 'Mudança de escala.'],
+    answer: 1,
+    explanation:
+      'A transparência de acesso permite operar sobre recursos locais e remotos com as mesmas operações, sem que o cliente perceba a diferença.',
+  },
+  {
+    id: 'tec-2024-69',
+    area: 'Tecnologia da Computação',
+    question:
+      'Uma falha _______ ocorre quando um servidor para abruptamente, mas estava funcionando corretamente até parar; uma vez que pare, nada mais se ouve dele (ex.: um SO que trava e só é resolvido reinicializando). Assinale a alternativa que preenche corretamente a lacuna.',
+    options: ['por omissão', 'de temporização', 'de resposta', 'arbitrária', 'por queda'],
+    answer: 4,
+    explanation:
+      'A falha por queda (crash) ocorre quando o servidor, antes correto, para completamente e deixa de responder.',
+  },
+  {
+    id: 'tec-2024-70',
+    area: 'Tecnologia da Computação',
+    question:
+      'O algoritmo de exclusão mútua _______ requer apenas três mensagens para entrar e sair de uma região crítica: uma requisição, uma permissão para entrar e uma liberação para sair. Assinale a alternativa que preenche corretamente a lacuna.',
+    options: ['centralizado', 'descentralizado', 'distribuído', 'token-ring', 'relógios vetoriais'],
+    answer: 0,
+    explanation:
+      'No algoritmo centralizado, um coordenador gerencia o acesso: requisição, permissão e liberação — três mensagens por uso da região crítica.',
+  },
 ];
 
 // Per-question difficulty (1 fácil .. 5 difícil). Ids not listed default to 3.
@@ -719,6 +1085,16 @@ const DIFFICULTY_BY_ID: Record<string, number> = {
   'tec-2019-45': 4, 'tec-2019-46': 2, 'tec-2019-61': 2, 'tec-2019-62': 3,
   'tec-2022-46': 4, 'tec-2022-54': 4, 'tec-2024-51': 5, 'tec-2024-53': 4,
   'tec-2024-58': 2,
+  // POSCOMP 2024 (adicionais)
+  'mat-2024-05': 2, 'mat-2024-14': 3, 'mat-2024-15': 3,
+  'fun-2024-26': 2, 'fun-2024-28': 3, 'fun-2024-29': 1, 'fun-2024-36': 4,
+  'fun-2024-38': 3, 'fun-2024-39': 2, 'fun-2024-40': 3, 'fun-2024-42': 4,
+  'fun-2024-45': 1,
+  'tec-2024-46': 3, 'tec-2024-47': 1, 'tec-2024-49': 2, 'tec-2024-50': 1,
+  'tec-2024-55': 4, 'tec-2024-57': 4, 'tec-2024-60': 2, 'tec-2024-61': 2,
+  'tec-2024-62': 2, 'tec-2024-63': 3, 'tec-2024-64': 4, 'tec-2024-65': 3,
+  'tec-2024-66': 3, 'tec-2024-67': 2, 'tec-2024-68': 3, 'tec-2024-69': 3,
+  'tec-2024-70': 3,
 };
 
 // Fine-grained theme per question (players can filter the run by these). Same
@@ -726,6 +1102,7 @@ const DIFFICULTY_BY_ID: Record<string, number> = {
 const TOPIC_BY_ID: Record<string, string> = {
   // Lógica
   'mat-2019-15': 'Lógica', 'mat-2022-11': 'Lógica', 'mat-2019-12': 'Lógica', 'mat-2024-13': 'Lógica',
+  'mat-2024-14': 'Lógica', 'mat-2024-15': 'Lógica',
   // Algoritmos e Complexidade
   'fun-2019-21': 'Algoritmos e Complexidade', 'fun-2019-22': 'Algoritmos e Complexidade',
   'fun-2019-24': 'Algoritmos e Complexidade', 'fun-2019-25': 'Algoritmos e Complexidade',
@@ -733,30 +1110,44 @@ const TOPIC_BY_ID: Record<string, string> = {
   'fun-2022-22': 'Algoritmos e Complexidade', 'fun-2022-26': 'Algoritmos e Complexidade',
   'fun-2024-22': 'Algoritmos e Complexidade', 'fun-2024-23': 'Algoritmos e Complexidade',
   'fun-2022-25': 'Algoritmos e Complexidade', 'fun-2024-21': 'Algoritmos e Complexidade',
+  'fun-2024-40': 'Algoritmos e Complexidade',
   // Estruturas de Dados
   'fun-2019-23': 'Estruturas de Dados', 'fun-2010-21': 'Estruturas de Dados',
   'fun-2010-26': 'Estruturas de Dados', 'fun-2024-24': 'Estruturas de Dados',
-  'fun-2022-24': 'Estruturas de Dados',
+  'fun-2022-24': 'Estruturas de Dados', 'mat-2024-05': 'Estruturas de Dados',
+  'fun-2024-26': 'Estruturas de Dados', 'tec-2024-49': 'Estruturas de Dados',
+  'tec-2024-50': 'Estruturas de Dados',
   // Teoria da Computação (inclui grafos)
   'fun-2010-50': 'Teoria da Computação', 'fun-2010-46': 'Teoria da Computação', 'fun-2024-48': 'Teoria da Computação',
+  'fun-2024-36': 'Teoria da Computação', 'fun-2024-38': 'Teoria da Computação',
   // Programação e Compiladores
   'fun-2022-28': 'Programação e Compiladores', 'fun-2024-25': 'Programação e Compiladores', 'tec-2024-54': 'Programação e Compiladores',
+  'fun-2024-45': 'Programação e Compiladores', 'tec-2024-46': 'Programação e Compiladores',
+  'tec-2024-47': 'Programação e Compiladores', 'tec-2024-55': 'Programação e Compiladores',
   // Sistemas Operacionais e Arquitetura
   'tec-2022-50': 'SO e Arquitetura', 'tec-2019-45': 'SO e Arquitetura', 'tec-2019-46': 'SO e Arquitetura',
   'tec-2022-46': 'SO e Arquitetura', 'tec-2019-43': 'SO e Arquitetura',
+  'fun-2024-28': 'SO e Arquitetura', 'fun-2024-29': 'SO e Arquitetura',
+  'fun-2024-39': 'SO e Arquitetura', 'fun-2024-42': 'SO e Arquitetura',
   // Redes
   'tec-2019-54': 'Redes', 'tec-2019-60': 'Redes', 'tec-2022-54': 'Redes',
+  'tec-2024-65': 'Redes', 'tec-2024-66': 'Redes', 'tec-2024-67': 'Redes',
   // Banco de Dados
   'tec-2010-47': 'Banco de Dados', 'tec-2010-49': 'Banco de Dados', 'tec-2024-51': 'Banco de Dados',
   'tec-2024-52': 'Banco de Dados', 'tec-2024-53': 'Banco de Dados',
   // IA e Ciência de Dados
   'tec-2019-52': 'IA e Dados', 'tec-2022-52': 'IA e Dados',
+  'tec-2024-61': 'IA e Dados', 'tec-2024-62': 'IA e Dados',
   // Sistemas Distribuídos
   'tec-2019-64': 'Sistemas Distribuídos', 'tec-2019-62': 'Sistemas Distribuídos',
+  'tec-2024-68': 'Sistemas Distribuídos', 'tec-2024-69': 'Sistemas Distribuídos',
+  'tec-2024-70': 'Sistemas Distribuídos',
   // Computação Gráfica
   'tec-2019-57': 'Computação Gráfica', 'tec-2019-58': 'Computação Gráfica', 'tec-2019-61': 'Computação Gráfica',
+  'tec-2024-57': 'Computação Gráfica', 'tec-2024-63': 'Computação Gráfica', 'tec-2024-64': 'Computação Gráfica',
   // Engenharia de Software
   'tec-2024-59': 'Engenharia de Software', 'tec-2024-58': 'Engenharia de Software',
+  'tec-2024-60': 'Engenharia de Software',
 };
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = RAW_QUESTIONS.map((q) => ({
