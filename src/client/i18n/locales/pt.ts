@@ -137,7 +137,6 @@ export const pt = {
     seeRanking: 'Ver ranking',
     errorGeneric: 'Algo deu errado. Tente novamente.',
     worthLabel: 'Valendo',
-    securedLabel: 'Garantido',
     finalAnswer: 'Resposta final: {{letter}}!',
     settingsTitle: 'Configurações de jogo',
     topicsTitle: 'Temas das perguntas',

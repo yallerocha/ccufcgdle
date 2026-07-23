@@ -4016,8 +4016,7 @@ a:focus-visible,
 @media (max-width: 920px) {
   .show-layout { grid-template-columns: 1fr; }
   .show-main, .show-ladder { grid-column: auto; }
-  /* The full 15-rung ladder would push the question below the fold on phones;
-     the gold "Valendo R$X" chip in the meta row carries the stakes instead. */
+  /* The full 15-rung ladder would push the question below the fold on phones. */
   .show-ladder { display: none; }
 }
 
@@ -4039,32 +4038,6 @@ a:focus-visible,
   color: var(--sc-muted);
 }
 .show-source { font-family: var(--font-mono); color: var(--sc-tech); border-color: rgba(60, 224, 230, 0.25); }
-/* Current stake pill — gold, the strongest chip in the meta row. */
-.show-worth {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.14rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(255, 210, 74, 0.1);
-  border: 1px solid rgba(255, 210, 74, 0.4);
-  color: var(--sc-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  font-size: 0.68rem;
-}
-.show-worth strong {
-  font-family: var(--font-mono);
-  color: var(--sc-gold);
-  font-size: 0.85rem;
-  letter-spacing: 0;
-}
-/* Banked floor — green, reads as "safe money" next to the gold stake. */
-.show-worth--secured {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.4);
-}
-.show-worth--secured strong { color: #34d399; }
 
 .show-question-card {
   position: relative;

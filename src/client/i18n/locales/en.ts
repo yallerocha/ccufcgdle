@@ -123,7 +123,7 @@ export const en: Dictionary = {
       fifty: 'Cards',
       skip: 'Skip question',
       audience: 'Audience',
-      students: 'Phone a friend',
+      students: 'University students',
     },
     cards: {
       title: 'Lucky cards',
@@ -141,7 +141,6 @@ export const en: Dictionary = {
     seeRanking: 'See ranking',
     errorGeneric: 'Something went wrong. Please try again.',
     worthLabel: 'Playing for',
-    securedLabel: 'Safe',
     finalAnswer: 'Final answer: {{letter}}!',
     settingsTitle: 'Game settings',
     topicsTitle: 'Question topics',

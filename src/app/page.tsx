@@ -668,15 +668,6 @@ export default function ShowPage() {
             <span className="show-step">{t('show.stepOf', { step: q.step, total: q.totalSteps })}</span>
             <span className="show-area">{q.topic}</span>
             {q.source && <span className="show-source">POSCOMP {q.source.year}</span>}
-            {/* Current stake + banked floor — the prize indicators on mobile (ladder hidden). */}
-            <span className="show-worth">
-              {t('show.worthLabel')} <strong>{formatPrize(run.ladder[q.step - 1])}</strong>
-            </span>
-            {run.securedPrize > 0 && (
-              <span className="show-worth show-worth--secured">
-                {t('show.securedLabel')} <strong>{formatPrize(run.securedPrize)}</strong>
-              </span>
-            )}
           </div>
 
           {(() => {
