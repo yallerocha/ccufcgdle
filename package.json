@@ -8,6 +8,7 @@
     "start": "next start",
     "start:api": "tsx src/backend/index.ts",
     "dev:api": "tsx watch src/backend/index.ts",
+    "dev:local": "bash scripts/dev.sh",
     "lint": "eslint",
     "test": "DATABASE_URL=postgres://test tsx src/server/show.test.ts",
     "postinstall": "node scripts/prisma-generate-if-present.mjs"

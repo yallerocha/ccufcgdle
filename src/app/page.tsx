@@ -29,6 +29,7 @@ interface ShowQuestion {
   options: string[];
   difficulty: number;
   source: { year: number; number: number } | null;
+  secondsLeft: number;
 }
 
 interface ShowRun {
@@ -316,10 +317,11 @@ export default function ShowPage() {
   const timerActive = playing && !reveal && !transition;
   useEffect(() => {
     if (!timerActive) return;
-    setTimeLeft(QUESTION_SECONDS);
+    // Start from the server's remaining time (so a reload can't refresh the clock).
+    setTimeLeft(run?.question?.secondsLeft ?? QUESTION_SECONDS);
     const id = window.setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
     return () => window.clearInterval(id);
-  }, [timerActive, run?.runId, run?.currentStep]);
+  }, [timerActive, run?.runId, run?.currentStep, run?.question?.secondsLeft]);
   useEffect(() => {
     if (timerActive && timeLeft === 0) handleTimeout();
   }, [timeLeft, timerActive, handleTimeout]);
@@ -421,6 +423,19 @@ export default function ShowPage() {
     setHidden(cardCut);
   };
   const cardsDone = cardCut ? picked !== null : true;
+
+  // Close the card modal with Escape once a card has been flipped.
+  useEffect(() => {
+    if (!cardCut) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && picked !== null) {
+        setCardCut(null);
+        setPicked(null);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [cardCut, picked]);
 
   const toggleSound = () => {
     const m = toggleMuted();
@@ -572,7 +587,7 @@ export default function ShowPage() {
         <div className="show-cards-overlay" role="dialog" aria-modal="true" aria-label={t('show.cards.title')}>
           <div className="show-cards-box">
             <h3 className="show-cards-title">{t('show.cards.title')}</h3>
-            <p className="show-cards-hint">
+            <p className="show-cards-hint" aria-live="polite">
               {picked !== null ? t('show.cards.done', { count: cardCut.length }) : t('show.cards.flip')}
             </p>
             <div className="show-cards-row">
@@ -589,6 +604,7 @@ export default function ShowPage() {
                     onClick={() => flipCard(i)}
                     disabled={picked !== null}
                     aria-label={t('show.cards.flipOne')}
+                    autoFocus={i === 0}
                   >
                     <span className="show-card-inner">
                       <span className="show-card-face show-card-back" aria-hidden="true" />
@@ -597,7 +613,7 @@ export default function ShowPage() {
                           <b>{cardCut.length}</b><span className="show-card-suit">{suit}</span>
                         </span>
                         <span className="show-card-center">
-                          <Scissors size={20} />
+                          <Scissors size={20} aria-hidden="true" />
                           <em>−{cardCut.length}</em>
                         </span>
                         <span className="show-card-corner show-card-corner--br">

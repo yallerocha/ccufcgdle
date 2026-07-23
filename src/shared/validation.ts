@@ -1,15 +1,8 @@
 // Shared validation for account fields (email, password, display name, photo),
 // enforced on the server so the database can't be filled with malformed values.
 
-export function formatAllowedEmailDomains(): string {
-  return '';
-}
-
-// Registration is open to anyone — any valid email address is accepted. (Kept as
-// a helper so callers stay unchanged; format is validated separately.)
-export function isAllowedEmailDomain(_email: string): boolean {
-  return true;
-}
+// Registration is open to anyone — any syntactically valid email is accepted
+// (see the emailRegex check in routes/auth.ts). No domain allow-list.
 
 // Password policy: at least 8 chars with an uppercase letter, a lowercase
 // letter and a digit.

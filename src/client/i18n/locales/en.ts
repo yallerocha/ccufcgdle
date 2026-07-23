@@ -382,7 +382,6 @@ export const en: Dictionary = {
     submitting: 'Registering...',
     orWithEmail: 'or register with email',
     toLogin: 'Back to sign in',
-    errorEmailDomain: 'Only @ccc.ufcg.edu.br, @computacao.ufcg.edu.br and @copin.ufcg.edu.br emails can register.',
     errorPasswordWeak: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter and a number.',
     errorPasswordMismatch: 'Passwords do not match.',
     error: 'Failed to register.',

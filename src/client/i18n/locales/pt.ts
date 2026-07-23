@@ -378,7 +378,6 @@ export const pt = {
     submitting: 'Cadastrando...',
     orWithEmail: 'ou cadastre com email',
     toLogin: 'Voltar para Login',
-    errorEmailDomain: 'Apenas emails @ccc.ufcg.edu.br, @computacao.ufcg.edu.br e @copin.ufcg.edu.br podem se cadastrar.',
     errorPasswordWeak: 'A senha deve ter ao menos 8 caracteres, incluindo letra maiúscula, minúscula e número.',
     errorPasswordMismatch: 'As senhas não coincidem.',
     error: 'Erro ao realizar cadastro.',

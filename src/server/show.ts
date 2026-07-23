@@ -21,6 +21,12 @@ export const PRIZE_LADDER = [
 ];
 export const LADDER_SIZE = PRIZE_LADDER.length; // 15
 
+// Per-question countdown. Enforced server-side: an answer submitted after the
+// deadline (plus a grace margin for latency/animation) ends the run like a
+// timeout, so the client clock can't be stalled or reset by reloading.
+export const QUESTION_SECONDS = 200;
+const TIMER_GRACE_MS = 15_000;
+
 // "Portas" de garantia: once a player has cleared one of these many steps, a
 // wrong answer can't drop the banked prize below the matching floor. Ordered from
 // highest so the first match is the best applicable floor.
@@ -46,6 +52,7 @@ export interface ShowQuestionView {
   options: string[];
   difficulty: number;
   source: QuizSource | null;
+  secondsLeft: number; // server-authoritative remaining time on this step
 }
 
 export interface ShowRunView {
@@ -181,7 +188,12 @@ export function optionPerm(runId: string, questionId: string, n: number): number
   return seededShuffle(Array.from({ length: n }, (_, i) => i), makeRng(`${runId}:${questionId}`));
 }
 
-function questionView(id: string, step: number, runId: string): ShowQuestionView | null {
+function questionView(
+  id: string,
+  step: number,
+  runId: string,
+  secondsLeft = QUESTION_SECONDS
+): ShowQuestionView | null {
   const q = QUESTION_BY_ID.get(id);
   if (!q) return null;
   const perm = optionPerm(runId, id, q.options.length);
@@ -194,7 +206,14 @@ function questionView(id: string, step: number, runId: string): ShowQuestionView
     options: perm.map((k) => q.options[k]),
     difficulty: q.difficulty,
     source: questionSource(q),
+    secondsLeft,
   };
+}
+
+// Remaining seconds on the current step, from the server clock.
+function secondsLeftFor(stepStartedAt: Date): number {
+  const elapsed = Math.floor((Date.now() - stepStartedAt.getTime()) / 1000);
+  return Math.max(0, QUESTION_SECONDS - elapsed);
 }
 
 type RunRow = {
@@ -206,6 +225,7 @@ type RunRow = {
   status: string;
   usedLifelines: string;
   startedAt: Date;
+  stepStartedAt: Date;
 };
 
 function toView(run: RunRow): ShowRunView {
@@ -233,7 +253,9 @@ function toView(run: RunRow): ShowRunView {
     securedPrize: run.prize,
     ladder: PRIZE_LADDER,
     usedLifelines: parseLifelines(run.usedLifelines),
-    question: playing ? questionView(ids[run.currentStep - 1], run.currentStep, run.id) : null,
+    question: playing
+      ? questionView(ids[run.currentStep - 1], run.currentStep, run.id, secondsLeftFor(run.stepStartedAt))
+      : null,
     aids,
   };
 }
@@ -292,6 +314,11 @@ export async function answerRun(
   const q = QUESTION_BY_ID.get(ids[run.currentStep - 1]);
   if (!q) return { error: 'bad-state' };
 
+  // Server-side timer: an answer past the deadline (+ grace) loses, like a timeout.
+  if (Date.now() - run.stepStartedAt.getTime() > QUESTION_SECONDS * 1000 + TIMER_GRACE_MS) {
+    return endAsTimeout(run, q);
+  }
+
   // Map the player's shuffled-option index back to the original to check it.
   const perm = optionPerm(run.id, q.id, q.options.length);
   const chosenOriginal = optionIndex >= 0 && optionIndex < perm.length ? perm[optionIndex] : -1;
@@ -311,7 +338,8 @@ export async function answerRun(
         durationMs,
       };
     } else {
-      data = { currentStep: run.currentStep + 1, prize: prizeForCleared(cleared) };
+      // Advancing to the next question restarts its countdown.
+      data = { currentStep: run.currentStep + 1, prize: prizeForCleared(cleared), stepStartedAt: now };
     }
   } else {
     const cleared = run.currentStep - 1;
@@ -344,16 +372,7 @@ export async function stopRun(
 
 // Running out of time on a question ends the run exactly like a wrong answer:
 // banks the guaranteed floor and reveals the correct option.
-export async function timeoutRun(
-  runId: string,
-  playerId: string
-): Promise<AnswerResult | { error: string }> {
-  const run = await loadRun(runId, playerId);
-  if (!run) return { error: 'not-found' };
-  if (run.status !== 'playing') return { error: 'finished' };
-  const ids = parseIds(run.questionIds);
-  const q = QUESTION_BY_ID.get(ids[run.currentStep - 1]);
-  if (!q) return { error: 'bad-state' };
+async function endAsTimeout(run: RunRow, q: QuizQuestion): Promise<AnswerResult> {
   const now = new Date();
   const updated = await prisma.showRun.update({
     where: { id: run.id },
@@ -366,6 +385,18 @@ export async function timeoutRun(
   });
   const correctIndex = optionPerm(run.id, q.id, q.options.length).indexOf(q.answer);
   return { correct: false, correctIndex, explanation: q.explanation, run: toView(updated) };
+}
+
+export async function timeoutRun(
+  runId: string,
+  playerId: string
+): Promise<AnswerResult | { error: string }> {
+  const run = await loadRun(runId, playerId);
+  if (!run) return { error: 'not-found' };
+  if (run.status !== 'playing') return { error: 'finished' };
+  const q = QUESTION_BY_ID.get(parseIds(run.questionIds)[run.currentStep - 1]);
+  if (!q) return { error: 'bad-state' };
+  return endAsTimeout(run, q);
 }
 
 // ── lifelines ─────────────────────────────────────────────────────────────────
@@ -480,7 +511,8 @@ export async function useLifeline(
   const newCsv = run.usedLifelines ? `${run.usedLifelines},${newToken}` : newToken;
   await prisma.showRun.update({
     where: { id: run.id },
-    data: { usedLifelines: newCsv, questionIds },
+    // Skipping swaps in a fresh question, so its countdown restarts.
+    data: { usedLifelines: newCsv, questionIds, ...(type === 'skip' ? { stepStartedAt: new Date() } : {}) },
   });
   return result;
 }

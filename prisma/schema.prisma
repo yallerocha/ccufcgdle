@@ -71,9 +71,10 @@ model ShowRun {
   currentStep   Int       @default(1) // 1..N, the step being answered next
   prize         Int       @default(0) // banked prize: 0 / guaranteed floor / accumulated
   status        String    @default("playing") // playing | won | stopped | lost
-  usedLifelines String    @default("") // csv: fifty,skip,audience,students
+  usedLifelines String    @default("") // csv tokens `type@step` (see server/show.ts)
   durationMs    Int?      // filled when the run ends
   startedAt     DateTime  @default(now())
+  stepStartedAt DateTime  @default(now()) // when the current question was served (server timer)
   endedAt       DateTime?
 
   @@index([playerId, prize])

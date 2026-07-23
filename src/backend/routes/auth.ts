@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../../server/db';
 import { signToken } from '../../server/auth';
 import { requireAuth } from '../middleware/auth';
-import { validatePhoto, isAllowedEmailDomain, isStrongPassword, validateDisplayName, formatAllowedEmailDomains } from '../../shared/validation';
+import { validatePhoto, isStrongPassword, validateDisplayName } from '../../shared/validation';
 import { isEmailVerified, issueVerificationToken, consumeVerificationToken, findUnverifiedUserByEmail } from '../../server/email-verification';
 import { isEmailVerificationRequired, isPasswordResetByEmailEnabled } from '../../server/email-verification-config';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../../server/email';
@@ -133,12 +133,6 @@ router.post('/google', async (req, res) => {
       return res.status(401).json({ error: 'Token do Google inválido ou expirado.' });
     }
 
-    if (!isAllowedEmailDomain(profile.email)) {
-      return res.status(403).json({
-        error: `Apenas emails ${formatAllowedEmailDomains()} podem entrar.`,
-      });
-    }
-
     const photoDataUrl = profile.picture ? await fetchGooglePhotoAsDataUrl(profile.picture) : null;
 
     let user = await prisma.user.findFirst({
@@ -229,12 +223,6 @@ router.post('/register', async (req, res) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (typeof email !== 'string' || !emailRegex.test(email)) {
       return res.status(400).json({ error: 'Email inválido.' });
-    }
-
-    if (!isAllowedEmailDomain(email)) {
-      return res.status(400).json({
-        error: `Apenas emails ${formatAllowedEmailDomains()} podem se cadastrar.`,
-      });
     }
 
     if (typeof password !== 'string' || !isStrongPassword(password)) {
