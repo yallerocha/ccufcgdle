@@ -3762,6 +3762,7 @@ a:focus-visible,
   --sc-text: #eef3ff;
   --sc-muted: #93a6d6;
 
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -3802,6 +3803,74 @@ a:focus-visible,
   mask: radial-gradient(circle at 50% 24%, #000, transparent 60%);
   animation: scRingPulse 5s ease-in-out infinite;
 }
+
+/* ── Sweeping stage spotlights ────────────────────────────────────────────── */
+/* Sits behind the centered content (z-index: -1); the stage's overflow:hidden
+   clips the beams to the stage box. */
+.show-spotlights {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Each beam is a soft cone whose apex converges at the top-center of the stage,
+   swaying side to side like a follow-spot. */
+.show-beam {
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  width: 42%;
+  height: 105%;
+  transform-origin: top center;
+  clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
+  mix-blend-mode: screen;
+  filter: blur(7px);
+  will-change: transform, opacity;
+}
+.show-beam--a {
+  background: linear-gradient(to bottom, rgba(255, 210, 74, 0.30), rgba(255, 210, 74, 0.05) 46%, transparent 72%);
+  animation: beamSwayA 8s ease-in-out infinite;
+}
+.show-beam--b {
+  background: linear-gradient(to bottom, rgba(60, 224, 230, 0.26), rgba(60, 224, 230, 0.04) 46%, transparent 72%);
+  animation: beamSwayB 10.5s ease-in-out infinite;
+}
+.show-beam--c {
+  background: linear-gradient(to bottom, rgba(255, 210, 74, 0.18), rgba(255, 200, 74, 0.03) 46%, transparent 72%);
+  animation: beamSwayC 13s ease-in-out infinite;
+}
+/* The glowing "source" the beams pour out of, at the top-center. */
+.show-spotlight-source {
+  position: absolute;
+  top: -95px;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 234, 170, 0.5), rgba(255, 210, 74, 0.12) 38%, transparent 68%);
+  mix-blend-mode: screen;
+  filter: blur(8px);
+  animation: sourceGlow 5s ease-in-out infinite;
+}
+@keyframes beamSwayA {
+  0%, 100% { transform: translateX(-50%) rotate(-22deg); opacity: 0.85; }
+  50%      { transform: translateX(-50%) rotate(-7deg);  opacity: 1; }
+}
+@keyframes beamSwayB {
+  0%, 100% { transform: translateX(-50%) rotate(20deg);  opacity: 0.7; }
+  50%      { transform: translateX(-50%) rotate(5deg);   opacity: 0.95; }
+}
+@keyframes beamSwayC {
+  0%, 100% { transform: translateX(-50%) rotate(3deg);   opacity: 0.8; }
+  50%      { transform: translateX(-50%) rotate(-9deg);  opacity: 0.55; }
+}
+@keyframes sourceGlow {
+  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+  50%      { opacity: 1;   transform: translateX(-50%) scale(1.06); }
+}
+
 .show-badge-lg {
   position: relative;
   display: inline-flex;
@@ -4636,6 +4705,8 @@ input:focus, select:focus, textarea:focus {
   .show-stage-rings,
   .show-badge-lg,
   .show-hero-logo,
+  .show-beam,
+  .show-spotlight-source,
   .show-rung.is-current,
   .show-option,
   .show-option.is-selected,

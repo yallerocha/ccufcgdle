@@ -449,6 +449,14 @@ export default function ShowPage() {
   if (!run || run.status !== 'playing') {
     return (
       <div className="show-page show-intro fade-in">
+        {/* Sweeping auditorium spotlights — span the whole page so the light
+            reaches up under the top bar while the content stays centered. */}
+        <div className="show-spotlights" aria-hidden>
+          <span className="show-beam show-beam--a" />
+          <span className="show-beam show-beam--b" />
+          <span className="show-beam show-beam--c" />
+          <span className="show-spotlight-source" />
+        </div>
         <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
         {result && (
           <ShowResultModal run={result} onClose={() => setResult(null)} onPlayAgain={start} />
