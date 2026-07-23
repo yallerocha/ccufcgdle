@@ -3805,8 +3805,8 @@ a:focus-visible,
 }
 
 /* ── Sweeping stage spotlights ────────────────────────────────────────────── */
-/* Sits behind the centered content (z-index: -1); the stage's overflow:hidden
-   clips the beams to the stage box. */
+/* Full-page layer behind the centered content (z-index: -1); its own
+   overflow:hidden clips the beams so the light reaches up under the top bar. */
 .show-spotlights {
   position: absolute;
   inset: 0;
@@ -3814,8 +3814,10 @@ a:focus-visible,
   pointer-events: none;
   overflow: hidden;
 }
-/* Each beam is a soft cone whose apex converges at the top-center of the stage,
-   swaying side to side like a follow-spot. */
+/* Each beam is a soft cone rooted at the top-center, swaying side to side like a
+   follow-spot. The resting transform (translateX(-50%) + --beam-rot) lives on the
+   base rule so the beams stay centered and fanned when animation is disabled
+   (reduced motion). The keyframes override transform while they sweep. */
 .show-beam {
   position: absolute;
   top: -70px;
@@ -3823,20 +3825,24 @@ a:focus-visible,
   width: 42%;
   height: 105%;
   transform-origin: top center;
+  transform: translateX(-50%) rotate(var(--beam-rot, 0deg));
   clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
   mix-blend-mode: screen;
   filter: blur(7px);
   will-change: transform, opacity;
 }
 .show-beam--a {
+  --beam-rot: -14deg;
   background: linear-gradient(to bottom, rgba(255, 210, 74, 0.30), rgba(255, 210, 74, 0.05) 46%, transparent 72%);
   animation: beamSwayA 8s ease-in-out infinite;
 }
 .show-beam--b {
+  --beam-rot: 12deg;
   background: linear-gradient(to bottom, rgba(60, 224, 230, 0.26), rgba(60, 224, 230, 0.04) 46%, transparent 72%);
   animation: beamSwayB 10.5s ease-in-out infinite;
 }
 .show-beam--c {
+  --beam-rot: -3deg;
   background: linear-gradient(to bottom, rgba(255, 210, 74, 0.18), rgba(255, 200, 74, 0.03) 46%, transparent 72%);
   animation: beamSwayC 13s ease-in-out infinite;
 }
@@ -4033,6 +4039,32 @@ a:focus-visible,
   color: var(--sc-muted);
 }
 .show-source { font-family: var(--font-mono); color: var(--sc-tech); border-color: rgba(60, 224, 230, 0.25); }
+/* Current stake pill — gold, the strongest chip in the meta row. */
+.show-worth {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.14rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 210, 74, 0.1);
+  border: 1px solid rgba(255, 210, 74, 0.4);
+  color: var(--sc-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-size: 0.68rem;
+}
+.show-worth strong {
+  font-family: var(--font-mono);
+  color: var(--sc-gold);
+  font-size: 0.85rem;
+  letter-spacing: 0;
+}
+/* Banked floor — green, reads as "safe money" next to the gold stake. */
+.show-worth--secured {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.show-worth--secured strong { color: #34d399; }
 
 .show-question-card {
   position: relative;
@@ -4127,6 +4159,12 @@ a:focus-visible,
 }
 .show-option.is-wrong .show-option-letter { background: linear-gradient(180deg, #fca5a5, #dc2626); color: #2a0606; }
 .show-option.is-dim { opacity: 0.4; }
+/* The correct answer locks in with a brief, satisfying pop — state indication on
+   the game's key moment. Overrides the entrance animation (already finished). */
+@keyframes scCorrectPop { 0% { transform: scale(1); } 45% { transform: scale(1.035); } 100% { transform: scale(1); } }
+.show-option.is-correct { animation: scCorrectPop 0.4s ease-out both; }
+/* Tactile press feedback on tap (feedback; subtle, within budget). */
+.show-option:active:not(:disabled) { transform: scale(0.985); }
 
 .show-hint {
   margin-top: 0.85rem;
@@ -4139,6 +4177,8 @@ a:focus-visible,
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  /* Fades in rather than snapping when the "universitários" hint arrives. */
+  animation: scRise 0.3s ease both;
 }
 
 /* ── Reveal ───────────────────────────────────────────────────────────────── */
@@ -4176,8 +4216,9 @@ a:focus-visible,
   font-size: 0.72rem;
   font-weight: 700;
   text-align: center;
-  transition: transform 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
+  transition: transform 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease, opacity 0.25s ease;
 }
+.show-lifeline:active:not(:disabled) { transform: scale(0.97); }
 .show-lifeline svg { color: var(--sc-tech); }
 .show-lifeline-count {
   position: absolute;
@@ -4286,6 +4327,76 @@ a:focus-visible,
 }
 .show-result-prize svg { color: var(--gold); }
 
+/* ── Result modal: outcome-aware (win = gold, stop = green, loss = red) ────── */
+.show-result-modal { max-width: 440px; text-align: center; }
+.show-result-hero { margin-bottom: 1.3rem; }
+.show-result-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  margin-bottom: 0.9rem;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  animation: scResultBadge 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.show-result-title { font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--text-primary); }
+/* Icons inherit the badge's currentColor. */
+.show-result-modal.is-won .show-result-badge {
+  color: var(--gold);
+  background: radial-gradient(circle at 50% 40%, rgba(255, 210, 74, 0.22), transparent 70%);
+  border-color: rgba(255, 210, 74, 0.5);
+}
+.show-result-modal.is-stopped .show-result-badge {
+  color: #34d399;
+  background: radial-gradient(circle at 50% 40%, rgba(16, 185, 129, 0.20), transparent 70%);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+.show-result-modal.is-lost .show-result-badge {
+  color: #f87171;
+  background: radial-gradient(circle at 50% 40%, rgba(222, 93, 96, 0.18), transparent 70%);
+  border-color: rgba(222, 93, 96, 0.5);
+}
+
+/* Prize plate: the banked amount in a framed gold panel. */
+.show-result-plate {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.85rem 1.8rem;
+  border-radius: 16px;
+  background: rgba(255, 210, 74, 0.06);
+  border: 1px solid rgba(255, 210, 74, 0.28);
+}
+.show-result-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.show-result-plate .show-result-prize { margin-top: 0; font-size: 2.1rem; }
+.show-result-zero { color: var(--text-muted); font-size: 0.95rem; line-height: 1.55; max-width: 32ch; margin: 0.25rem auto 0; }
+
+/* Actions: one gold primary, then two secondary side by side. */
+.show-result-actions { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 1.6rem; }
+.show-result-actions-row { display: flex; gap: 0.7rem; }
+.show-result-actions-row .btn { flex: 1; justify-content: center; }
+.show-result-again {
+  width: 100%;
+  justify-content: center;
+  font-weight: 800;
+  color: #1a1200;
+  border: none;
+  background: linear-gradient(180deg, #ffe27a, var(--gold-deep));
+  box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+.show-result-again:hover { transform: translateY(-2px); filter: brightness(1.04); }
+@keyframes scResultBadge { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
 /* ══════════════════════════════════════════════════════════════════════════
    STUDIO POLISH — pódio, membros, perfil, admin (shared selectors)
    ══════════════════════════════════════════════════════════════════════════ */
@@ -4338,6 +4449,17 @@ input:focus, select:focus, textarea:focus {
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45);
 }
 .podium-col:nth-child(2) .podium-name { color: var(--gold); }
+/* The champion's halo breathes — a subtle spotlight on the winner. */
+@keyframes scChampGlow {
+  0%, 100% { opacity: 0.65; transform: translateX(-50%) scale(1); }
+  50%      { opacity: 1; transform: translateX(-50%) scale(1.08); }
+}
+.podium-col:nth-child(2)::before { animation: scChampGlow 3s ease-in-out infinite; }
+
+/* Member cards lift into a warm gold glow on hover. */
+.member-card-button:hover {
+  box-shadow: 0 16px 40px -22px rgba(0, 0, 0, 0.8), 0 0 26px -10px rgba(255, 210, 74, 0.35) !important;
+}
 
 /* Member + profile avatars: gold ring, cyan on hover */
 .member-photo, .member-photo-placeholder {
@@ -4710,6 +4832,10 @@ input:focus, select:focus, textarea:focus {
   .show-rung.is-current,
   .show-option,
   .show-option.is-selected,
+  .show-option.is-correct,
+  .show-hint,
+  .show-result-badge,
+  .podium-col:nth-child(2)::before,
   .show-intro-card,
   .show-question-card,
   .show-final-btn,
@@ -4843,48 +4969,46 @@ input:focus, select:focus, textarea:focus {
   color: var(--gold);
   margin: 0 0 0.7rem;
 }
+/* Content-sized pills that wrap naturally — no more uneven 2-column grid. A
+   leading dot lights up gold when the theme is selected (clear multi-select). */
 .show-topic-chips {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.55rem;
-}
-@media (max-width: 460px) {
-  .show-topic-chips { grid-template-columns: 1fr; }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 .show-topic-chip {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 46px;
-  padding: 0.5rem 0.9rem;
-  border-radius: 12px;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
   border: 1.5px solid rgba(120, 160, 255, 0.22);
-  background: linear-gradient(180deg, rgba(20, 34, 78, 0.7), rgba(10, 20, 50, 0.7));
+  background: rgba(16, 30, 68, 0.6);
   color: #cdd8f5;
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-align: center;
-  line-height: 1.15;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.1;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 6px -3px rgba(0, 0, 0, 0.6);
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
-.show-topic-chip:hover {
-  border-color: var(--tech);
-  transform: translateY(-2px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 16px -12px rgba(0, 0, 0, 0.6);
+.show-topic-chip::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(120, 160, 255, 0.35);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
+.show-topic-chip:hover { border-color: var(--tech); color: var(--sc-text); }
+.show-topic-chip:active { transform: scale(0.97); }
 .show-topic-chip.is-on {
   border-color: var(--gold);
-  background: linear-gradient(180deg, rgba(255, 210, 74, 0.22), rgba(230, 167, 0, 0.14));
+  background: linear-gradient(180deg, rgba(255, 210, 74, 0.18), rgba(230, 167, 0, 0.10));
   color: #fff2c8;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
-.show-topic-chip .count {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  opacity: 0.6;
-  margin-left: 0.25rem;
+.show-topic-chip.is-on::before {
+  background: var(--gold);
+  box-shadow: 0 0 8px -1px rgba(255, 210, 74, 0.8);
 }
 .show-topic-chip:focus-visible {
   outline: 2px solid var(--tech);
@@ -5156,9 +5280,58 @@ input:focus, select:focus, textarea:focus {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--gold);
-  margin: 0 0 0.3rem;
+  margin: 0;
 }
 .show-setting-sub { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 0.9rem; }
+
+/* ── Game settings modal: a tidy, left-aligned settings panel ──────────────── */
+.show-settings-modal {
+  max-width: 500px;
+  text-align: left;
+}
+.show-settings-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  justify-content: flex-start;
+  margin-bottom: 1.4rem;
+}
+.show-settings-title svg { color: var(--gold); flex-shrink: 0; }
+.show-setting-section { margin-top: 0.25rem; }
+.show-setting-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+.show-setting-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--sc-tech);
+  background: rgba(60, 224, 230, 0.1);
+  border: 1px solid rgba(60, 224, 230, 0.25);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+.show-setting-selectall {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--sc-tech);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.show-setting-selectall:hover { color: #7ef0f5; }
+.show-setting-selectall:focus-visible { outline: 2px solid var(--tech); outline-offset: 2px; border-radius: 4px; }
+.show-settings-done { margin-top: 1.5rem; }
 
 /* ── Per-question timer ───────────────────────────────────────────────────── */
 .show-timer {

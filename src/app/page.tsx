@@ -518,9 +518,9 @@ export default function ShowPage() {
         {/* Game settings modal: lifelines toggle + question themes */}
         {mounted && topicsOpen && createPortal(
           <div className="modal-overlay" onClick={() => setTopicsOpen(false)}>
-            <div className="modal-content" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
-              <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                <SlidersHorizontal size={20} style={{ color: 'var(--gold)' }} /> {t('show.settingsTitle')}
+            <div className="modal-content show-settings-modal" onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title show-settings-title">
+                <SlidersHorizontal size={20} /> {t('show.settingsTitle')}
               </h2>
 
               <button
@@ -537,22 +537,37 @@ export default function ShowPage() {
                 <span className="show-switch" aria-hidden><span className="show-switch-knob" /></span>
               </button>
 
-              <h3 className="show-setting-heading">{t('show.topicsTitle')}</h3>
-              <p className="show-setting-sub">{t('show.topicsHint')}</p>
-              <div className="show-topic-chips">
-                {topics.map((tp) => (
+              <div className="show-setting-section">
+                <div className="show-setting-section-head">
+                  <h3 className="show-setting-heading">{t('show.topicsTitle')}</h3>
+                  <span className="show-setting-count">{chosen.size}/{topics.length}</span>
+                </div>
+                <p className="show-setting-sub">{t('show.topicsHint')}</p>
+                <div className="show-topic-chips">
+                  {topics.map((tp) => (
+                    <button
+                      key={tp.id}
+                      type="button"
+                      className={`show-topic-chip${chosen.has(tp.id) ? ' is-on' : ''}`}
+                      aria-pressed={chosen.has(tp.id)}
+                      onClick={() => toggleTopic(tp.id)}
+                    >
+                      {tp.id}
+                    </button>
+                  ))}
+                </div>
+                {chosen.size < topics.length && (
                   <button
-                    key={tp.id}
                     type="button"
-                    className={`show-topic-chip${chosen.has(tp.id) ? ' is-on' : ''}`}
-                    aria-pressed={chosen.has(tp.id)}
-                    onClick={() => toggleTopic(tp.id)}
+                    className="show-setting-selectall"
+                    onClick={() => setChosen(new Set(topics.map((tp) => tp.id)))}
                   >
-                    {tp.id}
+                    {t('show.topicsSelectAll')}
                   </button>
-                ))}
+                )}
               </div>
-              <button onClick={() => setTopicsOpen(false)} className="btn show-final-btn" style={{ marginTop: '1.25rem' }}>
+
+              <button onClick={() => setTopicsOpen(false)} className="btn show-final-btn show-settings-done">
                 <Check size={18} /> {t('show.topicsDone')}
               </button>
             </div>
@@ -653,6 +668,15 @@ export default function ShowPage() {
             <span className="show-step">{t('show.stepOf', { step: q.step, total: q.totalSteps })}</span>
             <span className="show-area">{q.topic}</span>
             {q.source && <span className="show-source">POSCOMP {q.source.year}</span>}
+            {/* Current stake + banked floor — the prize indicators on mobile (ladder hidden). */}
+            <span className="show-worth">
+              {t('show.worthLabel')} <strong>{formatPrize(run.ladder[q.step - 1])}</strong>
+            </span>
+            {run.securedPrize > 0 && (
+              <span className="show-worth show-worth--secured">
+                {t('show.securedLabel')} <strong>{formatPrize(run.securedPrize)}</strong>
+              </span>
+            )}
           </div>
 
           {(() => {

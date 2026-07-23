@@ -254,7 +254,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
       {/* Name */}
       <div className="card">
         <h2 className="card-title">
-          <Settings2 size={22} style={{ color: 'var(--primary)' }} /> {t('profileEdit.attrTitle')}
+          <Settings2 size={22} style={{ color: 'var(--gold)' }} /> {t('profileEdit.attrTitle')}
         </h2>
 
         <Toast
@@ -266,7 +266,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="profile-field-label" htmlFor="profile-name">
-              <UserIcon size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.nameLabel')}
+              <UserIcon size={15} style={{ color: 'var(--tech)' }} /> {t('profileEdit.nameLabel')}
             </label>
             <input
               id="profile-name"
@@ -367,7 +367,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
                 <form onSubmit={handlePasswordSubmit}>
                   <div className="form-group">
                     <label className="profile-field-label" htmlFor="profile-current-password">
-                      <Lock size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.currentPasswordLabel')}
+                      <Lock size={15} style={{ color: 'var(--tech)' }} /> {t('profileEdit.currentPasswordLabel')}
                     </label>
                     <PasswordInput
                       id="profile-current-password"
@@ -380,7 +380,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
                   </div>
                   <div className="form-group">
                     <label className="profile-field-label" htmlFor="profile-new-password">
-                      <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.newPasswordLabel')}
+                      <LockKeyhole size={15} style={{ color: 'var(--tech)' }} /> {t('profileEdit.newPasswordLabel')}
                     </label>
                     <PasswordInput
                       id="profile-new-password"
@@ -394,7 +394,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
                   </div>
                   <div className="form-group">
                     <label className="profile-field-label" htmlFor="profile-confirm-password">
-                      <LockKeyhole size={15} style={{ color: 'var(--primary)' }} /> {t('profileEdit.confirmPasswordLabel')}
+                      <LockKeyhole size={15} style={{ color: 'var(--tech)' }} /> {t('profileEdit.confirmPasswordLabel')}
                     </label>
                     <PasswordInput
                       id="profile-confirm-password"

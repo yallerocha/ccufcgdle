@@ -31,7 +31,12 @@ const PODIUM_COLOR: Record<number, string> = {
   3: 'linear-gradient(180deg, #fdba74, #c2792f)',
 };
 
-function Avatar({ entry, size }: { entry: Entry; size: number }) {
+// Medal-tinted rings tie each avatar to its podium base; other avatars get a
+// subtle gold ring to match the rest of the studio theme.
+const RING_COLOR: Record<number, string> = { 1: '#f5c542', 2: '#cbd5e1', 3: '#d08a4a' };
+
+function Avatar({ entry, size, place }: { entry: Entry; size: number; place?: number }) {
+  const ring = place ? RING_COLOR[place] : 'rgba(255, 210, 74, 0.45)';
   const style: React.CSSProperties = {
     width: size,
     height: size,
@@ -39,7 +44,7 @@ function Avatar({ entry, size }: { entry: Entry; size: number }) {
     flexShrink: 0,
     borderRadius: '50%',
     objectFit: 'cover',
-    border: '3px solid var(--primary)',
+    border: `${size >= 60 ? 3 : 2}px solid ${ring}`,
     boxSizing: 'border-box',
   };
 
@@ -121,7 +126,7 @@ export default function PodiumPage() {
               return (
                 <button key={place} type="button" className="podium-col" onClick={() => setSelectedId(entry.id)}>
                   <span className="podium-medal">{MEDALS[place]}</span>
-                  <Avatar entry={entry} size={place === 1 ? 88 : 64} />
+                  <Avatar entry={entry} size={place === 1 ? 88 : 64} place={place} />
                   <span className="podium-name">{entry.name}</span>
                   <span className="podium-points">{formatPrize(entry.points)}</span>
                   <div className="podium-base" style={{ height: PODIUM_HEIGHT[place], background: PODIUM_COLOR[place] }}>
