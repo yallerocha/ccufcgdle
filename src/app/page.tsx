@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
@@ -129,6 +129,10 @@ export default function ShowPage() {
   // Settings modal: 'menu' (options list) | 'topics' (theme picker), like the profile.
   const [settingsView, setSettingsView] = useState<'menu' | 'topics'>('menu');
   const [noLifelines, setNoLifelines] = useState(false);
+  // Snapshot of the settings when the modal opened, to detect unsaved edits and
+  // offer to discard them on close (X / overlay).
+  const settingsSnapshot = useRef<{ topics: Set<string> } | null>(null);
+  const [confirmExitSettings, setConfirmExitSettings] = useState(false);
   useEffect(() => {
     apiFetch('/api/show/topics')
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
@@ -149,6 +153,31 @@ export default function ShowPage() {
   };
   const topicsFiltered = chosen.size > 0 && chosen.size < topics.length;
   const settingsChanged = topicsFiltered || noLifelines;
+
+  const openSettings = () => {
+    settingsSnapshot.current = { topics: new Set(chosen) };
+    setSettingsView('menu');
+    setTopicsOpen(true);
+  };
+  // Only topic edits count as "unsaved" — the lifelines switch is applied live.
+  const settingsDirty = () => {
+    const s = settingsSnapshot.current;
+    if (!s) return false;
+    if (s.topics.size !== chosen.size) return true;
+    for (const id of chosen) if (!s.topics.has(id)) return true;
+    return false;
+  };
+  // X / overlay: confirm before closing if the topics were edited.
+  const requestCloseSettings = () => {
+    if (settingsDirty()) setConfirmExitSettings(true);
+    else setTopicsOpen(false);
+  };
+  const discardSettings = () => {
+    const s = settingsSnapshot.current;
+    if (s) setChosen(new Set(s.topics)); // lifelines switch is left as-is
+    setConfirmExitSettings(false);
+    setTopicsOpen(false);
+  };
 
   // Per-question lifeline UI state (reset when the question changes).
   const [hidden, setHidden] = useState<number[]>([]);
@@ -506,7 +535,7 @@ export default function ShowPage() {
               <button
                 type="button"
                 className="show-edit-btn"
-                onClick={() => { setSettingsView('menu'); setTopicsOpen(true); }}
+                onClick={openSettings}
                 title={t('show.settingsTitle')}
                 aria-label={t('show.settingsTitle')}
               >
@@ -537,7 +566,7 @@ export default function ShowPage() {
 
         {/* Game settings modal: lifelines toggle + question themes */}
         {mounted && topicsOpen && createPortal(
-          <div className="modal-overlay" onClick={() => setTopicsOpen(false)}>
+          <div className="modal-overlay" onClick={requestCloseSettings}>
             <div className="modal-content show-settings-modal" onClick={(e) => e.stopPropagation()}>
               <div className="settings-modal-head">
                 {settingsView === 'topics' ? (
@@ -548,7 +577,7 @@ export default function ShowPage() {
                 <h2 className="modal-title" style={{ margin: 0, fontSize: '1.4rem' }}>
                   {settingsView === 'topics' ? t('show.topicsTitle') : t('show.settingsTitle')}
                 </h2>
-                <button type="button" className="settings-back" onClick={() => setTopicsOpen(false)} aria-label={t('common.close')}>
+                <button type="button" className="settings-back" onClick={requestCloseSettings} aria-label={t('common.close')}>
                   <X size={18} />
                 </button>
               </div>
@@ -608,6 +637,24 @@ export default function ShowPage() {
                   </button>
                 </>
               )}
+            </div>
+          </div>,
+          document.body
+        )}
+
+        {mounted && confirmExitSettings && createPortal(
+          <div className="modal-overlay" onClick={() => setConfirmExitSettings(false)}>
+            <div className="modal-content show-quit-modal" role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+              <h2 className="modal-title">{t('show.discardTitle')}</h2>
+              <p className="show-quit-body">{t('show.discardBody')}</p>
+              <div className="show-quit-actions">
+                <button onClick={() => setConfirmExitSettings(false)} className="btn btn-secondary">
+                  {t('show.discardCancel')}
+                </button>
+                <button onClick={discardSettings} className="btn show-quit-confirm">
+                  {t('show.discardConfirm')}
+                </button>
+              </div>
             </div>
           </div>,
           document.body
