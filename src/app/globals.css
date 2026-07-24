@@ -1782,7 +1782,7 @@ a:focus-visible,
     justify-content: flex-start;
     align-items: center;
     gap: 0.65rem;
-    padding: 0.75rem 0;
+    padding: 0.75rem 1.5rem;
   }
 
   .nav-menu-btn {
@@ -4865,7 +4865,7 @@ input:focus, select:focus, textarea:focus {
   background: linear-gradient(180deg, rgba(4, 9, 26, 0.96), rgba(6, 12, 34, 0.82)) !important;
 }
 .navbar-content {
-  padding: 0.65rem 0;
+  padding: 0.65rem 1.5rem;
 }
 /* Uppercase, letter-spaced show-style links; gold underline lights up */
 .nav-links--desktop .nav-link {
@@ -5083,11 +5083,30 @@ input:focus, select:focus, textarea:focus {
   background: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
 }
-.show-quit-btn.is-armed {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.16);
-  color: #fecaca;
-  animation: scSelectedPulse 1.2s ease-in-out infinite;
+.show-quit-modal { max-width: 420px; text-align: center; }
+.show-quit-body {
+  margin: 0.75rem 0 1.5rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.show-quit-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+.show-quit-actions > button {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+}
+.show-quit-confirm {
+  background: #ef4444;
+  border: 1px solid #ef4444;
+  color: #fff;
+}
+.show-quit-confirm:hover:not(:disabled) {
+  background: #dc2626;
+  border-color: #dc2626;
 }
 .show-quit-btn:focus-visible {
   outline: 2px solid var(--tech);

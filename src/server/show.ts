@@ -41,7 +41,7 @@ export const ALL_LIFELINES: LifelineType[] = ['fifty', 'skip', 'audience', 'stud
 // generous (up to 3). Encoded by repeating the type in the usedLifelines CSV.
 export const LIFELINE_USES: Record<LifelineType, number> = { fifty: 1, skip: 3, audience: 1, students: 1 };
 
-export type ShowStatus = 'playing' | 'won' | 'stopped' | 'lost';
+export type ShowStatus = 'playing' | 'won' | 'stopped' | 'lost' | 'abandoned';
 
 export interface ShowQuestionView {
   step: number; // 1-based ladder position
@@ -363,6 +363,28 @@ export async function stopRun(
     data: {
       status: 'stopped',
       prize: prizeForCleared(run.currentStep - 1),
+      endedAt: now,
+      durationMs: now.getTime() - run.startedAt.getTime(),
+    },
+  });
+  return toView(updated);
+}
+
+// Giving up abandons the run entirely: nothing is banked and it's excluded from
+// the leaderboard (which only counts won/stopped/lost).
+export async function abandonRun(
+  runId: string,
+  playerId: string
+): Promise<ShowRunView | { error: string }> {
+  const run = await loadRun(runId, playerId);
+  if (!run) return { error: 'not-found' };
+  if (run.status !== 'playing') return { error: 'finished' };
+  const now = new Date();
+  const updated = await prisma.showRun.update({
+    where: { id: run.id },
+    data: {
+      status: 'abandoned',
+      prize: 0,
       endedAt: now,
       durationMs: now.getTime() - run.startedAt.getTime(),
     },

@@ -7,6 +7,7 @@ import {
   answerRun,
   timeoutRun,
   stopRun,
+  abandonRun,
   useLifeline,
   ALL_LIFELINES,
   type LifelineType,
@@ -128,6 +129,25 @@ router.post('/stop', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error stopping show run:', error);
     return res.status(500).json({ error: 'Erro ao encerrar a partida.' });
+  }
+});
+
+// POST /api/show/quit — give up: bank nothing, exclude from ranking. { runId }
+router.post('/quit', requireAuth, async (req, res) => {
+  try {
+    const { runId } = req.body ?? {};
+    if (typeof runId !== 'string') {
+      return res.status(400).json({ error: 'Requisição inválida.' });
+    }
+    const result = await abandonRun(runId, req.auth!.userId);
+    if ('error' in result) {
+      const code = result.error === 'not-found' ? 404 : 409;
+      return res.status(code).json({ error: 'Não foi possível desistir da partida.' });
+    }
+    return res.json(result);
+  } catch (error) {
+    console.error('Error abandoning show run:', error);
+    return res.status(500).json({ error: 'Erro ao desistir da partida.' });
   }
 });
 

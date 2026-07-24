@@ -151,8 +151,8 @@ export default function ShowPage() {
   const [picked, setPicked] = useState<number | null>(null); // index of the flipped card
   // Two-step answering, like the show: pick an option, then lock it in.
   const [selected, setSelected] = useState<number | null>(null);
-  // Quit needs a second click to confirm (it ends the run for good).
-  const [quitArmed, setQuitArmed] = useState(false);
+  // Quit opens a confirmation modal (it ends the run for good).
+  const [quitOpen, setQuitOpen] = useState(false);
   // Per-question countdown (server enforces the actual timeout end).
   const [timeLeft, setTimeLeft] = useState(QUESTION_SECONDS);
 
@@ -161,7 +161,7 @@ export default function ShowPage() {
     setAudience(null);
     setStudentsHint(null);
     setSelected(null);
-    setQuitArmed(false);
+    setQuitOpen(false);
     setCardCut(null);
     setPicked(null);
   };
@@ -351,17 +351,13 @@ export default function ShowPage() {
     }
   };
 
-  // Give up: ends the run (banking whatever is secured, like stop) but goes
-  // straight back to the intro — no celebration modal.
+  // Give up: abandons the run entirely — nothing banked, excluded from the
+  // ranking — and goes straight back to the intro.
   const quit = async () => {
     if (!run || reveal || submitting) return;
-    if (!quitArmed) {
-      setQuitArmed(true);
-      return;
-    }
     setSubmitting(true);
     try {
-      const res = await apiFetch('/api/show/stop', {
+      const res = await apiFetch('/api/show/quit', {
         method: 'POST',
         body: JSON.stringify({ runId: run.runId }),
       });
@@ -762,12 +758,11 @@ export default function ShowPage() {
                 <HandCoins size={18} /> {t('show.stopWith', { prize: formatPrize(run.securedPrize) })}
               </button>
               <button
-                onClick={quit}
+                onClick={() => setQuitOpen(true)}
                 disabled={submitting}
-                className={`show-quit-btn${quitArmed ? ' is-armed' : ''}`}
-                onBlur={() => setQuitArmed(false)}
+                className="show-quit-btn"
               >
-                <Flag size={15} /> {quitArmed ? t('show.quitConfirm') : t('show.quit')}
+                <Flag size={15} /> {t('show.quit')}
               </button>
             </div>
           )}
@@ -796,6 +791,24 @@ export default function ShowPage() {
           </ol>
         </aside>
       </div>
+
+      {mounted && quitOpen && createPortal(
+        <div className="modal-overlay" onClick={() => setQuitOpen(false)}>
+          <div className="modal-content show-quit-modal" role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title"><Flag size={20} /> {t('show.quitTitle')}</h2>
+            <p className="show-quit-body">{t('show.quitBody')}</p>
+            <div className="show-quit-actions">
+              <button onClick={() => setQuitOpen(false)} disabled={submitting} className="btn btn-secondary">
+                {t('show.quitCancel')}
+              </button>
+              <button onClick={quit} disabled={submitting} className="btn show-quit-confirm">
+                <Flag size={15} /> {t('show.quitConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
