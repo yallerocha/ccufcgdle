@@ -192,8 +192,14 @@ export default function ShowPage() {
   const [selected, setSelected] = useState<number | null>(null);
   // Quit opens a confirmation modal (it ends the run for good).
   const [quitOpen, setQuitOpen] = useState(false);
-  // Per-question countdown (server enforces the actual timeout end).
+  // Per-question countdown (server enforces the actual timeout end). The timer
+  // ticks against a wall-clock deadline so it starts moving immediately instead
+  // of holding the first second, and so Q1 accounts for the opening message.
   const [timeLeft, setTimeLeft] = useState(QUESTION_SECONDS);
+  const questionDeadline = useRef<number | null>(null);
+  const setQuestionDeadline = (secondsLeft?: number) => {
+    questionDeadline.current = Date.now() + (secondsLeft ?? QUESTION_SECONDS) * 1000;
+  };
 
   const resetQuestionAids = () => {
     setHidden([]);
@@ -214,6 +220,7 @@ export default function ShowPage() {
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data: ShowRun) => {
         if (data.status === 'playing') {
+          setQuestionDeadline(data.question?.secondsLeft);
           setRun(data);
           // Restore aids already spent on this step (eliminated options / audience
           // / students), so a reload doesn't waste a used lifeline.
@@ -245,6 +252,7 @@ export default function ShowPage() {
       const data = await res.json();
       if (res.ok) {
         setRun(data);
+        setQuestionDeadline(data.question?.secondsLeft);
         localStorage.setItem(RUN_KEY, data.runId);
         sfxStart();
         // Opening host message before the first question (same overlay as the
@@ -332,6 +340,7 @@ export default function ShowPage() {
     setTransition({ prize: next.ladder[next.currentStep - 1], phrase });
     window.setTimeout(() => {
       resetQuestionAids();
+      setQuestionDeadline(next.question?.secondsLeft);
       setRun(next);
       setTransition(null);
       startMusic();
@@ -372,9 +381,12 @@ export default function ShowPage() {
   const timerActive = playing && !reveal && !transition;
   useEffect(() => {
     if (!timerActive) return;
-    // Start from the server's remaining time (so a reload can't refresh the clock).
-    setTimeLeft(run?.question?.secondsLeft ?? QUESTION_SECONDS);
-    const id = window.setInterval(() => setTimeLeft((s) => Math.max(0, s - 1)), 1000);
+    // Deadline is set when the question's clock starts (start / advance / skip /
+    // reload); tick against it so the count starts moving right away.
+    const dl = questionDeadline.current ?? Date.now() + (run?.question?.secondsLeft ?? QUESTION_SECONDS) * 1000;
+    const tick = () => setTimeLeft(Math.max(0, Math.round((dl - Date.now()) / 1000)));
+    tick();
+    const id = window.setInterval(tick, 250);
     return () => window.clearInterval(id);
   }, [timerActive, run?.runId, run?.currentStep, run?.question?.secondsLeft]);
   useEffect(() => {
@@ -456,6 +468,7 @@ export default function ShowPage() {
         setStudentsHint(data.hint ?? null);
       } else if (type === 'skip' && data.question) {
         resetQuestionAids();
+        setQuestionDeadline(data.question.secondsLeft);
         setRun((r) => (r ? { ...r, question: data.question!, usedLifelines: data.usedLifelines } : r));
       }
     } catch {
@@ -632,7 +645,14 @@ export default function ShowPage() {
                       {t('show.topicsSelectAll')}
                     </button>
                   )}
-                  <button onClick={() => setSettingsView('menu')} className="btn show-final-btn show-settings-done">
+                  <button
+                    onClick={() => {
+                      // Done commits the current selection, so closing won't prompt.
+                      settingsSnapshot.current = { topics: new Set(chosen) };
+                      setSettingsView('menu');
+                    }}
+                    className="btn show-final-btn show-settings-done"
+                  >
                     <Check size={18} /> {t('show.topicsDone')}
                   </button>
                 </>

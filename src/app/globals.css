@@ -5462,9 +5462,10 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-muted);
   transition: color 0.15s ease;
 }
-/* PT (first) is highlighted by default; EN (last) when the switch is on. */
+/* PT (first) is highlighted by default; EN (second) when the switch is on.
+   Note: the knob is the actual last child, so EN is :nth-child(2), not :last-child. */
 .settings-lang-toggle:not(.is-en) .settings-lang-opt:first-child,
-.settings-lang-toggle.is-en .settings-lang-opt:last-child {
+.settings-lang-toggle.is-en .settings-lang-opt:nth-child(2) {
   color: #1a1200;
 }
 .settings-lang-knob {
