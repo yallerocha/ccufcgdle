@@ -54,6 +54,7 @@ export const pt = {
     runsPlayed: 'Partidas',
     millionaire: 'Milhões',
     fastestWin: 'Vitória mais rápida: {{time}}',
+    topTopic: 'Tema com mais acertos',
     totalWins: 'Vitórias totais',
     bestStreak: 'Melhor sequência',
     personOfDay: 'Foi a pessoa do dia',

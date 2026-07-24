@@ -257,14 +257,16 @@ export default function AdminPage() {
                   const isSessionActive = diffDays < 30;
                   return (
                     <tr key={u.id}>
-                      <td>
-                        <div style={{ fontWeight: 600 }}>{u.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                      <td data-label={t('admin.thCharacter')}>
+                        <div className="admin-cell-value" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+                          <div style={{ fontWeight: 600 }}>{u.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                        </div>
                       </td>
-                      <td style={{ fontSize: '0.85rem' }}>
+                      <td data-label={t('admin.thLastLogin')} style={{ fontSize: '0.85rem' }}>
                         {lastLoginDate.toLocaleDateString(dateLocale)} {lastLoginDate.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td>
+                      <td data-label={t('admin.thGameStatus')}>
                         {u.isActive && isSessionActive ? (
                           <span className="badge badge-active">{t('admin.statusActive')}</span>
                         ) : !u.isActive ? (
@@ -273,14 +275,14 @@ export default function AdminPage() {
                           <span className="badge badge-inactive" title={t('admin.titleExpired')}>{t('admin.statusExpired')}</span>
                         )}
                       </td>
-                      <td>
+                      <td data-label={t('admin.thRoleCol')}>
                         {u.isAdmin ? (
                           <span className="badge badge-admin">{t('admin.roleAdmin')}</span>
                         ) : (
                           <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{t('admin.roleUser')}</span>
                         )}
                       </td>
-                      <td>
+                      <td data-label={t('admin.thActions')}>
                         <div className="admin-actions">
                           <button onClick={() => handleToggleActive(u.id, u.isActive)} disabled={u.id === currentUser.id} className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }} title={u.isActive ? t('admin.actionDeactivate') : t('admin.actionActivate')}>
                             <Power size={14} style={{ color: u.isActive ? '#ef4444' : 'var(--color-correct)' }} />

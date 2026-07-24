@@ -58,6 +58,7 @@ export const en: Dictionary = {
     runsPlayed: 'Runs',
     millionaire: 'Millions',
     fastestWin: 'Fastest win: {{time}}',
+    topTopic: 'Best topic',
     totalWins: 'Total wins',
     bestStreak: 'Best streak',
     personOfDay: 'Was person of the day',

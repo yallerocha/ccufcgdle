@@ -2026,6 +2026,38 @@ a:focus-visible,
     font-size: 0.8rem;
   }
 
+  /* Admin users table → stacked cards (no horizontal scroll on phones). */
+  .admin-table-container { overflow-x: visible; border: none; }
+  .admin-table thead { display: none; }
+  .admin-table, .admin-table tbody, .admin-table tr, .admin-table td { display: block; width: 100%; }
+  .admin-table tr {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.9rem;
+  }
+  .admin-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+    text-align: right;
+  }
+  .admin-table tr td:last-child { border-bottom: none; }
+  .admin-table td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+  }
+  /* Let the value side shrink/wrap so long emails stay inside the card. */
+  .admin-table td > * { min-width: 0; overflow-wrap: anywhere; }
+  .admin-actions { justify-content: flex-end; }
+
   .hero-actions .btn {
     font-size: 0.88rem;
     padding: 0.6rem 0.9rem;
@@ -5166,6 +5198,34 @@ input:focus, select:focus, textarea:focus {
   font-size: 2rem;
   font-weight: 800;
   color: var(--gold);
+}
+
+.player-topic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.9rem 0.5rem;
+  border-radius: 12px;
+  background: rgba(10, 22, 60, 0.5);
+  border: 1px solid rgba(120, 160, 255, 0.12);
+  margin-top: 1rem;
+  margin-bottom: 1.1rem;
+}
+.player-topic-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+.player-topic-label svg { color: var(--gold); }
+.player-topic-value {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  text-align: center;
 }
 
 .player-progress { margin-bottom: 1.1rem; }

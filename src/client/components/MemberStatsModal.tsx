@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Crown, Clock, Target, Gamepad2, Coins } from 'lucide-react';
+import { Trophy, Crown, Clock, Target, Gamepad2, Coins, Sparkles } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
 import { formatPrize } from '@/client/lib/format';
@@ -18,6 +18,7 @@ interface ShowStats {
   bestCleared: number;
   totalSteps: number;
   fastestMs: number | null;
+  topTopic: { topic: string; correct: number } | null;
 }
 
 interface MemberStats {
@@ -132,6 +133,13 @@ export function MemberStatsModal({ memberId, onClose }: MemberStatsModalProps) {
                 <span className="player-tile-lbl">{t('members.millionaire')}</span>
               </div>
             </div>
+
+            {stats.topTopic && (
+              <div className="player-topic">
+                <span className="player-topic-label"><Sparkles size={14} /> {t('members.topTopic')}</span>
+                <span className="player-topic-value">{stats.topTopic.topic}</span>
+              </div>
+            )}
 
             {stats.wins > 0 && (
               <p className="player-fastest">
