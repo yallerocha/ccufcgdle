@@ -134,3 +134,26 @@ export function stopMusic(): void {
   window.clearInterval(music.timer);
   music = null;
 }
+
+// ── Lobby / intro music ─────────────────────────────────────────────────────────
+// The real Show do Milhão opening theme, looped, playing only on the intro screen.
+// A plain <audio> element (native loop) — no Web Audio needed for file playback.
+let lobby: HTMLAudioElement | null = null;
+
+export function startLobbyMusic(): void {
+  if (typeof window === 'undefined' || muted) return;
+  if (!lobby) {
+    lobby = new Audio('/lobby-theme.mp3');
+    lobby.loop = true;
+    lobby.volume = 0.6;
+  }
+  // play() may reject until the user has interacted with the page; that's fine —
+  // the intro effect retries on the first gesture.
+  void lobby.play().catch(() => {});
+}
+
+export function stopLobbyMusic(): void {
+  if (!lobby) return;
+  lobby.pause();
+  lobby.currentTime = 0;
+}

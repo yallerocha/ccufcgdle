@@ -14,7 +14,7 @@ import { ShowResultModal } from '@/client/components/ShowResultModal';
 import {
   unlockAudio, isMuted, toggleMuted,
   sfxSelect, sfxCorrect, sfxWrong, sfxLifeline, sfxStart, sfxWin, sfxStop,
-  startMusic, stopMusic,
+  startMusic, stopMusic, startLobbyMusic, stopLobbyMusic,
 } from '@/client/lib/sound';
 
 type LifelineType = 'fifty' | 'skip' | 'audience' | 'students';
@@ -104,6 +104,25 @@ export default function ShowPage() {
   useEffect(() => setMounted(true), []);
   useEffect(() => setMuted(isMuted()), []);
   useEffect(() => () => stopMusic(), []);
+
+  // Intro-screen music. Autoplay is blocked until a user gesture, so also retry
+  // on the first pointer/key event. Independent of the run's suspense bed.
+  const onIntro = !run || run.status !== 'playing';
+  useEffect(() => {
+    if (!onIntro || muted) {
+      stopLobbyMusic();
+      return;
+    }
+    startLobbyMusic();
+    const kick = () => startLobbyMusic();
+    window.addEventListener('pointerdown', kick, { once: true });
+    window.addEventListener('keydown', kick, { once: true });
+    return () => {
+      stopLobbyMusic();
+      window.removeEventListener('pointerdown', kick);
+      window.removeEventListener('keydown', kick);
+    };
+  }, [onIntro, muted]);
 
   // While a run is live, lock the navbar (no wandering off mid-question — the
   // stage is immersive, like the real show). The class drives CSS in globals.
