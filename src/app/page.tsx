@@ -520,6 +520,14 @@ export default function ShowPage() {
           <span className="show-spotlight-source" />
         </div>
         <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
+
+        {mounted && createPortal(
+          <button type="button" className="show-mute" onClick={toggleSound} title={muted ? t('show.soundOn') : t('show.soundOff')} aria-label={muted ? t('show.soundOn') : t('show.soundOff')}>
+            {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>,
+          document.body
+        )}
+
         {result && (
           <ShowResultModal run={result} onClose={finishToLobby} onPlayAgain={start} />
         )}
