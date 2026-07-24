@@ -137,15 +137,31 @@ test('cards (fifty) removes 1..n-1 wrong options, never the correct one', () => 
   }
 });
 
-test('audience/students distribution sums to 100 and peaks on the correct option', () => {
+test('audience/students distribution always sums to 100', () => {
   const q = QUIZ_QUESTIONS[3];
-  const correctDisplayed = optionPerm('rZ', q.id, q.options.length).indexOf(q.answer);
+  const correctDisplayed = 0;
   for (const type of ['audience', 'students'] as const) {
-    const { distribution } = resolveAid(type, 'rZ', q, correctDisplayed);
-    assert.ok(distribution);
-    assert.strictEqual(distribution.reduce((a, b) => a + b, 0), 100);
-    assert.strictEqual(Math.max(...distribution), distribution[correctDisplayed]);
+    for (let i = 0; i < 100; i++) {
+      const { distribution } = resolveAid(type, 'seed-' + i, q, correctDisplayed);
+      assert.ok(distribution);
+      assert.strictEqual(distribution.reduce((a, b) => a + b, 0), 100);
+    }
   }
+});
+
+test('the crowd can be fooled: the peak is not always the correct option', () => {
+  const q = QUIZ_QUESTIONS[3];
+  const correctDisplayed = 0;
+  let peakedCorrect = 0;
+  let peakedWrong = 0;
+  for (let i = 0; i < 300; i++) {
+    const { distribution } = resolveAid('audience', 'seed-' + i, q, correctDisplayed);
+    const argmax = distribution!.indexOf(Math.max(...distribution!));
+    if (argmax === correctDisplayed) peakedCorrect++;
+    else peakedWrong++;
+  }
+  assert.ok(peakedCorrect > 0, 'usually still points at the correct option');
+  assert.ok(peakedWrong > 0, 'but is sometimes fooled onto a wrong option');
 });
 
 // ── lifeline uses ────────────────────────────────────────────────────────────

@@ -471,14 +471,27 @@ export function resolveAid(type: LifelineType, runId: string, q: QuizQuestion, c
     const hits = 1 + Math.floor(rng() * wrong.length);
     return { removedIndices: seededShuffle(wrong, rng).slice(0, hits) };
   }
+  // The crowd/students can be fooled — more often on harder questions — so the
+  // top-percentage option isn't always the right one (like the real show).
+  const foolChance = (q.difficulty - 1) * 0.09 + 0.05; // d1≈5% .. d5≈41%
+  const pickWrong = () => {
+    const wrong = Array.from({ length: n }, (_, i) => i).filter((i) => i !== correctDisplayed);
+    return wrong[Math.floor(rng() * wrong.length)];
+  };
   if (type === 'audience') {
-    const share = 45 + Math.floor(rng() * 25); // 45–69% on the correct one
-    return { distribution: biasedDistribution(n, correctDisplayed, share, rng) };
+    const fooled = rng() < foolChance;
+    const target = fooled ? pickWrong() : correctDisplayed;
+    const share = fooled ? 36 + Math.floor(rng() * 10) // 36–45% weak plurality on a wrong one
+                         : 45 + Math.floor(rng() * 25); // 45–69% on the correct one
+    return { distribution: biasedDistribution(n, target, share, rng) };
   }
   if (type === 'students') {
-    const share = 60 + Math.floor(rng() * 25); // 60–84% confidence
-    const distribution = biasedDistribution(n, correctDisplayed, share, rng);
-    const letter = String.fromCharCode(65 + correctDisplayed);
+    const fooled = rng() < foolChance * 0.6; // students are fooled less often
+    const target = fooled ? pickWrong() : correctDisplayed;
+    const share = fooled ? 44 + Math.floor(rng() * 12) // 44–55% confident but wrong
+                         : 60 + Math.floor(rng() * 25); // 60–84% confidence
+    const distribution = biasedDistribution(n, target, share, rng);
+    const letter = String.fromCharCode(65 + target);
     return { distribution, hint: `A galera dos universitários fechou na alternativa ${letter} — mas confira você mesmo!` };
   }
   return {};
