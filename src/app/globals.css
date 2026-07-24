@@ -410,7 +410,7 @@ body::before {
   z-index: 210;
   width: min(18rem, 86vw);
   height: 100dvh;
-  background-color: var(--bg-card);
+  background-color: var(--bg-main);
   border-right: 1px solid var(--border-color);
   box-shadow: var(--shadow-lg);
   padding: 0 1rem 1.25rem;
