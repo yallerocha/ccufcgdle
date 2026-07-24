@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors } from 'lucide-react';
+import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, X, ListChecks } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
@@ -126,6 +126,8 @@ export default function ShowPage() {
   const [topics, setTopics] = useState<{ id: string; count: number }[]>([]);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [topicsOpen, setTopicsOpen] = useState(false);
+  // Settings modal: 'menu' (options list) | 'topics' (theme picker), like the profile.
+  const [settingsView, setSettingsView] = useState<'menu' | 'topics'>('menu');
   const [noLifelines, setNoLifelines] = useState(false);
   useEffect(() => {
     apiFetch('/api/show/topics')
@@ -504,7 +506,7 @@ export default function ShowPage() {
               <button
                 type="button"
                 className="show-edit-btn"
-                onClick={() => setTopicsOpen(true)}
+                onClick={() => { setSettingsView('menu'); setTopicsOpen(true); }}
                 title={t('show.settingsTitle')}
                 aria-label={t('show.settingsTitle')}
               >
@@ -537,57 +539,75 @@ export default function ShowPage() {
         {mounted && topicsOpen && createPortal(
           <div className="modal-overlay" onClick={() => setTopicsOpen(false)}>
             <div className="modal-content show-settings-modal" onClick={(e) => e.stopPropagation()}>
-              <h2 className="modal-title show-settings-title">
-                <SlidersHorizontal size={20} /> {t('show.settingsTitle')}
-              </h2>
-
-              <button
-                type="button"
-                className={`show-setting-toggle${noLifelines ? ' is-off' : ''}`}
-                role="switch"
-                aria-checked={!noLifelines}
-                onClick={() => setNoLifelines((v) => !v)}
-              >
-                <span className="show-setting-text">
-                  <strong>{t('show.lifelinesLabel')}</strong>
-                  <small>{noLifelines ? t('show.lifelinesOff') : t('show.lifelinesOn')}</small>
-                </span>
-                <span className="show-switch" aria-hidden><span className="show-switch-knob" /></span>
-              </button>
-
-              <div className="show-setting-section">
-                <div className="show-setting-section-head">
-                  <h3 className="show-setting-heading">{t('show.topicsTitle')}</h3>
-                  <span className="show-setting-count">{chosen.size}/{topics.length}</span>
-                </div>
-                <p className="show-setting-sub">{t('show.topicsHint')}</p>
-                <div className="show-topic-chips">
-                  {topics.map((tp) => (
-                    <button
-                      key={tp.id}
-                      type="button"
-                      className={`show-topic-chip${chosen.has(tp.id) ? ' is-on' : ''}`}
-                      aria-pressed={chosen.has(tp.id)}
-                      onClick={() => toggleTopic(tp.id)}
-                    >
-                      {tp.id}
-                    </button>
-                  ))}
-                </div>
-                {chosen.size < topics.length && (
-                  <button
-                    type="button"
-                    className="show-setting-selectall"
-                    onClick={() => setChosen(new Set(topics.map((tp) => tp.id)))}
-                  >
-                    {t('show.topicsSelectAll')}
+              <div className="settings-modal-head">
+                {settingsView === 'topics' ? (
+                  <button type="button" className="settings-back" onClick={() => setSettingsView('menu')} aria-label={t('common.back')}>
+                    <ArrowLeft size={18} />
                   </button>
-                )}
+                ) : <span />}
+                <h2 className="modal-title" style={{ margin: 0, fontSize: '1.4rem' }}>
+                  {settingsView === 'topics' ? t('show.topicsTitle') : t('show.settingsTitle')}
+                </h2>
+                <button type="button" className="settings-back" onClick={() => setTopicsOpen(false)} aria-label={t('common.close')}>
+                  <X size={18} />
+                </button>
               </div>
 
-              <button onClick={() => setTopicsOpen(false)} className="btn show-final-btn show-settings-done">
-                <Check size={18} /> {t('show.topicsDone')}
-              </button>
+              {settingsView === 'menu' && (
+                <div className="settings-options">
+                  <button
+                    type="button"
+                    className={`show-setting-toggle${noLifelines ? ' is-off' : ''}`}
+                    role="switch"
+                    aria-checked={!noLifelines}
+                    onClick={() => setNoLifelines((v) => !v)}
+                  >
+                    <span className="show-setting-text">
+                      <strong>{t('show.lifelinesLabel')}</strong>
+                      <small>{noLifelines ? t('show.lifelinesOff') : t('show.lifelinesOn')}</small>
+                    </span>
+                    <span className="show-switch" aria-hidden><span className="show-switch-knob" /></span>
+                  </button>
+
+                  <button type="button" className="settings-option" onClick={() => setSettingsView('topics')}>
+                    <ListChecks size={18} style={{ color: 'var(--gold)' }} />
+                    <span>{t('show.topicsTitle')}</span>
+                    <span className="show-setting-count" style={{ marginLeft: 'auto' }}>{chosen.size}/{topics.length}</span>
+                    <ChevronRight size={16} style={{ color: 'var(--text-dim)' }} />
+                  </button>
+                </div>
+              )}
+
+              {settingsView === 'topics' && (
+                <>
+                  <p className="show-setting-sub">{t('show.topicsHint')}</p>
+                  <div className="show-topic-chips">
+                    {topics.map((tp) => (
+                      <button
+                        key={tp.id}
+                        type="button"
+                        className={`show-topic-chip${chosen.has(tp.id) ? ' is-on' : ''}`}
+                        aria-pressed={chosen.has(tp.id)}
+                        onClick={() => toggleTopic(tp.id)}
+                      >
+                        {tp.id}
+                      </button>
+                    ))}
+                  </div>
+                  {chosen.size < topics.length && (
+                    <button
+                      type="button"
+                      className="show-setting-selectall"
+                      onClick={() => setChosen(new Set(topics.map((tp) => tp.id)))}
+                    >
+                      {t('show.topicsSelectAll')}
+                    </button>
+                  )}
+                  <button onClick={() => setSettingsView('menu')} className="btn show-final-btn show-settings-done">
+                    <Check size={18} /> {t('show.topicsDone')}
+                  </button>
+                </>
+              )}
             </div>
           </div>,
           document.body
