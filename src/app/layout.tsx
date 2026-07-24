@@ -6,6 +6,7 @@ import I18nProvider from "@/client/i18n/I18nProvider";
 import Footer from "@/client/components/Footer";
 import { AppGoogleOAuthProvider } from "@/client/providers/AppGoogleOAuthProvider";
 import ThemeBootstrap from "@/client/components/ThemeBootstrap";
+import LobbyMusic from "@/client/components/LobbyMusic";
 import { THEME_BOOTSTRAP_SCRIPT, THEME_CRITICAL_CSS } from "@/shared/theme";
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <ThemeBootstrap />
+        <LobbyMusic />
         <I18nProvider>
           <AppGoogleOAuthProvider>
             <AuthProvider>

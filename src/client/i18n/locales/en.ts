@@ -161,6 +161,13 @@ export const en: Dictionary = {
     backHome: 'Back to home',
     soundOn: 'Unmute',
     soundOff: 'Mute',
+    startPhrases: [
+      'Good luck! Here we go!',
+      'Get ready... the game is starting!',
+      'Lights, camera, computation!',
+      'Your moment is here. Full focus!',
+      'Let the show begin!',
+    ],
     transitionPhrases: [
       "You're doing great!",
       'Now it gets serious...',

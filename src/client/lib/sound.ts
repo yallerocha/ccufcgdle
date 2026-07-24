@@ -44,6 +44,7 @@ export function toggleMuted(): boolean {
   }
   if (muted) stopMusic();
   else ac();
+  updateLobby(); // pause/resume the lobby theme to match the new mute state
   return muted;
 }
 
@@ -120,9 +121,9 @@ export function startMusic(): void {
   let step = 0;
   const tick = () => {
     if (muted) return;
-    note(seq[step % seq.length], 0, 0.17, { type: 'triangle', peak: 0.09 });
-    if (step % 8 === 0) note(110, 0, 0.55, { type: 'sine', peak: 0.16 }); // low heartbeat
-    if (step % 8 === 4) note(116.54, 0, 0.55, { type: 'sine', peak: 0.13 }); // Bb2 tension
+    note(seq[step % seq.length], 0, 0.17, { type: 'triangle', peak: 0.17 });
+    if (step % 8 === 0) note(110, 0, 0.55, { type: 'sine', peak: 0.28 }); // low heartbeat
+    if (step % 8 === 4) note(116.54, 0, 0.55, { type: 'sine', peak: 0.23 }); // Bb2 tension
     step++;
   };
   tick();
@@ -135,25 +136,48 @@ export function stopMusic(): void {
   music = null;
 }
 
-// ── Lobby / intro music ─────────────────────────────────────────────────────────
-// The real Show do Milhão opening theme, looped, playing only on the intro screen.
-// A plain <audio> element (native loop) — no Web Audio needed for file playback.
+// ── Lobby music ─────────────────────────────────────────────────────────────────
+// The real Show do Milhão opening theme, looped. Plays everywhere in the app
+// EXCEPT while a game is live. A plain <audio> element (native loop). Playback is
+// the product of three flags: we want it, no game is active, and not muted.
 let lobby: HTMLAudioElement | null = null;
+let lobbyWanted = false; // a mounted lobby controller wants it playing
+let gameActive = false; // a Show run is currently being played
 
-export function startLobbyMusic(): void {
-  if (typeof window === 'undefined' || muted) return;
-  if (!lobby) {
-    lobby = new Audio('/lobby-theme.mp3');
-    lobby.loop = true;
-    lobby.volume = 0.6;
+function updateLobby(): void {
+  if (typeof window === 'undefined') return;
+  const shouldPlay = lobbyWanted && !gameActive && !muted;
+  if (shouldPlay) {
+    if (!lobby) {
+      lobby = new Audio('/lobby-theme.mp3');
+      lobby.loop = true;
+      lobby.volume = 0.6;
+    }
+    // play() may reject until the user has interacted; the controller retries on
+    // the first gesture. Pausing (not resetting) keeps the track flowing across
+    // page navigations and game pauses.
+    void lobby.play().catch(() => {});
+  } else if (lobby) {
+    lobby.pause();
   }
-  // play() may reject until the user has interacted with the page; that's fine —
-  // the intro effect retries on the first gesture.
-  void lobby.play().catch(() => {});
+}
+
+/** Mark that we're on a lobby screen (anywhere but an active game). */
+export function startLobbyMusic(): void {
+  lobbyWanted = true;
+  updateLobby();
 }
 
 export function stopLobbyMusic(): void {
-  if (!lobby) return;
-  lobby.pause();
-  lobby.currentTime = 0;
+  lobbyWanted = false;
+  updateLobby();
+}
+
+/** Pause the lobby theme while a Show run is live; restart it from the top after. */
+export function setGameActive(active: boolean): void {
+  const wasActive = gameActive;
+  gameActive = active;
+  // Coming out of a game back to the lobby: restart the theme from the beginning.
+  if (wasActive && !active && lobby) lobby.currentTime = 0;
+  updateLobby();
 }

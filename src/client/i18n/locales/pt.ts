@@ -9,7 +9,7 @@ export const pt = {
     play: 'Jogar',
     ranking: 'Ranking',
     myCharacter: 'Meu Perfil',
-    members: 'Players',
+    members: 'Jogadores',
     admin: 'Admin',
     logout: 'Sair',
     joinLogin: 'Entrar',
@@ -36,7 +36,7 @@ export const pt = {
     howBody: 'Sua posição é a soma de todos os prêmios que você já bancou nas partidas do Show da Computação. Empates são desempatados por quem chegou mais vezes ao milhão.',
   },
   members: {
-    title: 'Players',
+    title: 'Jogadores',
     subtitle: 'Os jogadores que já subiram no palco do Show da Computação.',
     loading: 'Carregando membros...',
     empty: 'Nenhum membro cadastrado ainda.',
@@ -157,6 +157,13 @@ export const pt = {
     backHome: 'Voltar ao início',
     soundOn: 'Ativar som',
     soundOff: 'Silenciar',
+    startPhrases: [
+      'Boa sorte! Vamos começar!',
+      'Prepare-se... o jogo vai começar!',
+      'Luz, câmera, computação!',
+      'Chegou a sua hora. Foco total!',
+      'Que comece o show!',
+    ],
     transitionPhrases: [
       'Você está indo muito bem!',
       'Agora a coisa esquenta...',

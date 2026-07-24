@@ -14,7 +14,7 @@ import { ShowResultModal } from '@/client/components/ShowResultModal';
 import {
   unlockAudio, isMuted, toggleMuted,
   sfxSelect, sfxCorrect, sfxWrong, sfxLifeline, sfxStart, sfxWin, sfxStop,
-  startMusic, stopMusic, startLobbyMusic, stopLobbyMusic,
+  startMusic, stopMusic, setGameActive,
 } from '@/client/lib/sound';
 
 type LifelineType = 'fifty' | 'skip' | 'audience' | 'students';
@@ -105,24 +105,13 @@ export default function ShowPage() {
   useEffect(() => setMuted(isMuted()), []);
   useEffect(() => () => stopMusic(), []);
 
-  // Intro-screen music. Autoplay is blocked until a user gesture, so also retry
-  // on the first pointer/key event. Independent of the run's suspense bed.
-  const onIntro = !run || run.status !== 'playing';
+  // Pause the global lobby theme while a run is actually being played (the intro
+  // screen still counts as lobby). Resume it when the run ends or we leave.
+  const inGame = !!run && run.status === 'playing';
   useEffect(() => {
-    if (!onIntro || muted) {
-      stopLobbyMusic();
-      return;
-    }
-    startLobbyMusic();
-    const kick = () => startLobbyMusic();
-    window.addEventListener('pointerdown', kick, { once: true });
-    window.addEventListener('keydown', kick, { once: true });
-    return () => {
-      stopLobbyMusic();
-      window.removeEventListener('pointerdown', kick);
-      window.removeEventListener('keydown', kick);
-    };
-  }, [onIntro, muted]);
+    setGameActive(inGame);
+    return () => setGameActive(false);
+  }, [inGame]);
 
   // While a run is live, lock the navbar (no wandering off mid-question — the
   // stage is immersive, like the real show). The class drives CSS in globals.
@@ -227,7 +216,16 @@ export default function ShowPage() {
         setRun(data);
         localStorage.setItem(RUN_KEY, data.runId);
         sfxStart();
-        startMusic();
+        // Opening host message before the first question (same overlay as the
+        // between-questions transition). Suspense music starts when it clears.
+        const phrases = t('show.startPhrases', { returnObjects: true });
+        const list = Array.isArray(phrases) ? (phrases as string[]) : [];
+        const phrase = list.length ? list[Math.floor(Math.random() * list.length)] : '';
+        setTransition({ prize: data.ladder[data.currentStep - 1], phrase });
+        window.setTimeout(() => {
+          setTransition(null);
+          startMusic();
+        }, 2600);
       } else {
         setErrorMsg(data.error || t('show.errorGeneric'));
       }
@@ -277,18 +275,25 @@ export default function ShowPage() {
     }
   };
 
+  // Game over: leave the game screen up (with the reveal) and show the result
+  // modal over it. Teardown to the lobby happens only when the modal is closed.
+  const finishToLobby = () => {
+    setResult(null);
+    setReveal(null);
+    localStorage.removeItem(RUN_KEY);
+    resetQuestionAids();
+    setRun(null);
+  };
+
   const proceed = () => {
     if (!reveal) return;
     const next = reveal.nextRun;
-    setReveal(null);
     if (next.status !== 'playing') {
-      localStorage.removeItem(RUN_KEY);
-      resetQuestionAids();
-      setRun(next);
       if (next.status === 'won') sfxWin();
       setResult(next);
       return;
     }
+    setReveal(null);
     // Between-questions transition: a host phrase + the next prize, then advance.
     const phrases = t('show.transitionPhrases', { returnObjects: true });
     const list = Array.isArray(phrases) ? (phrases as string[]) : [];
@@ -357,9 +362,7 @@ export default function ShowPage() {
       if (res.ok) {
         stopMusic();
         sfxStop();
-        setRun(data);
-        localStorage.removeItem(RUN_KEY);
-        setResult(data);
+        setResult(data); // over the game screen; finishToLobby tears down on close
       } else {
         setErrorMsg((data as unknown as { error?: string }).error || t('show.errorGeneric'));
       }
@@ -474,7 +477,7 @@ export default function ShowPage() {
         </div>
         <Toast message={errorMsg} type="error" onClose={() => setErrorMsg('')} />
         {result && (
-          <ShowResultModal run={result} onClose={() => setResult(null)} onPlayAgain={start} />
+          <ShowResultModal run={result} onClose={finishToLobby} onPlayAgain={start} />
         )}
 
         <section className="show-stage">
@@ -606,6 +609,10 @@ export default function ShowPage() {
           {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
         </button>,
         document.body
+      )}
+
+      {result && (
+        <ShowResultModal run={result} onClose={finishToLobby} onPlayAgain={start} />
       )}
 
       {/* Between-questions host transition (portaled: true full-screen) */}
