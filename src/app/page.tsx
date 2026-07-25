@@ -132,7 +132,9 @@ export default function ShowPage() {
   // Snapshot of the settings when the modal opened, to detect unsaved edits and
   // offer to discard them on close (X / overlay).
   const settingsSnapshot = useRef<{ topics: Set<string> } | null>(null);
-  const [confirmExitSettings, setConfirmExitSettings] = useState(false);
+  // Which exit is pending confirmation: leaving the modal, or just stepping back
+  // to the options list. Both throw away the same edits, so both must ask.
+  const [confirmExitSettings, setConfirmExitSettings] = useState<'close' | 'back' | null>(null);
   useEffect(() => {
     apiFetch('/api/show/topics')
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
@@ -169,14 +171,20 @@ export default function ShowPage() {
   };
   // X / overlay: confirm before closing if the topics were edited.
   const requestCloseSettings = () => {
-    if (settingsDirty()) setConfirmExitSettings(true);
+    if (settingsDirty()) setConfirmExitSettings('close');
     else setTopicsOpen(false);
+  };
+  // Back arrow: same edits at stake, so it asks too — it just returns to the menu.
+  const requestBackSettings = () => {
+    if (settingsDirty()) setConfirmExitSettings('back');
+    else setSettingsView('menu');
   };
   const discardSettings = () => {
     const s = settingsSnapshot.current;
     if (s) setChosen(new Set(s.topics)); // lifelines switch is left as-is
-    setConfirmExitSettings(false);
-    setTopicsOpen(false);
+    if (confirmExitSettings === 'back') setSettingsView('menu');
+    else setTopicsOpen(false);
+    setConfirmExitSettings(null);
   };
 
   // Per-question lifeline UI state (reset when the question changes).
@@ -591,7 +599,7 @@ export default function ShowPage() {
             <div className="modal-content show-settings-modal" onClick={(e) => e.stopPropagation()}>
               <div className="settings-modal-head">
                 {settingsView === 'topics' ? (
-                  <button type="button" className="settings-back" onClick={() => setSettingsView('menu')} aria-label={t('common.back')}>
+                  <button type="button" className="settings-back" onClick={requestBackSettings} aria-label={t('common.back')}>
                     <ArrowLeft size={18} />
                   </button>
                 ) : <span />}
@@ -671,12 +679,12 @@ export default function ShowPage() {
         )}
 
         {mounted && confirmExitSettings && createPortal(
-          <div className="modal-overlay" onClick={() => setConfirmExitSettings(false)}>
+          <div className="modal-overlay" onClick={() => setConfirmExitSettings(null)}>
             <div className="modal-content show-quit-modal" role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
               <h2 className="modal-title">{t('show.discardTitle')}</h2>
               <p className="show-quit-body">{t('show.discardBody')}</p>
               <div className="show-quit-actions">
-                <button onClick={() => setConfirmExitSettings(false)} className="btn btn-secondary">
+                <button onClick={() => setConfirmExitSettings(null)} className="btn btn-secondary">
                   {t('show.discardCancel')}
                 </button>
                 <button onClick={discardSettings} className="btn show-quit-confirm">
