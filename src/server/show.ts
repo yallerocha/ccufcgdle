@@ -6,6 +6,7 @@ import {
   type QuizQuestion,
   type QuizSource,
 } from './quiz-questions';
+import { getDisabledIds } from './disabled-questions';
 
 // ── O Show da Computação — server-authoritative "Show do Milhão" quiz ─────────
 // A run is a ladder of questions of increasing prize. Everything that decides a
@@ -105,10 +106,11 @@ function bucketize(pool: QuizQuestion[]): Map<number, QuizQuestion[]> {
   return byDiff;
 }
 
-export function pickLadder(topics?: string[]): string[] {
+export function pickLadder(topics?: string[], disabled?: Set<string>): string[] {
+  const bank = disabled?.size ? QUIZ_QUESTIONS.filter((q) => !disabled.has(q.id)) : QUIZ_QUESTIONS;
   const wanted = topics && topics.length ? new Set(topics) : null;
-  const primary = bucketize(wanted ? QUIZ_QUESTIONS.filter((q) => wanted.has(q.topic)) : QUIZ_QUESTIONS);
-  const fallback = bucketize(wanted ? QUIZ_QUESTIONS.filter((q) => !wanted.has(q.topic)) : []);
+  const primary = bucketize(wanted ? bank.filter((q) => wanted.has(q.topic)) : bank);
+  const fallback = bucketize(wanted ? bank.filter((q) => !wanted.has(q.topic)) : []);
 
   const used = new Set<string>();
   const takeNearest = (buckets: Map<number, QuizQuestion[]>, target: number): string | null => {
@@ -269,7 +271,7 @@ export async function startRun(
   const run = await prisma.showRun.create({
     data: {
       playerId,
-      questionIds: pickLadder(opts?.topics).join(','),
+      questionIds: pickLadder(opts?.topics, await getDisabledIds()).join(','),
       currentStep: 1,
       prize: 0,
       // Disabling lifelines is modelled as "all already spent" — no schema change,

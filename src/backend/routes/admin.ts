@@ -3,6 +3,9 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../server/db';
 import { requireAdmin } from '../middleware/auth';
+import { QUIZ_QUESTIONS, QUESTION_BY_ID, questionSource } from '../../server/quiz-questions';
+import { getDisabledIds, setQuestionDisabled } from '../../server/disabled-questions';
+import { LADDER_SIZE } from '../../server/show';
 
 const router = Router();
 
@@ -136,5 +139,58 @@ router.delete('/users', async (req, res) => {
   }
 });
 
+// GET /api/admin/questions — the whole question bank with its disabled flag.
+// Counts (by difficulty/topic/area) are derived on the client from this list.
+router.get('/questions', async (_req, res) => {
+  try {
+    const disabled = await getDisabledIds();
+    const questions = QUIZ_QUESTIONS.map((q) => ({
+      id: q.id,
+      area: q.area,
+      topic: q.topic,
+      difficulty: q.difficulty,
+      question: q.question,
+      source: questionSource(q),
+      disabled: disabled.has(q.id),
+    }));
+    return res.json({ questions, ladderSize: LADDER_SIZE });
+  } catch (error) {
+    console.error('Admin questions fetch error:', error);
+    return res.status(500).json({ error: 'Erro ao buscar as perguntas.' });
+  }
+});
+
+// PUT /api/admin/questions — enable/disable one question. { questionId, disabled }
+router.put('/questions', async (req, res) => {
+  try {
+    const { questionId, disabled } = req.body ?? {};
+    if (typeof questionId !== 'string' || typeof disabled !== 'boolean') {
+      return res.status(400).json({ error: 'Requisição inválida.' });
+    }
+    if (!QUESTION_BY_ID.has(questionId)) {
+      return res.status(404).json({ error: 'Pergunta não encontrada.' });
+    }
+
+    // A run needs a full ladder, so never let the bank shrink below it.
+    if (disabled) {
+      const current = await getDisabledIds();
+      if (!current.has(questionId) && QUIZ_QUESTIONS.length - current.size - 1 < LADDER_SIZE) {
+        return res.status(400).json({
+          error: `É preciso manter ao menos ${LADDER_SIZE} perguntas ativas para montar uma partida.`,
+        });
+      }
+    }
+
+    await setQuestionDisabled(questionId, disabled);
+    return res.json({
+      message: disabled ? 'Pergunta desabilitada com sucesso!' : 'Pergunta habilitada com sucesso!',
+      questionId,
+      disabled,
+    });
+  } catch (error) {
+    console.error('Admin question update error:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar a pergunta.' });
+  }
+});
 
 export default router;

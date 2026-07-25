@@ -14,6 +14,7 @@ import {
 } from '../../server/show';
 import { requireAuth } from '../middleware/auth';
 import { QUIZ_QUESTIONS, TOPICS } from '../../server/quiz-questions';
+import { getDisabledIds } from '../../server/disabled-questions';
 
 // O Show da Computação — the whole run is server-authoritative (see server/show.ts),
 // so playing requires a logged-in user and the score is derived here, never sent
@@ -21,10 +22,14 @@ import { QUIZ_QUESTIONS, TOPICS } from '../../server/quiz-questions';
 const router = Router();
 
 // GET /api/show/topics — question themes with counts (for the pre-run picker).
-router.get('/topics', (_req, res) => {
+// Questions disabled by an admin don't count, so a fully retired theme disappears.
+router.get('/topics', async (_req, res) => {
+  const disabled = await getDisabledIds();
   const counts: Record<string, number> = {};
-  for (const q of QUIZ_QUESTIONS) counts[q.topic] = (counts[q.topic] ?? 0) + 1;
-  return res.json({ topics: TOPICS.map((id) => ({ id, count: counts[id] ?? 0 })) });
+  for (const q of QUIZ_QUESTIONS) {
+    if (!disabled.has(q.id)) counts[q.topic] = (counts[q.topic] ?? 0) + 1;
+  }
+  return res.json({ topics: TOPICS.filter((id) => counts[id]).map((id) => ({ id, count: counts[id] })) });
 });
 
 // POST /api/show/start — begin a new run. Optional { topics: string[] } filters

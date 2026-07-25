@@ -115,6 +115,13 @@ test('pickLadder prefers chosen topics but still fills the ladder', () => {
   assert.strictEqual(logicCount, Math.min(logicTotal, LADDER_SIZE));
 });
 
+test('pickLadder never serves an admin-disabled question', () => {
+  const banned = new Set(QUIZ_QUESTIONS.filter((q) => q.topic === 'Lógica').map((q) => q.id));
+  const ids = pickLadder(['Lógica'], banned);
+  assert.strictEqual(ids.length, LADDER_SIZE); // filled from the rest of the bank
+  for (const id of ids) assert.ok(!banned.has(id), `disabled ${id} was served`);
+});
+
 // ── aid results (deterministic, so reload restores them) ──────────────────────
 test('resolveAid is deterministic for the same (run, question, type)', () => {
   const q = QUIZ_QUESTIONS[0];
