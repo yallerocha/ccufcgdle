@@ -4,7 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { ShieldAlert, Trash2, Power, Shield, AlertTriangle, KeyRound, Search, Copy, Check, BookOpen, Eye, EyeOff } from 'lucide-react';
+import {
+  ShieldAlert, Trash2, Power, Shield, AlertTriangle, KeyRound, Search, Copy, Check,
+  BookOpen, Eye, EyeOff, Users, Activity, ListChecks, Tags,
+} from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 import { Toast } from '@/client/components/Toast';
 import { BackLink } from '@/client/components/BackLink';
@@ -33,6 +36,20 @@ interface AdminQuestion {
 }
 
 type QuestionStatusFilter = 'all' | 'active' | 'disabled';
+type AdminTab = 'users' | 'questions';
+
+// A KPI tile of the top strip: one number, one label, one gold glyph.
+function Kpi({ icon, value, label }: { icon: React.ReactNode; value: number | string; label: string }) {
+  return (
+    <div className="admin-kpi">
+      <div className="admin-kpi-icon">{icon}</div>
+      <div style={{ minWidth: 0 }}>
+        <div className="admin-kpi-val">{value}</div>
+        <div className="admin-kpi-lbl">{label}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const { t, i18n } = useTranslation();
@@ -41,6 +58,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [tab, setTab] = useState<AdminTab>('users');
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [userToReset, setUserToReset] = useState<AdminUser | null>(null);
@@ -227,6 +245,8 @@ export default function AdminPage() {
     );
   }
 
+  const daysSince = (iso: string) => Math.floor((new Date().getTime() - new Date(iso).getTime()) / 86_400_000);
+
   const searchQ = userSearch.trim().toLowerCase();
   const visibleUsers = (
     searchQ
@@ -237,6 +257,9 @@ export default function AdminPage() {
     if (userSort === 'lastLogin') return new Date(b.lastLogin).getTime() - new Date(a.lastLogin).getTime();
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  const adminCount = users.filter((u) => u.isAdmin).length;
+  const activeCount = users.filter((u) => u.isActive && daysSince(u.lastLogin) < 30).length;
 
   // Question-bank breakdowns: active/disabled counts per difficulty and per topic.
   const groupCounts = (key: (q: AdminQuestion) => string | number) => {
@@ -263,16 +286,17 @@ export default function AdminPage() {
     return !questionQ || q.question.toLowerCase().includes(questionQ) || q.id.toLowerCase().includes(questionQ);
   });
 
+  const offCount = (n: number) => (n > 0 ? <span className="admin-off-count"> (-{n})</span> : null);
+
   return (
     <div style={{ margin: '2rem 0' }} className="fade-in">
       <BackLink href="/" label={t('nav.backToHub')} />
-      <div className="admin-section-header">
-        <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShieldAlert style={{ color: 'var(--primary)' }} /> {t('admin.title')}
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('admin.subtitle')}</p>
-        </div>
+
+      <div className="hero" style={{ padding: '1rem 0 1.5rem 0' }}>
+        <h1 className="page-heading">
+          <ShieldAlert size={30} /> {t('admin.title')}
+        </h1>
+        <p>{t('admin.subtitle')}</p>
       </div>
 
       <Toast
@@ -281,214 +305,218 @@ export default function AdminPage() {
         onClose={() => { setErrorMsg(''); setSuccessMsg(''); }}
       />
 
-      <div className="card" style={{ padding: '1.5rem 2rem' }}>
-        <h3 className="card-title" style={{ marginBottom: '1rem' }}>
-          <Shield size={20} style={{ color: 'var(--primary)' }} /> {t('admin.usersTitle')} ({users.length})
-        </h3>
+      {/* Panel overview: the numbers an admin wants before drilling into a tab. */}
+      <div className="admin-kpis">
+        <Kpi icon={<Users size={18} />} value={users.length} label={t('admin.kpiUsers')} />
+        <Kpi icon={<Shield size={18} />} value={adminCount} label={t('admin.kpiAdmins')} />
+        <Kpi icon={<Activity size={18} />} value={activeCount} label={t('admin.kpiActive')} />
+        <Kpi icon={<BookOpen size={18} />} value={questions.length - disabledCount} label={t('admin.kpiQuestions')} />
+      </div>
 
-        {users.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{ position: 'relative', flex: '1 1 240px' }}>
-              <input type="text" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} placeholder={t('admin.searchPlaceholder')} style={{ paddingLeft: '2.4rem' }} />
-              <Search size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+      <div className="admin-tabs">
+        <button className={`admin-tab${tab === 'users' ? ' is-active' : ''}`} onClick={() => setTab('users')}>
+          <Users size={16} /> {t('admin.tabUsers')} ({users.length})
+        </button>
+        <button className={`admin-tab${tab === 'questions' ? ' is-active' : ''}`} onClick={() => setTab('questions')}>
+          <BookOpen size={16} /> {t('admin.tabQuestions')} ({questions.length})
+        </button>
+      </div>
+
+      {tab === 'users' ? (
+        <div className="card" style={{ padding: '1.5rem 2rem' }}>
+          <h3 className="card-title" style={{ marginBottom: '0.35rem' }}>
+            <Shield size={20} style={{ color: 'var(--gold)' }} /> {t('admin.usersTitle')}
+          </h3>
+          <p className="admin-card-desc">{t('admin.usersDesc')}</p>
+
+          {users.length > 0 && (
+            <div className="admin-toolbar">
+              <div className="admin-search">
+                <input type="text" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} placeholder={t('admin.searchPlaceholder')} />
+                <Search size={16} />
+              </div>
+              <select value={userSort} onChange={(e) => setUserSort(e.target.value as UserSort)}>
+                <option value="newest">{t('admin.sortNewest')}</option>
+                <option value="name">{t('admin.sortName')}</option>
+                <option value="lastLogin">{t('admin.sortLastLogin')}</option>
+              </select>
             </div>
-            <select value={userSort} onChange={(e) => setUserSort(e.target.value as UserSort)} style={{ flex: '0 1 180px' }}>
-              <option value="newest">{t('admin.sortNewest')}</option>
-              <option value="name">{t('admin.sortName')}</option>
-              <option value="lastLogin">{t('admin.sortLastLogin')}</option>
+          )}
+
+          {users.length === 0 ? (
+            <p className="admin-empty">{t('admin.noUsers')}</p>
+          ) : visibleUsers.length === 0 ? (
+            <p className="admin-empty">{t('admin.noSearchResults')}</p>
+          ) : (
+            <div className="admin-table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>{t('admin.thCharacter')}</th>
+                    <th>{t('admin.thLastLogin')}</th>
+                    <th>{t('admin.thGameStatus')}</th>
+                    <th>{t('admin.thRoleCol')}</th>
+                    <th>{t('admin.thActions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleUsers.map((u) => {
+                    const lastLoginDate = new Date(u.lastLogin);
+                    const isSessionActive = daysSince(u.lastLogin) < 30;
+                    const isSelf = u.id === currentUser.id;
+                    return (
+                      <tr key={u.id}>
+                        <td data-label={t('admin.thCharacter')}>
+                          <div className="admin-cell-value" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+                            <div style={{ fontWeight: 600 }}>{u.name}</div>
+                            <div className="admin-q-meta">{u.email}</div>
+                          </div>
+                        </td>
+                        <td data-label={t('admin.thLastLogin')} style={{ fontSize: '0.85rem' }}>
+                          {lastLoginDate.toLocaleDateString(dateLocale)} {lastLoginDate.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td data-label={t('admin.thGameStatus')}>
+                          {u.isActive && isSessionActive ? (
+                            <span className="badge badge-active">{t('admin.statusActive')}</span>
+                          ) : !u.isActive ? (
+                            <span className="badge badge-inactive" title={t('admin.titleDisabledByAdmin')}>{t('admin.statusDisabled')}</span>
+                          ) : (
+                            <span className="badge badge-inactive" title={t('admin.titleExpired')}>{t('admin.statusExpired')}</span>
+                          )}
+                        </td>
+                        <td data-label={t('admin.thRoleCol')}>
+                          {u.isAdmin ? (
+                            <span className="badge badge-admin">{t('admin.roleAdmin')}</span>
+                          ) : (
+                            <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{t('admin.roleUser')}</span>
+                          )}
+                        </td>
+                        <td data-label={t('admin.thActions')}>
+                          <div className="admin-actions">
+                            <button onClick={() => handleToggleActive(u.id, u.isActive)} disabled={isSelf} className="btn btn-secondary admin-icon-btn" title={u.isActive ? t('admin.actionDeactivate') : t('admin.actionActivate')}>
+                              <Power size={14} style={{ color: u.isActive ? '#ef4444' : 'var(--color-correct)' }} />
+                            </button>
+                            <button onClick={() => handleToggleAdmin(u.id, u.isAdmin)} disabled={isSelf} className={`btn btn-secondary admin-icon-btn${u.isAdmin ? ' is-on' : ''}`} title={u.isAdmin ? t('admin.actionRemoveAdmin') : t('admin.actionMakeAdmin')}>
+                              <Shield size={14} style={{ color: u.isAdmin ? '#fff' : 'var(--text-muted)' }} />
+                            </button>
+                            <button onClick={() => setUserToReset(u)} disabled={isSelf} className="btn btn-secondary admin-icon-btn" title={t('admin.actionResetPassword')}>
+                              <KeyRound size={14} style={{ color: 'var(--color-partial)' }} />
+                            </button>
+                            <button onClick={() => setUserToDelete(u)} disabled={isSelf} className="btn btn-danger admin-icon-btn" title={t('admin.actionDelete')}>
+                              <Trash2 size={14} style={{ color: '#fff' }} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="card" style={{ padding: '1.5rem 2rem' }}>
+          <h3 className="card-title" style={{ marginBottom: '0.35rem' }}>
+            <BookOpen size={20} style={{ color: 'var(--gold)' }} /> {t('admin.questionsTitle')}
+          </h3>
+          <p className="admin-card-desc">{t('admin.questionsDesc')}</p>
+
+          <div className="admin-kpis">
+            <Kpi icon={<ListChecks size={18} />} value={questions.length} label={t('admin.qStatTotal')} />
+            <Kpi icon={<Eye size={18} />} value={questions.length - disabledCount} label={t('admin.qStatActive')} />
+            <Kpi icon={<EyeOff size={18} />} value={disabledCount} label={t('admin.qStatDisabled')} />
+            <Kpi icon={<Tags size={18} />} value={topicRows.length} label={t('admin.qStatTopics')} />
+          </div>
+
+          <div className="admin-split">
+            <div>
+              <h4 className="admin-sub-title">{t('admin.qByDifficulty')}</h4>
+              {diffRows.map((r) => (
+                <div key={r.key} className="admin-bar-row">
+                  <span className="admin-bar-lbl">{t('admin.qDiffLevel', { n: r.key })}</span>
+                  <div className="admin-bar-track">
+                    <div className="admin-bar-fill" style={{ width: `${(r.active / maxCount) * 100}%` }} />
+                  </div>
+                  <span className="admin-bar-num">{r.active}{offCount(r.disabled)}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <h4 className="admin-sub-title">{t('admin.qByTopic')}</h4>
+              <div className="admin-chips">
+                {topicRows.map((r) => (
+                  <button key={r.key} type="button" className="admin-chip" onClick={() => setQuestionTopic(questionTopic === r.key ? '' : r.key)} title={t('admin.qFilterByTopic')}>
+                    {r.key} <strong>{r.active}</strong>{offCount(r.disabled)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="admin-toolbar">
+            <div className="admin-search">
+              <input type="text" value={questionSearch} onChange={(e) => setQuestionSearch(e.target.value)} placeholder={t('admin.qSearchPlaceholder')} />
+              <Search size={16} />
+            </div>
+            <select value={questionTopic} onChange={(e) => setQuestionTopic(e.target.value)}>
+              <option value="">{t('admin.qAllTopics')}</option>
+              {topicRows.map((r) => <option key={r.key} value={r.key}>{r.key}</option>)}
+            </select>
+            <select value={questionStatus} onChange={(e) => setQuestionStatus(e.target.value as QuestionStatusFilter)}>
+              <option value="all">{t('admin.qAllStatus')}</option>
+              <option value="active">{t('admin.qStatusActive')}</option>
+              <option value="disabled">{t('admin.qStatusDisabled')}</option>
             </select>
           </div>
-        )}
 
-        {users.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('admin.noUsers')}</p>
-        ) : visibleUsers.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('admin.noSearchResults')}</p>
-        ) : (
-          <div className="admin-table-container">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>{t('admin.thCharacter')}</th>
-                  <th>{t('admin.thLastLogin')}</th>
-                  <th>{t('admin.thGameStatus')}</th>
-                  <th>{t('admin.thRoleCol')}</th>
-                  <th>{t('admin.thActions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleUsers.map((u) => {
-                  const lastLoginDate = new Date(u.lastLogin);
-                  const todayDate = new Date();
-                  const diffDays = Math.floor((todayDate.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
-                  const isSessionActive = diffDays < 30;
-                  return (
-                    <tr key={u.id}>
-                      <td data-label={t('admin.thCharacter')}>
+          {visibleQuestions.length === 0 ? (
+            <p className="admin-empty">{t('admin.qNoResults')}</p>
+          ) : (
+            <div className="admin-table-container admin-scroll-table">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>{t('admin.qThQuestion')}</th>
+                    <th>{t('admin.qThTopic')}</th>
+                    <th>{t('admin.qThDifficulty')}</th>
+                    <th>{t('admin.qThStatus')}</th>
+                    <th>{t('admin.thActions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleQuestions.map((q) => (
+                    <tr key={q.id} className={q.disabled ? 'is-off' : undefined}>
+                      <td data-label={t('admin.qThQuestion')}>
                         <div className="admin-cell-value" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
-                          <div style={{ fontWeight: 600 }}>{u.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                          <div className="admin-q-text">{q.question}</div>
+                          <div className="admin-q-meta">
+                            {q.id}{q.source && ` · POSCOMP ${q.source.year} #${q.source.number}`}
+                          </div>
                         </div>
                       </td>
-                      <td data-label={t('admin.thLastLogin')} style={{ fontSize: '0.85rem' }}>
-                        {lastLoginDate.toLocaleDateString(dateLocale)} {lastLoginDate.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                      <td data-label={t('admin.thGameStatus')}>
-                        {u.isActive && isSessionActive ? (
-                          <span className="badge badge-active">{t('admin.statusActive')}</span>
-                        ) : !u.isActive ? (
-                          <span className="badge badge-inactive" title={t('admin.titleDisabledByAdmin')}>{t('admin.statusDisabled')}</span>
+                      <td data-label={t('admin.qThTopic')} style={{ fontSize: '0.85rem' }}>{q.topic}</td>
+                      <td data-label={t('admin.qThDifficulty')} style={{ fontSize: '0.85rem' }}>{t('admin.qDiffLevel', { n: q.difficulty })}</td>
+                      <td data-label={t('admin.qThStatus')}>
+                        {q.disabled ? (
+                          <span className="badge badge-inactive">{t('admin.qStatusDisabled')}</span>
                         ) : (
-                          <span className="badge badge-inactive" title={t('admin.titleExpired')}>{t('admin.statusExpired')}</span>
-                        )}
-                      </td>
-                      <td data-label={t('admin.thRoleCol')}>
-                        {u.isAdmin ? (
-                          <span className="badge badge-admin">{t('admin.roleAdmin')}</span>
-                        ) : (
-                          <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{t('admin.roleUser')}</span>
+                          <span className="badge badge-active">{t('admin.qStatusActive')}</span>
                         )}
                       </td>
                       <td data-label={t('admin.thActions')}>
-                        <div className="admin-actions">
-                          <button onClick={() => handleToggleActive(u.id, u.isActive)} disabled={u.id === currentUser.id} className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }} title={u.isActive ? t('admin.actionDeactivate') : t('admin.actionActivate')}>
-                            <Power size={14} style={{ color: u.isActive ? '#ef4444' : 'var(--color-correct)' }} />
-                          </button>
-                          <button onClick={() => handleToggleAdmin(u.id, u.isAdmin)} disabled={u.id === currentUser.id} className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', ...(u.isAdmin && { backgroundColor: 'var(--primary)', borderColor: 'var(--primary)' }) }} title={u.isAdmin ? t('admin.actionRemoveAdmin') : t('admin.actionMakeAdmin')}>
-                            <Shield size={14} style={{ color: u.isAdmin ? 'white' : 'var(--text-muted)' }} />
-                          </button>
-                          <button onClick={() => setUserToReset(u)} disabled={u.id === currentUser.id} className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }} title={t('admin.actionResetPassword')}>
-                            <KeyRound size={14} style={{ color: 'var(--color-partial)' }} />
-                          </button>
-                          <button onClick={() => setUserToDelete(u)} disabled={u.id === currentUser.id} className="btn btn-secondary btn-danger" style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', border: 'none' }} title={t('admin.actionDelete')}>
-                            <Trash2 size={14} style={{ color: 'white' }} />
-                          </button>
-                        </div>
+                        <button onClick={() => toggleQuestion(q)} disabled={togglingId === q.id} className="btn btn-secondary admin-icon-btn" title={q.disabled ? t('admin.qEnable') : t('admin.qDisable')}>
+                          {q.disabled ? <Eye size={14} style={{ color: 'var(--color-correct)' }} /> : <EyeOff size={14} style={{ color: '#ef4444' }} />}
+                        </button>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Question bank: overview + enable/disable */}
-      <div className="card" style={{ padding: '1.5rem 2rem', marginTop: '1.5rem' }}>
-        <h3 className="card-title" style={{ marginBottom: '0.35rem' }}>
-          <BookOpen size={20} style={{ color: 'var(--primary)' }} /> {t('admin.questionsTitle')}
-        </h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>{t('admin.questionsDesc')}</p>
-
-        <div className="stat-grid" style={{ marginBottom: '1.25rem' }}>
-          <div className="stat-card">
-            <div className="stat-val">{questions.length}</div>
-            <div className="stat-lbl">{t('admin.qStatTotal')}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-val" style={{ color: 'var(--color-correct)' }}>{questions.length - disabledCount}</div>
-            <div className="stat-lbl">{t('admin.qStatActive')}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-val" style={{ color: '#ef4444' }}>{disabledCount}</div>
-            <div className="stat-lbl">{t('admin.qStatDisabled')}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-val">{topicRows.length}</div>
-            <div className="stat-lbl">{t('admin.qStatTopics')}</div>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gap: '1.25rem', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', marginBottom: '1.25rem' }}>
-          <div>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.6rem' }}>{t('admin.qByDifficulty')}</h4>
-            {diffRows.map((r) => (
-              <div key={r.key} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', fontSize: '0.85rem' }}>
-                <span style={{ width: '5.5rem', color: 'var(--text-muted)' }}>{t('admin.qDiffLevel', { n: r.key })}</span>
-                <div style={{ flex: 1, height: '8px', borderRadius: '999px', backgroundColor: 'var(--bg-input)', overflow: 'hidden' }}>
-                  <div style={{ width: `${maxCount ? (r.active / maxCount) * 100 : 0}%`, height: '100%', backgroundColor: 'var(--primary)' }} />
-                </div>
-                <span style={{ width: '4.5rem', textAlign: 'right', color: 'var(--text-muted)' }}>
-                  {r.active}{r.disabled > 0 && <span style={{ color: '#ef4444' }}> (-{r.disabled})</span>}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.6rem' }}>{t('admin.qByTopic')}</h4>
-            <div style={{ maxHeight: '190px', overflowY: 'auto', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              {topicRows.map((r) => (
-                <span key={r.key} className="badge badge-inactive" style={{ fontSize: '0.75rem' }}>
-                  {r.key}: {r.active}{r.disabled > 0 && <span style={{ color: '#ef4444' }}> (-{r.disabled})</span>}
-                </span>
-              ))}
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
+          )}
         </div>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
-          <div style={{ position: 'relative', flex: '1 1 240px' }}>
-            <input type="text" value={questionSearch} onChange={(e) => setQuestionSearch(e.target.value)} placeholder={t('admin.qSearchPlaceholder')} style={{ paddingLeft: '2.4rem' }} />
-            <Search size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-          </div>
-          <select value={questionTopic} onChange={(e) => setQuestionTopic(e.target.value)} style={{ flex: '0 1 200px' }}>
-            <option value="">{t('admin.qAllTopics')}</option>
-            {topicRows.map((r) => <option key={r.key} value={r.key}>{r.key}</option>)}
-          </select>
-          <select value={questionStatus} onChange={(e) => setQuestionStatus(e.target.value as QuestionStatusFilter)} style={{ flex: '0 1 170px' }}>
-            <option value="all">{t('admin.qAllStatus')}</option>
-            <option value="active">{t('admin.qStatusActive')}</option>
-            <option value="disabled">{t('admin.qStatusDisabled')}</option>
-          </select>
-        </div>
-
-        {visibleQuestions.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>{t('admin.qNoResults')}</p>
-        ) : (
-          <div className="admin-table-container" style={{ maxHeight: '520px', overflowY: 'auto' }}>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>{t('admin.qThQuestion')}</th>
-                  <th>{t('admin.qThTopic')}</th>
-                  <th>{t('admin.qThDifficulty')}</th>
-                  <th>{t('admin.qThStatus')}</th>
-                  <th>{t('admin.thActions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleQuestions.map((q) => (
-                  <tr key={q.id} style={q.disabled ? { opacity: 0.55 } : undefined}>
-                    <td data-label={t('admin.qThQuestion')}>
-                      <div className="admin-cell-value" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
-                        <div style={{ fontSize: '0.85rem' }}>{q.question}</div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          {q.id}{q.source && ` · POSCOMP ${q.source.year} #${q.source.number}`}
-                        </div>
-                      </div>
-                    </td>
-                    <td data-label={t('admin.qThTopic')} style={{ fontSize: '0.85rem' }}>{q.topic}</td>
-                    <td data-label={t('admin.qThDifficulty')} style={{ fontSize: '0.85rem' }}>{t('admin.qDiffLevel', { n: q.difficulty })}</td>
-                    <td data-label={t('admin.qThStatus')}>
-                      {q.disabled ? (
-                        <span className="badge badge-inactive">{t('admin.qStatusDisabled')}</span>
-                      ) : (
-                        <span className="badge badge-active">{t('admin.qStatusActive')}</span>
-                      )}
-                    </td>
-                    <td data-label={t('admin.thActions')}>
-                      <button onClick={() => toggleQuestion(q)} disabled={togglingId === q.id} className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }} title={q.disabled ? t('admin.qEnable') : t('admin.qDisable')}>
-                        {q.disabled ? <Eye size={14} style={{ color: 'var(--color-correct)' }} /> : <EyeOff size={14} style={{ color: '#ef4444' }} />}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Password-reset: confirmation, then one-time display of the temp password */}
       {mounted && userToReset && createPortal(

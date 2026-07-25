@@ -45,6 +45,7 @@ html:not([data-theme="light"]) {
   --bg-card: rgba(11, 22, 58, 0.55);
   --bg-card-hover: rgba(20, 34, 82, 0.6);
   --bg-input: rgba(255, 255, 255, 0.04);
+  --select-popup-bg: #10193d; /* opaque: native <option> lists can't be translucent */
   --footer-bg: rgba(6, 12, 34, 0.6);
   --footer-text: #9fb0dd;
   --modal-gray-bar-bg: #223066;
@@ -89,6 +90,7 @@ html.theme-light {
   --bg-card: #ffffff;
   --bg-card-hover: #f4f4f5;
   --bg-input: #f4f4f5;
+  --select-popup-bg: #ffffff;
   --footer-bg: #f4f4f5;
   --footer-text: #52525b;
   --modal-gray-bar-bg: #e4e4e7;
@@ -726,6 +728,15 @@ select {
   background-position: right 0.85rem center;
   background-size: 1rem;
   cursor: pointer;
+}
+
+/* The native option popup does NOT inherit the page theme: with a translucent
+   --bg-input it paints dark-on-dark and the list is unreadable. Opaque colours
+   set on the options themselves are the only thing browsers honour here. */
+select option,
+select optgroup {
+  background-color: var(--select-popup-bg);
+  color: var(--text-primary);
 }
 
 input:focus, select:focus, textarea:focus {
@@ -2008,15 +2019,6 @@ a:focus-visible,
     bottom: -4px;
   }
 
-  .photo-crop-viewport {
-    width: min(280px, calc(100vw - 4.5rem));
-    height: min(280px, calc(100vw - 4.5rem));
-  }
-
-  .photo-crop-workspace {
-    max-width: min(280px, calc(100vw - 4.5rem));
-  }
-
   .admin-tabs {
     gap: 0.35rem;
   }
@@ -2751,7 +2753,7 @@ a:focus-visible,
 }
 
 .photo-crop-modal {
-  max-width: 360px;
+  max-width: 380px;
   overflow-x: hidden;
 }
 
@@ -2759,63 +2761,163 @@ a:focus-visible,
   margin-bottom: 1.25rem;
 }
 
-.photo-crop-workspace {
-  width: 100%;
-  max-width: 280px;
-  margin: 0 auto;
-  overflow: hidden;
+.photo-crop-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
-.photo-crop-viewport {
+.photo-crop-status {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem 0;
+}
+.photo-crop-status--error {
+  color: #ef4444;
+  padding: 1rem 0;
+}
+
+/* Dark stage: the whole photo stays visible and gets dragged under the crop
+   window, exactly like every familiar cropper. --crop-size is measured by the
+   component, so the export always matches what is framed on screen. */
+.photo-crop-stage {
+  --crop-size: min(216px, calc(100vw - 9rem));
   position: relative;
-  width: 280px;
-  height: 280px;
-  margin: 0 auto;
+  width: 100%;
+  aspect-ratio: 1; /* square stage: even breathing room around a square crop */
   overflow: hidden;
-  border: 3px solid var(--border-color);
-  background: var(--bg-input);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  background: #05091c;
   cursor: grab;
   touch-action: none;
-  isolation: isolate;
-  contain: layout paint;
+  outline: none;
 }
 
-.photo-crop-viewport--circle {
-  border-radius: 50%;
+.photo-crop-stage:active {
+  cursor: grabbing;
 }
 
-.photo-crop-viewport--square {
-  border-radius: 8px;
+.photo-crop-stage:focus-visible {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(60, 224, 230, 0.25);
 }
 
-.photo-crop-viewport img {
+.photo-crop-frame,
+.photo-crop-mask {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--crop-size);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+
+.photo-crop-frame img {
   position: absolute;
   left: 0;
   top: 0;
   max-width: none;
   user-select: none;
-  touch-action: none;
   pointer-events: none;
 }
 
-.photo-crop-viewport:active {
-  cursor: grabbing;
+/* The giant spread dims everything outside the crop window in one shot. */
+.photo-crop-mask {
+  pointer-events: none;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 9999px rgba(3, 6, 20, 0.66);
 }
 
-.photo-crop-zoom-label {
+.photo-crop-mask--circle {
+  border-radius: 50%;
+}
+
+.photo-crop-mask--square {
+  border-radius: 10px;
+}
+
+/* Rule-of-thirds guides, the usual framing aid on a rectangular crop. */
+.photo-crop-mask--square::before,
+.photo-crop-mask--square::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.photo-crop-mask--square::before {
+  background:
+    linear-gradient(to right, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.25) calc(33.33% - 1px) 33.33%, transparent 33.33%),
+    linear-gradient(to right, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.25) calc(66.66% - 1px) 66.66%, transparent 66.66%);
+}
+.photo-crop-mask--square::after {
+  background:
+    linear-gradient(to bottom, transparent calc(33.33% - 1px), rgba(255, 255, 255, 0.25) calc(33.33% - 1px) 33.33%, transparent 33.33%),
+    linear-gradient(to bottom, transparent calc(66.66% - 1px), rgba(255, 255, 255, 0.25) calc(66.66% - 1px) 66.66%, transparent 66.66%);
+}
+
+.photo-crop-zoom {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.6rem;
   margin-top: 1rem;
-  font-size: 0.85rem;
-  color: var(--text-muted);
 }
 
-.photo-crop-zoom-label input[type='range'] {
-  display: block;
-  width: 100%;
-  max-width: 100%;
+/* Themed slider: the native one clashed with the studio palette. */
+.photo-crop-zoom input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  height: 6px;
   margin: 0;
+  padding: 0;
+  appearance: none;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-input);
+  cursor: pointer;
+}
+
+.photo-crop-zoom input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+}
+
+.photo-crop-zoom input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+}
+
+.photo-crop-zoom .btn {
+  flex-shrink: 0;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.photo-crop-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+/* Basis from the content, then share the slack: "Usar foto" must not wrap. */
+.photo-crop-actions .btn {
+  flex: 1 1 auto;
+  justify-content: center;
+  white-space: nowrap;
+  padding-inline: 1rem;
 }
 
 .verify-email-banner {
@@ -5481,4 +5583,188 @@ input:focus, select:focus, textarea:focus {
 }
 .settings-lang-toggle.is-en .settings-lang-knob {
   transform: translateX(100%);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ADMIN PANEL — studio dashboard (KPIs, tabs, toolbars, icon actions)
+   Replaces the ad-hoc inline styles the page used to carry.
+   ══════════════════════════════════════════════════════════════════════════ */
+.admin-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.admin-kpi {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-card);
+  backdrop-filter: blur(6px);
+}
+.admin-kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(255, 210, 74, 0.12);
+  color: var(--gold);
+}
+.admin-kpi-val {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.admin-kpi-lbl {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Filter/search bar shared by both tables. */
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.admin-search {
+  position: relative;
+  flex: 1 1 240px;
+}
+.admin-search input {
+  padding-left: 2.4rem;
+}
+.admin-search svg {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  pointer-events: none;
+}
+.admin-toolbar select {
+  flex: 0 1 180px;
+}
+
+/* Square icon buttons in table rows. */
+.admin-icon-btn {
+  padding: 0.4rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+}
+.admin-icon-btn.is-on {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.admin-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem;
+}
+.admin-card-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.admin-sub-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+}
+.admin-split {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-bottom: 1.5rem;
+}
+
+/* Difficulty distribution bars. */
+.admin-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+}
+.admin-bar-lbl {
+  width: 5rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.admin-bar-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--bg-input);
+  overflow: hidden;
+}
+.admin-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+  transition: width 0.3s ease;
+}
+.admin-bar-num {
+  width: 4.5rem;
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.admin-off-count { color: #ef4444; }
+
+/* Neutral topic chips (the red "inactive" badge was the wrong signal here). */
+.admin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  max-height: 190px;
+  overflow-y: auto;
+}
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-input);
+  color: var(--text-muted);
+}
+.admin-chip strong {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+/* Question rows: dim the retired ones, keep the toggle legible. */
+.admin-table tr.is-off td:not(:last-child) { opacity: 0.5; }
+.admin-q-text { font-size: 0.85rem; }
+.admin-q-meta {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+.admin-scroll-table { max-height: 32rem; overflow-y: auto; }
+
+@media (max-width: 768px) {
+  .admin-kpi { padding: 0.7rem 0.8rem; }
+  .admin-kpi-val { font-size: 1.15rem; }
+  .admin-toolbar select { flex: 1 1 100%; }
+  .admin-scroll-table { max-height: none; }
 }

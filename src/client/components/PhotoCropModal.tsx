@@ -1,16 +1,23 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Crop, X, Check } from 'lucide-react';
-import { squareCropToDataUrl, loadImageFromFile } from '@/client/lib/image';
+import { Crop, X, Check, ZoomIn, ZoomOut } from 'lucide-react';
+import { squareCropToDataUrl, loadImageFromFile, cropGeometry } from '@/client/lib/image';
 import { ModalColorBar } from '@/client/components/ModalColorBar';
 import { useModalDismiss } from '@/client/hooks/useModalDismiss';
 
-const CROP_SIZE = 280;
+// The cropper follows the conventional pattern (Instagram/react-easy-crop): the
+// whole photo stays visible on a dark stage, dimmed outside a bright crop window,
+// and is dragged/zoomed under it. Position is stored as the normalized image point
+// pinned to the centre of that window, so it survives a resize of the window
+// itself — the window is measured, never assumed, which keeps what you see on a
+// phone identical to what gets exported.
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.25;
+const KEY_PAN_PX = 12;
 
 interface PhotoCropModalProps {
   file: File | null;
@@ -20,37 +27,24 @@ interface PhotoCropModalProps {
   shape?: 'circle' | 'square';
 }
 
-function clampPan(
-  panX: number,
-  panY: number,
-  imgW: number,
-  imgH: number,
-  scale: number,
-): { x: number; y: number } {
-  const renderedW = imgW * scale;
-  const renderedH = imgH * scale;
-  const minX = CROP_SIZE - renderedW;
-  const minY = CROP_SIZE - renderedH;
-  const maxX = 0;
-  const maxY = 0;
-  return {
-    x: Math.min(maxX, Math.max(minX, panX)),
-    y: Math.min(maxY, Math.max(minY, panY)),
-  };
-}
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
 export function PhotoCropModal({ file, onConfirm, onClose, shape = 'circle' }: PhotoCropModalProps) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(MIN_ZOOM);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [baseScale, setBaseScale] = useState(1);
+  const [center, setCenter] = useState({ x: 0.5, y: 0.5 });
+  const [cropSize, setCropSize] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
-  const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const objectUrlRef = useRef<string | null>(null);
+  // Live pointers, so one finger pans and two fingers pinch-zoom.
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{ dist: number; zoom: number } | null>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -78,15 +72,8 @@ export function PhotoCropModal({ file, onConfirm, onClose, shape = 'circle' }: P
         if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
         objectUrlRef.current = objectUrl;
         setPreviewUrl(objectUrl);
-        const coverScale = Math.max(CROP_SIZE / img.naturalWidth, CROP_SIZE / img.naturalHeight);
-        setBaseScale(coverScale);
         setZoom(MIN_ZOOM);
-        const renderedW = img.naturalWidth * coverScale;
-        const renderedH = img.naturalHeight * coverScale;
-        setPan({
-          x: (CROP_SIZE - renderedW) / 2,
-          y: (CROP_SIZE - renderedH) / 2,
-        });
+        setCenter({ x: 0.5, y: 0.5 });
         setImage(img);
       })
       .catch(() => {
@@ -110,64 +97,104 @@ export function PhotoCropModal({ file, onConfirm, onClose, shape = 'circle' }: P
     };
   }, []);
 
-  const scale = baseScale * zoom;
+  // The crop window is sized by CSS (it shrinks on narrow phones); measuring it
+  // keeps the exported crop in sync with the preview.
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => setCropSize(entry.contentRect.width));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [image]);
 
-  const applyPan = useCallback(
-    (nextPan: { x: number; y: number }) => {
-      if (!image) return;
-      setPan(clampPan(nextPan.x, nextPan.y, image.naturalWidth, image.naturalHeight, scale));
-    },
-    [image, scale],
+  // Wheel zoom needs a non-passive listener to keep the modal from scrolling.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setZoom((z) => clamp(z * (1 - e.deltaY * 0.0015), MIN_ZOOM, MAX_ZOOM));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [image]);
+
+  const { scale, renderedW, renderedH, panX, panY } = cropGeometry(
+    image?.naturalWidth ?? 0,
+    image?.naturalHeight ?? 0,
+    cropSize,
+    zoom,
+    center.x,
+    center.y,
   );
 
-  const handleZoomChange = (nextZoom: number) => {
-    if (!image) {
-      setZoom(nextZoom);
-      return;
-    }
+  // Pan from the clamped position, so dragging into an edge stops there instead
+  // of building up slack that has to be dragged back.
+  const panBy = (dx: number, dy: number) => {
+    if (!renderedW || !renderedH) return;
+    setCenter({
+      x: (cropSize / 2 - panX) / renderedW - dx / renderedW,
+      y: (cropSize / 2 - panY) / renderedH - dy / renderedH,
+    });
+  };
 
-    const prevScale = baseScale * zoom;
-    const nextScale = baseScale * nextZoom;
-    const centerX = CROP_SIZE / 2;
-    const centerY = CROP_SIZE / 2;
+  const zoomBy = (delta: number) => setZoom((z) => clamp(z + delta, MIN_ZOOM, MAX_ZOOM));
 
-    setPan((currentPan) =>
-      clampPan(
-        centerX - (centerX - currentPan.x) * (nextScale / prevScale),
-        centerY - (centerY - currentPan.y) * (nextScale / prevScale),
-        image.naturalWidth,
-        image.naturalHeight,
-        nextScale,
-      ),
-    );
-    setZoom(nextZoom);
+  const pointerDistance = () => {
+    const [a, b] = [...pointersRef.current.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (!image) return;
     e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y };
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointersRef.current.size === 2) pinchRef.current = { dist: pointerDistance(), zoom };
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragRef.current || !image) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    applyPan({
-      x: dragRef.current.panX + dx,
-      y: dragRef.current.panY + dy,
-    });
+    const prev = pointersRef.current.get(e.pointerId);
+    if (!prev || !image) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointersRef.current.size >= 2 && pinchRef.current) {
+      const ratio = pointerDistance() / pinchRef.current.dist;
+      setZoom(clamp(pinchRef.current.zoom * ratio, MIN_ZOOM, MAX_ZOOM));
+      return;
+    }
+    panBy(e.clientX - prev.x, e.clientY - prev.y);
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
-    dragRef.current = null;
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
     e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
+  // Arrows nudge the framing, +/- zoom: the drag surface stays usable without a
+  // pointing device.
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const pan: Record<string, [number, number]> = {
+      ArrowLeft: [KEY_PAN_PX, 0],
+      ArrowRight: [-KEY_PAN_PX, 0],
+      ArrowUp: [0, KEY_PAN_PX],
+      ArrowDown: [0, -KEY_PAN_PX],
+    };
+    if (pan[e.key]) {
+      e.preventDefault();
+      panBy(...pan[e.key]);
+    } else if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      zoomBy(ZOOM_STEP);
+    } else if (e.key === '-') {
+      e.preventDefault();
+      zoomBy(-ZOOM_STEP);
+    }
+  };
+
   const handleConfirm = () => {
-    if (!image) return;
-    const dataUrl = squareCropToDataUrl(image, scale, pan.x, pan.y, CROP_SIZE);
-    onConfirm(dataUrl);
+    if (!image || !cropSize) return;
+    onConfirm(squareCropToDataUrl(image, scale, panX, panY, cropSize));
   };
 
   useModalDismiss(Boolean(file), onClose);
@@ -178,58 +205,68 @@ export function PhotoCropModal({ file, onConfirm, onClose, shape = 'circle' }: P
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content photo-crop-modal modal-has-bottom-bar" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="modal-body">
-        <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-          <Crop size={22} style={{ color: 'var(--primary)' }} /> {t('photo.cropTitle')}
-        </h2>
-        <p className="modal-subtitle">{t('photo.cropHint')}</p>
+          <h2 className="modal-title photo-crop-title">
+            <Crop size={22} style={{ color: 'var(--gold)' }} /> {t('photo.cropTitle')}
+          </h2>
+          <p className="modal-subtitle">{t('photo.cropHint')}</p>
 
-        {loading ? (
-          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>{t('photo.cropLoading')}</p>
-        ) : error ? (
-          <p style={{ textAlign: 'center', color: '#ef4444', padding: '1rem 0' }}>{error}</p>
-        ) : image ? (
-          <div className="photo-crop-workspace">
-            <div
-              className={`photo-crop-viewport photo-crop-viewport--${shape}`}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-            >
-              <img
-                src={previewUrl}
-                alt=""
-                draggable={false}
-                style={{
-                  width: `${image.naturalWidth * scale}px`,
-                  height: `${image.naturalHeight * scale}px`,
-                  transform: `translate(${pan.x}px, ${pan.y}px)`,
-                }}
-              />
-            </div>
+          {loading ? (
+            <p className="photo-crop-status">{t('photo.cropLoading')}</p>
+          ) : error ? (
+            <p className="photo-crop-status photo-crop-status--error">{error}</p>
+          ) : image ? (
+            <>
+              <div
+                ref={stageRef}
+                className="photo-crop-stage"
+                role="group"
+                aria-label={t('photo.cropStageAria')}
+                tabIndex={0}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerUp}
+                onKeyDown={onKeyDown}
+              >
+                <div ref={frameRef} className="photo-crop-frame">
+                  <img
+                    src={previewUrl}
+                    alt=""
+                    draggable={false}
+                    style={{ width: `${renderedW}px`, height: `${renderedH}px`, transform: `translate(${panX}px, ${panY}px)` }}
+                  />
+                </div>
+                <div className={`photo-crop-mask photo-crop-mask--${shape}`} aria-hidden="true" />
+              </div>
 
-            <label className="photo-crop-zoom-label">
-              <span>{t('photo.cropZoom')}</span>
-              <input
-                type="range"
-                min={MIN_ZOOM}
-                max={MAX_ZOOM}
-                step={0.01}
-                value={zoom}
-                onChange={(e) => handleZoomChange(Number(e.target.value))}
-              />
-            </label>
+              <div className="photo-crop-zoom">
+                <button type="button" className="btn btn-secondary" onClick={() => zoomBy(-ZOOM_STEP)} disabled={zoom <= MIN_ZOOM} aria-label={t('photo.cropZoomOut')}>
+                  <ZoomOut size={16} />
+                </button>
+                <input
+                  type="range"
+                  min={MIN_ZOOM}
+                  max={MAX_ZOOM}
+                  step={0.01}
+                  value={zoom}
+                  aria-label={t('photo.cropZoom')}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                />
+                <button type="button" className="btn btn-secondary" onClick={() => zoomBy(ZOOM_STEP)} disabled={zoom >= MAX_ZOOM} aria-label={t('photo.cropZoomIn')}>
+                  <ZoomIn size={16} />
+                </button>
+              </div>
+            </>
+          ) : null}
+
+          <div className="photo-crop-actions">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              <X size={18} /> {t('photo.cropCancel')}
+            </button>
+            <button type="button" className="btn" onClick={handleConfirm} disabled={!image || loading || !!error}>
+              <Check size={18} /> {t('photo.cropConfirm')}
+            </button>
           </div>
-        ) : null}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-          <button type="button" className="btn" style={{ width: '100%' }} onClick={handleConfirm} disabled={!image || loading || !!error}>
-            <Check size={18} /> {t('photo.cropConfirm')}
-          </button>
-          <button type="button" className="btn btn-secondary" style={{ width: '100%' }} onClick={onClose}>
-            <X size={18} /> {t('photo.cropCancel')}
-          </button>
-        </div>
         </div>
         <ModalColorBar />
       </div>

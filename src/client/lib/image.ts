@@ -18,6 +18,45 @@ export function loadImageFromFile(file: File): Promise<{ image: HTMLImageElement
   });
 }
 
+export interface CropGeometry {
+  scale: number;
+  renderedW: number;
+  renderedH: number;
+  panX: number;
+  panY: number;
+}
+
+/**
+ * Framing math for the crop viewport. The photo is cover-fitted to the crop
+ * window, scaled by `zoom`, and positioned so the normalized image point
+ * (centerX, centerY) sits at the middle of the window. The centre is clamped so
+ * the window is always fully covered — which is what lets squareCropToDataUrl
+ * export exactly the region the user sees.
+ */
+export function cropGeometry(
+  naturalW: number,
+  naturalH: number,
+  cropSize: number,
+  zoom: number,
+  centerX: number,
+  centerY: number,
+): CropGeometry {
+  const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+  const cover = naturalW && naturalH && cropSize ? Math.max(cropSize / naturalW, cropSize / naturalH) : 1;
+  const scale = cover * zoom;
+  const renderedW = naturalW * scale;
+  const renderedH = naturalH * scale;
+  const halfX = renderedW ? cropSize / 2 / renderedW : 0.5;
+  const halfY = renderedH ? cropSize / 2 / renderedH : 0.5;
+  return {
+    scale,
+    renderedW,
+    renderedH,
+    panX: cropSize / 2 - clamp(centerX, halfX, 1 - halfX) * renderedW,
+    panY: cropSize / 2 - clamp(centerY, halfY, 1 - halfY) * renderedH,
+  };
+}
+
 /** Maps on-screen crop viewport coordinates to a square JPEG data URL. */
 export function squareCropToDataUrl(
   image: HTMLImageElement,
