@@ -116,6 +116,8 @@ export const en: Dictionary = {
     timeUp: "Time's up!",
     timeLeft: 'Time left',
     wrong: 'Wrong answer!',
+    seeDetail: 'See detailed explanation',
+    hideDetail: 'Hide detailed explanation',
     continue: 'Continue',
     seeResult: 'See result',
     stopWith: 'Stop and take {{prize}}',

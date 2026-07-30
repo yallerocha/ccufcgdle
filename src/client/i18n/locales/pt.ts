@@ -112,6 +112,8 @@ export const pt = {
     timeUp: 'Tempo esgotado!',
     timeLeft: 'Tempo restante',
     wrong: 'Resposta errada!',
+    seeDetail: 'Ver explicação detalhada',
+    hideDetail: 'Ocultar explicação detalhada',
     continue: 'Continuar',
     seeResult: 'Ver resultado',
     stopWith: 'Parar e levar {{prize}}',

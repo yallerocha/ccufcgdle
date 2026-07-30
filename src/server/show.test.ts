@@ -180,4 +180,17 @@ test('LIFELINE_USES: skip is 3, the rest are single-use', () => {
   }
 });
 
+// ── question bank: long explanations ─────────────────────────────────────────
+test('every question has a long explanation, deeper than the short one', () => {
+  for (const q of QUIZ_QUESTIONS) {
+    assert.ok(q.explanationLong.trim().length > 0, `${q.id} is missing explanationLong`);
+    // The expander only pays off if the long text really adds something.
+    assert.ok(
+      q.explanationLong.length > q.explanation.length,
+      `${q.id}: explanationLong should be longer than explanation`
+    );
+    assert.notStrictEqual(q.explanationLong, q.explanation, `${q.id}: duplicated explanation`);
+  }
+});
+
 console.log(`✓ all ${passed} show-logic checks passed`);

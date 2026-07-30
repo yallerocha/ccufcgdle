@@ -300,6 +300,9 @@ export interface AnswerResult {
   correct: boolean;
   correctIndex: number;
   explanation: string;
+  // Optional deep dive on the question, shown only if the player expands it.
+  // Empty string for questions that don't have one written yet.
+  explanationLong: string;
   run: ShowRunView;
 }
 
@@ -349,7 +352,13 @@ export async function answerRun(
   }
 
   const updated = await prisma.showRun.update({ where: { id: run.id }, data });
-  return { correct, correctIndex, explanation: q.explanation, run: toView(updated) };
+  return {
+    correct,
+    correctIndex,
+    explanation: q.explanation,
+    explanationLong: q.explanationLong,
+    run: toView(updated),
+  };
 }
 
 export async function stopRun(
@@ -408,7 +417,13 @@ async function endAsTimeout(run: RunRow, q: QuizQuestion): Promise<AnswerResult>
     },
   });
   const correctIndex = optionPerm(run.id, q.id, q.options.length).indexOf(q.answer);
-  return { correct: false, correctIndex, explanation: q.explanation, run: toView(updated) };
+  return {
+    correct: false,
+    correctIndex,
+    explanation: q.explanation,
+    explanationLong: q.explanationLong,
+    run: toView(updated),
+  };
 }
 
 export async function timeoutRun(

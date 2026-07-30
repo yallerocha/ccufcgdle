@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, X, ListChecks } from 'lucide-react';
+import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, ChevronDown, BookOpen, X, ListChecks } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
@@ -48,6 +48,7 @@ interface AnswerResult {
   correct: boolean;
   correctIndex: number;
   explanation: string;
+  explanationLong: string;
   run: ShowRun;
 }
 
@@ -65,6 +66,8 @@ interface Reveal {
   correctIndex: number;
   chosenIndex: number;
   explanation: string;
+  // Longer walk-through of the question; '' when the bank has none for it.
+  explanationLong: string;
   nextRun: ShowRun;
   timedOut?: boolean;
 }
@@ -92,6 +95,9 @@ export default function ShowPage() {
   const [run, setRun] = useState<ShowRun | null>(null);
   const [starting, setStarting] = useState(false);
   const [reveal, setReveal] = useState<Reveal | null>(null);
+  // Whether the long explanation is expanded in the current reveal. Every new
+  // reveal starts collapsed, so the short explanation stays the default.
+  const [detailOpen, setDetailOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [result, setResult] = useState<ShowRun | null>(null);
@@ -305,11 +311,13 @@ export default function ShowPage() {
         stopMusic();
         if (data.correct) sfxCorrect(); else sfxWrong();
         setSelected(null);
+        setDetailOpen(false);
         setReveal({
           correct: data.correct,
           correctIndex: data.correctIndex,
           chosenIndex: index,
           explanation: data.explanation,
+          explanationLong: data.explanationLong,
           nextRun: data.run,
         });
       } else {
@@ -368,11 +376,13 @@ export default function ShowPage() {
         stopMusic();
         sfxWrong();
         setSelected(null);
+        setDetailOpen(false);
         setReveal({
           correct: false,
           correctIndex: data.correctIndex,
           chosenIndex: -1,
           explanation: data.explanation,
+          explanationLong: data.explanationLong,
           nextRun: data.run,
           timedOut: true,
         });
@@ -856,6 +866,26 @@ export default function ShowPage() {
                 {reveal.timedOut ? t('show.timeUp') : reveal.correct ? t('show.correct') : t('show.wrong')}
               </p>
               <p className="show-explanation">{reveal.explanation}</p>
+              {reveal.explanationLong && (
+                <div className="show-detail">
+                  <button
+                    type="button"
+                    className="show-detail-toggle"
+                    onClick={() => setDetailOpen((open) => !open)}
+                    aria-expanded={detailOpen}
+                    aria-controls="show-detail-text"
+                  >
+                    <BookOpen size={16} />
+                    <span>{detailOpen ? t('show.hideDetail') : t('show.seeDetail')}</span>
+                    <ChevronDown size={16} className="show-detail-caret" />
+                  </button>
+                  {detailOpen && (
+                    <div id="show-detail-text" className="show-detail-text">
+                      {reveal.explanationLong}
+                    </div>
+                  )}
+                </div>
+              )}
               <button onClick={proceed} className="btn show-continue-btn">
                 {reveal.nextRun.status === 'playing' ? t('show.continue') : t('show.seeResult')}
               </button>

@@ -19,6 +19,10 @@ export interface QuizQuestion {
   options: string[];
   answer: number;
   explanation: string;
+  // Deeper walk-through of the same question, revealed only if the player expands
+  // the short explanation. Assigned per id in LONG_EXPLANATION_BY_ID below; ids
+  // without an entry get '' and the UI hides the expander.
+  explanationLong: string;
   // Difficulty on a 1 (fácil) .. 5 (difícil) scale, used to order the Show's
   // prize ladder from easy to hard. Assigned per id in DIFFICULTY_BY_ID below;
   // absent ids default to 3. Values are an initial estimate, refinable later.
@@ -27,7 +31,7 @@ export interface QuizQuestion {
   topic: string;
 }
 
-const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty' | 'topic'>[] = [
+const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty' | 'topic' | 'explanationLong'>[] = [
   // ── Matemática — lógica e conceitos (POSCOMP) ──────────────────────────────
   // Somente questões teóricas/conceituais (lógica, quantificadores). Questões de
   // cálculo (determinantes, limites, integrais, combinatória, geometria
@@ -1150,10 +1154,377 @@ const TOPIC_BY_ID: Record<string, string> = {
   'tec-2024-60': 'Engenharia de Software',
 };
 
+// Explicação longa por questão, revelada quando o jogador expande a explicação
+// curta. Mesmo padrão de mapa compacto de DIFFICULTY_BY_ID/TOPIC_BY_ID, para não
+// inflar o bloco de cada questão. Cada texto segue a mesma estrutura: o raciocínio
+// que leva à resposta, por que as demais alternativas caem e o conceito a fixar.
+// Parágrafos são separados por '\n\n' (a UI preserva as quebras).
+const LONG_EXPLANATION_BY_ID: Record<string, string> = {
+  'mat-2019-15':
+    'Toda implicação é equivalente à sua contrapositiva: A → B ≡ ∼B → ∼A. Lendo ∼q → ∼p nessa forma, com A = ∼q e B = ∼p, a contrapositiva é p → q. Ou seja, negar os dois lados e inverter o sentido da flecha devolve a implicação original.\n\n' +
+    'Falta só reescrever p → q sem a flecha. Pela definição de implicação material, p → q ≡ ∼p ∨ q — a implicação só é falsa quando p é verdadeira e q é falsa, exatamente o único caso em que ∼p ∨ q também é falsa.\n\n' +
+    'As demais falham no teste da tabela-verdade: ∼p ∧ ∼q só é verdadeira quando p e q são ambas falsas; ∼p → q equivale a p ∨ q; p → ∼q equivale a ∼p ∨ ∼q; e q → p é a recíproca, não a contrapositiva (troca os lados sem negar).\n\n' +
+    'Para a prova, vale decorar as duas regras usadas aqui: A → B ≡ ∼B → ∼A e A → B ≡ ∼A ∨ B. Com elas, quase toda questão de equivalência lógica do POSCOMP sai em duas linhas.',
+  'fun-2019-21':
+    'Cada algoritmo vira uma recorrência T(n) = a·T(n/b) + f(n), e o teorema mestre compara f(n) com n^(log_b a): quem crescer mais rápido domina o custo total.\n\n' +
+    'Algoritmo 1: a = 3, b = 4, f(n) = O(1). Como n^(log₄3) ≈ n^0,79 cresce mais que a constante, o custo é dominado pelas folhas da recursão: Θ(n^log₄3).\n\n' +
+    'Algoritmo 2: a = 3, b = 2, f(n) = O(n²). Aqui n^(log₂3) ≈ n^1,58 é menor que n², então o custo extra de cada nível domina e o resultado é Θ(n²) — é justamente esse detalhe que elimina a alternativa que responde Θ(n^log₂3).\n\n' +
+    'Algoritmo 3: a = 3, b = 3, f(n) = O(n). Como n^(log₃3) = n empata com f(n), entra o caso de empate do teorema, que acrescenta um fator log: Θ(n log n).\n\n' +
+    'As outras alternativas erram por confundir o tamanho do subproblema (n/4, n/2, n/3) com a complexidade final, ou por ignorar o custo adicional por chamada.',
+  'fun-2019-22':
+    'O truque para comparar funções que crescem muito rápido é comparar seus logaritmos, porque log é monótono crescente: se log a(n) < log b(n) assintoticamente, então a(n) < b(n).\n\n' +
+    'Para h(n) = n^(log n) temos log h(n) = (log n)²; para f(n) = 2ⁿ temos log f(n) = n·log 2, que é linear. Como n domina (log n)², concluímos h(n) = O(f(n)) — potências de log ficam sempre abaixo de qualquer função linear.\n\n' +
+    'Para g(n) = n!, a aproximação de Stirling dá n! ≈ (n/e)ⁿ·√(2πn), cuja base cresce com n, enquanto 2ⁿ tem base fixa 2. Logo n! cresce mais rápido que 2ⁿ, isto é, g(n) = Ω(f(n)).\n\n' +
+    'A ordem final é h(n) < f(n) < g(n). Isso derruba as alternativas que afirmam g(n) = O(h(n)), f(n) = Ω(g(n)) ou g(n) = O(f(n)): todas invertem algum elo dessa cadeia.',
+  'fun-2019-23':
+    'Ancestral é uma relação definida por recursão: os ancestrais de um nodo são o seu pai e, em seguida, todos os ancestrais desse pai. Por isso a alternativa correta descreve tanto o ancestral direto (o pai) quanto os ancestrais mais acima na árvore, até a raiz.\n\n' +
+    'As outras alternativas trocam definições clássicas: nodo interno é o que tem ao menos um filho e nodo externo (folha) é o que não tem nenhum — a alternativa inverte os dois. Árvore balanceada diz respeito à diferença de altura entre subárvores, e não à existência de uma ordem linear. Árvore binária própria (ou cheia) é aquela em que todo nodo interno tem exatamente dois filhos, não "um ou zero". E se v é pai de u, então u é filho de v — a última alternativa inverte a relação.\n\n' +
+    'Fica a dica de estudo: em questões de terminologia de árvores, a banca costuma apenas inverter pares de conceitos (interno/externo, pai/filho, ancestral/descendente). Ler cada alternativa checando a direção da relação resolve a maioria delas.',
+  'fun-2019-24':
+    'A definição de recursão é sintática e direta: um procedimento é recursivo quando, na sua própria descrição, aparecem uma ou mais chamadas a si mesmo. É o que permite escrever fatorial(n) em termos de fatorial(n−1), com um caso base para encerrar as chamadas.\n\n' +
+    'A indução matemática aparece como distratora porque é a ferramenta usada para provar a corretude de algoritmos recursivos — mas provar e ser recursivo são coisas diferentes; nenhum código precisa conter uma prova.\n\n' +
+    'Chamadas a procedimentos externos ou internos, sozinhas, caracterizam apenas composição de funções. Sem a autorreferência não há recursão, e sem caso base há recursão infinita (que estoura a pilha de execução).',
+  'fun-2019-25':
+    'Analise os laços de dentro para fora. Para um i fixo, o laço interno vai de j = 1 até j < log(i), executando aproximadamente log(i) iterações de custo constante.\n\n' +
+    'O total é então a soma dos log(i) para i indo de 1 a n. Essa soma é log(1) + log(2) + ... + log(n) = log(n!), e por Stirling log(n!) = Θ(n log n). Uma forma mais intuitiva: metade dos termos tem i > n/2, e para esses log(i) > log(n) − 1, o que já garante pelo menos (n/2)(log n − 1) operações.\n\n' +
+    'Θ(n) sairia se o laço interno tivesse custo constante; Θ(n²) exigiria um laço interno proporcional a i; e Θ(n² log n) superestima em uma ordem inteira. O padrão a fixar: laço externo n vezes com interno logarítmico dá Θ(n log n).',
+  'tec-2019-52':
+    'A pergunta traz duas pistas que restringem a resposta: aprendizado não supervisionado (sem amostra de treinamento pré-classificada) e particionamento dos dados. As duas juntas descrevem agrupamento (clustering), e o representante clássico é o k-means.\n\n' +
+    'O k-means funciona assim: escolhe k centroides, atribui cada ponto ao centroide mais próximo e recalcula os centroides como a média dos pontos atribuídos, repetindo até estabilizar. Nenhum rótulo é usado — apenas a distância entre os pontos.\n\n' +
+    'As distratoras vêm de outra família de tarefas: crescimento de padrão frequente (FP-Growth), árvore de padrão frequente (FP-Tree) e associação negativa pertencem à mineração de regras de associação; amostragem é técnica de redução de dados, não de particionamento em grupos.',
+  'tec-2019-54':
+    'No modelo ISO/OSI (e no padrão IEEE 802), a camada de enlace é dividida em duas subcamadas com responsabilidades bem separadas: LLC (Logical Link Control), que trata do enquadramento, do controle de erros e da interface com a camada de rede; e MAC (Medium Access Control), que decide quem transmite e quando, além de cuidar do endereçamento físico.\n\n' +
+    'As alternativas erradas misturam camadas e funções: controle de fluxo é função, não subcamada, e controle de congestionamento é da camada de transporte; multiplexação também é da camada de transporte; física, rede, transporte e apresentação são outras camadas do modelo, e não subdivisões do enlace.\n\n' +
+    'Mnemônico útil: LLC olha "para cima" (conversa com a camada de rede) e MAC olha "para baixo" (conversa com o meio físico).',
+  'tec-2019-57':
+    'O produto vetorial a × b devolve um vetor perpendicular ao plano formado por a e b, com módulo |a||b|·sen θ e sentido dado pela regra da mão direita. Aplicado aos eixos X e Y de um sistema destro, X × Y produz exatamente o eixo Z.\n\n' +
+    'É essa propriedade que torna o produto vetorial onipresente em computação gráfica: ele gera as normais de superfícies para cálculo de iluminação e permite montar uma base ortonormal (por exemplo, a matriz de visão de uma câmera) a partir de dois vetores conhecidos.\n\n' +
+    'As demais operações não servem: o produto escalar devolve um número (útil para ângulos e projeções, não para gerar direções); normalização só ajusta o comprimento para 1, mantendo a direção; translação desloca pontos; projeção reduz um vetor à sua componente sobre outro.',
+  'tec-2019-58':
+    'A luz direcional é modelada como uma fonte infinitamente distante: seus raios chegam paralelos e apenas a direção importa, sem posição nem atenuação com a distância. É o modelo usado para o Sol, cuja distância é enorme em relação à cena.\n\n' +
+    'Comparando com as outras fontes: a pontual tem posição no espaço e intensidade que cai com a distância; a ambiente é uma constante aplicada a tudo, para simular a luz que já foi espalhada pelo ambiente; a spot é uma pontual restrita a um cone (como um holofote).\n\n' +
+    'Já "difusa" não é tipo de fonte, e sim tipo de reflexão — a componente do modelo de Phong que espalha a luz igualmente em todas as direções a partir da superfície.',
+  'tec-2019-60':
+    'A máscara 255.255.255.0 é um /24: os 24 primeiros bits identificam a rede e sobram 8 bits para hosts, o que dá 2⁸ = 256 combinações.\n\n' +
+    'Dessas 256, duas não podem ser atribuídas a máquinas: a de bits de host todos em 0 identifica a própria rede, e a de bits todos em 1 é o endereço de broadcast. Logo, 2⁸ − 2 = 254 hosts endereçáveis.\n\n' +
+    'As distratoras correspondem a outros prefixos ou ao erro de esquecer o desconto: 126 é o resultado de um /25 (2⁷ − 2), 128 e 256 são potências de 2 sem subtrair rede e broadcast, e 65.534 é o total de um /16 (2¹⁶ − 2).\n\n' +
+    'Regra geral: com h bits de host, o número de endereços utilizáveis é 2^h − 2.',
+  'tec-2019-64':
+    'O enunciado descreve uma transação que se ramifica em subtransações executadas em paralelo em máquinas diferentes — isto é, uma hierarquia de transações. Esse arranjo tem nome próprio: transação aninhada (nested transaction).\n\n' +
+    'A ideia é que a transação de nível mais alto só confirma (commit) se as regras de suas filhas permitirem; uma filha pode abortar e ser recomposta sem necessariamente derrubar a transação-pai, o que dá flexibilidade em ambientes distribuídos.\n\n' +
+    'As outras alternativas listam propriedades ACID, não formas de organizar transações: atomicidade (tudo ou nada), isolamento (transações concorrentes não interferem entre si) e durabilidade (o efeito do commit persiste a falhas). São conceitos ortogonais ao aninhamento.',
+  'fun-2010-27':
+    'A chave do problema é que o vetor contém apenas dois valores distintos, e ambos são conhecidos de antemão. Basta uma passada contando quantas vezes x aparece e quantas vezes y aparece, e depois reescrever o vetor com os x seguidos dos y — duas passadas lineares, custo O(n).\n\n' +
+    'Isso não viola o limite inferior Ω(n log n): esse limite vale para ordenação por comparação de elementos arbitrários. Aqui não comparamos elementos entre si, apenas os testamos contra valores conhecidos, saindo do modelo de comparação (a mesma ideia do counting sort).\n\n' +
+    'Por isso as alternativas de limite inferior Ω(n²) e Ω(n log n) caem, e também a que diz que o Quicksort O(n log n) seria o mais eficiente — existe algo melhor. A da ordenação por inserção também falha: seu melhor caso O(n) só ocorre se o vetor já estiver ordenado, e o enunciado diz que os valores estão distribuídos aleatoriamente.',
+  'fun-2010-46':
+    'K₃,₂ é o grafo bipartido completo com partes de 3 e 2 vértices: toda aresta liga um vértice de um lado a um do outro, e nunca dois vértices do mesmo lado.\n\n' +
+    'Isso dá uma coloração imediata com duas cores — uma para cada parte — pois vértices adjacentes estão sempre em partes diferentes. E uma cor não basta, já que o grafo tem pelo menos uma aresta. Portanto o número cromático é exatamente 2.\n\n' +
+    'Generalizando: um grafo é bipartido se e somente se não possui ciclo de comprimento ímpar, e todo grafo bipartido com ao menos uma aresta tem número cromático 2. Números cromáticos 3 ou mais aparecem quando há triângulos ou outros ciclos ímpares — o que não é o caso aqui.',
+  'tec-2010-47':
+    'Vale checar afirmativa por afirmativa. I está invertida: índice denso tem uma entrada para cada valor da chave de busca no arquivo de dados, e índice esparso tem entradas apenas para alguns valores (tipicamente um por bloco).\n\n' +
+    'II está correta: o índice é um arquivo sequencial de pares (chave, ponteiro) ordenado pela chave — é isso que permite a busca binária sobre ele.\n\n' +
+    'III está errada em dois pontos: quem determina a ordem física dos registros no disco é o índice primário (ou de agrupamento), e um arquivo pode ter vários índices secundários, não no máximo um.\n\n' +
+    'IV está correta: em um índice denso, cada inserção ou remoção no arquivo de dados exige a inserção ou remoção da entrada correspondente no índice — é o preço da densidade, e a razão de o índice esparso ser mais barato de manter.\n\n' +
+    'Logo, apenas II e IV.',
+  'tec-2010-49':
+    'Em uma Árvore B de ordem m, cada nó (exceto a raiz) guarda entre m e 2m registros. O split acontece exatamente quando se tenta inserir em um nó que já está cheio, com 2m registros: o nó é dividido em dois, cada um com cerca de m registros, e a chave do meio sobe para o nó pai.\n\n' +
+    'Como essa subida pode encher o pai, o split pode propagar-se para cima em cascata. A altura da árvore aumenta somente no caso extremo em que a propagação chega à raiz e a raiz também é dividida — por isso a alternativa que diz que a altura cresce a cada split está errada.\n\n' +
+    'As outras também caem: inserir em nó com menos de 2m registros cabe sem divisão; o valor relativo da chave define apenas onde ela entra, não se há split; e split não serve para diminuir altura (quem reduz altura é a fusão de nós na remoção).\n\n' +
+    'Esse mecanismo é o que mantém a árvore sempre balanceada, com todas as folhas no mesmo nível e busca em O(log n) acessos a disco.',
+  'mat-2022-11':
+    '"Exatamente uma pessoa entre Marcos e Heide viajou" é o ou-exclusivo: p ⊕ q, verdadeiro quando exatamente um dos dois viajou.\n\n' +
+    'Negar isso é dizer que não é o caso de exatamente um ter viajado, ou seja, que os dois têm o mesmo valor de verdade: ∼(p ⊕ q) ≡ (p ↔ q). Em português: ambos viajaram ou nenhum dos dois viajou.\n\n' +
+    'As demais são apenas uma metade da negação ou coisa diferente: "ambos viajaram" e "ambos não viajaram" cobrem cada um só um dos dois casos; "Marcos ou Heide não viajou" continua verdadeira quando exatamente um viajou (logo não é a negação); e "pelo menos um viajou" também é compatível com exatamente um ter viajado.\n\n' +
+    'Regra prática: a negação do ou-exclusivo é a bicondicional, e a da bicondicional é o ou-exclusivo.',
+  'fun-2022-21':
+    'Cada algoritmo citado é o exemplo de livro de um paradigma diferente, e a questão só pede o casamento correto na ordem dada.\n\n' +
+    'MergeSort é divisão e conquista: divide o vetor pela metade, ordena recursivamente cada metade e combina as duas na intercalação.\n\n' +
+    'Kruskal é guloso: ordena as arestas por peso e vai escolhendo, uma a uma, a mais leve que não forma ciclo — decisão local definitiva, sem revisão posterior.\n\n' +
+    'Floyd-Warshall é programação dinâmica: preenche uma tabela de distâncias reaproveitando subproblemas, testando para cada par (i, j) se passar por um vértice intermediário k melhora o caminho.\n\n' +
+    'Logo a ordem é divisão e conquista, guloso e programação dinâmica. As outras alternativas apenas permutam esses três rótulos.',
+  'fun-2022-22':
+    'A comparação é entre quatro classes clássicas de crescimento: linear (n), polinomial quadrática (n²), exponencial (2ⁿ) e fatorial (n!).\n\n' +
+    'A hierarquia é n < n² < 2ⁿ < n!. Qualquer polinômio é eventualmente superado por uma exponencial de base maior que 1, e a exponencial é superada pelo fatorial, porque n! multiplica fatores que crescem com n (por Stirling, n! ≈ (n/e)ⁿ), enquanto 2ⁿ multiplica sempre o mesmo 2.\n\n' +
+    'Traduzindo para os rótulos do enunciado — f1 = n, f4 = n², f3 = 2ⁿ, f2 = n! — a ordem crescente é f1 – f4 – f3 – f2. As demais alternativas colocam o fatorial ou a exponencial antes dos polinômios, invertendo a hierarquia.',
+  'fun-2022-26':
+    'Duas pistas do enunciado fecham a resposta: códigos mais curtos para os símbolos mais frequentes e um código único para cada símbolo distinto. Isso é exatamente a codificação de Huffman.\n\n' +
+    'O algoritmo constrói uma árvore binária de baixo para cima, unindo repetidamente os dois símbolos de menor frequência; a profundidade de cada folha vira o comprimento do seu código. O resultado é um código de prefixo (nenhum código é prefixo de outro, o que permite decodificar sem separadores) e de comprimento médio ótimo entre os códigos símbolo a símbolo.\n\n' +
+    'O LZW é a distratora forte, mas ele funciona de outro jeito: monta dinamicamente um dicionário de sequências de caracteres, e não um código por símbolo distinto. Tabela hash e índice são estruturas de busca, não de compressão, e "aproximação de entropia" não é um método de compressão — a entropia é o limite teórico que Huffman tenta alcançar.',
+  'tec-2022-50':
+    'Em um arquivo mapeado em memória, o mmap apenas cria a associação entre uma faixa de endereços virtuais e o conteúdo do arquivo. Nenhum dado é lido nesse momento — as páginas ficam marcadas como ausentes.\n\n' +
+    'Quando o programa acessa uma posição dessa faixa, a MMU descobre que a página não está presente e gera uma falta de página (page fault). É o tratador dessa falta, no núcleo, que dispara a leitura do bloco correspondente do disco para um quadro de memória física e retoma a instrução interrompida. Esse é o mecanismo de paginação por demanda.\n\n' +
+    'Por isso a chamada de sistema não é a resposta: ela participou da criação do mapeamento, não da leitura em si. Chamada de biblioteca é apenas código em espaço de usuário; a interrupção do disco ocorre depois, para sinalizar que a transferência já terminou; e ligação simbólica é conceito de sistema de arquivos, sem relação com o assunto.\n\n' +
+    'A grande vantagem do modelo é essa: ler o arquivo passa a ser acesso a memória, sem chamadas explícitas de read a cada trecho.',
+  'tec-2022-52':
+    'O enunciado descreve o critério de margem máxima: entre as infinitas fronteiras que separam as duas classes, escolher aquela cuja distância ao ponto mais próximo de qualquer classe seja a maior possível. Esse é o princípio da Máquina de Vetor de Suporte (SVM).\n\n' +
+    'Os pontos que ficam exatamente sobre as margens são os vetores de suporte, e só eles determinam a fronteira — mover os demais não altera o classificador. Maximizar a margem tende a melhorar a generalização, e com o truque do kernel a mesma ideia separa dados não linearmente separáveis em um espaço de maior dimensão.\n\n' +
+    'As distratoras usam outros critérios: árvore de decisão faz cortes sucessivos por atributo, guiada por ganho de informação; o classificador bayesiano decide por probabilidade a posteriori; redes neurais ajustam pesos por gradiente, sem otimizar margem explicitamente; e regras de associação nem são um classificador supervisionado.',
+  'fun-2024-22':
+    'Análise assintótica é o estudo do comportamento do custo quando o tamanho da entrada cresce indefinidamente (n → ∞). Constantes multiplicativas e termos de menor ordem são descartados, porque deixam de importar nesse limite: 3n² + 100n + 7 é simplesmente Θ(n²).\n\n' +
+    'É por isso que as outras alternativas caem. Entradas muito pequenas ou "médias" são exatamente o que a análise assintótica ignora; determinar o desempenho para todas as entradas possíveis seria análise exata, não assintótica; e juntar pior caso com caso médio não é o objetivo — pior caso, caso médio e melhor caso são cenários que podem ser analisados assintoticamente cada um por sua vez.\n\n' +
+    'A utilidade prática é permitir comparar algoritmos independentemente de máquina, linguagem ou compilador: um algoritmo O(n log n) vence um O(n²) para n suficientemente grande, ainda que perca para entradas pequenas.',
+  'fun-2024-23':
+    'Na tabela hash, a busca calcula h(chave) em tempo constante e vai direto ao bucket correspondente. Se a função de hash distribui bem as chaves e o fator de carga é mantido baixo, cada bucket guarda poucos elementos e o custo médio é O(1).\n\n' +
+    'O pior caso é o cenário em que todas as chaves colidem no mesmo bucket — função de hash ruim ou dados adversariais. A estrutura degenera em uma lista linear com n elementos e a busca passa a custar O(n).\n\n' +
+    'As demais alternativas descrevem outras estruturas: O(log n) nos dois casos é a assinatura de uma árvore balanceada (AVL, rubro-negra); O(log n) e O(n) descrevem uma árvore binária de busca sem balanceamento; e O(2ⁿ) não aparece em busca alguma.\n\n' +
+    'Vale notar o contraponto de projeto: a tabela hash ganha da árvore no caso médio, mas não mantém ordenação e não dá garantia de pior caso — em Java, por exemplo, buckets grandes passam a usar árvore justamente para conter esse pior caso.',
+  'fun-2024-48':
+    'Grafo misto é a definição exata de um grafo que contém, ao mesmo tempo, arestas não dirigidas e arestas dirigidas — o modelo natural para um mapa com ruas de mão dupla e trechos de sentido único.\n\n' +
+    'Os outros termos designam coisas distintas: dígrafo (grafo dirigido) tem todas as arestas com direção; grafo completo tem uma aresta entre cada par de vértices, o que fala de densidade e não de orientação; grafo simétrico é aquele em que a presença do arco (u, v) implica a de (v, u) — uma forma de representar mão dupla dentro de um dígrafo, mas sem misturar os dois tipos; e bígrafo é outro nome para grafo bipartido.\n\n' +
+    'Na prática, muitos algoritmos tratam um grafo misto convertendo cada aresta não dirigida em dois arcos opostos, o que reduz tudo a um dígrafo e permite reaproveitar Dijkstra, BFS e afins.',
+  'tec-2024-52':
+    'As estratégias contra deadlock dividem-se em dois grupos. Prevenção impede que o ciclo de espera se forme, tipicamente decidindo na hora do conflito quem espera e quem é abortado. Detecção deixa o ciclo acontecer, descobre que ele existe e então quebra-o abortando uma transação vítima.\n\n' +
+    'O grafo de espera (wait-for graph) é o mecanismo de detecção: cada transação é um nó e cada espera é uma aresta Tᵢ → Tⱼ. O sistema procura ciclos nesse grafo; achar um ciclo é exatamente achar um deadlock.\n\n' +
+    'Todas as outras alternativas são técnicas de prevenção baseadas em timestamps ou em teste no momento do bloqueio: esperar ou morrer (wait-die), ferir ou esperar (wound-wait), sem espera (no waiting) e espera cautelosa (cautious waiting).\n\n' +
+    'Detalhe importante da detecção: além de encontrar o ciclo, o sistema precisa escolher a vítima (normalmente a transação mais nova ou a que fez menos trabalho) e desfazer seus efeitos com rollback.',
+  'tec-2024-54':
+    'Um esquema de tradução dirigido pela sintaxe é uma gramática livre de contexto em que fragmentos de programa — as ações semânticas — são escritos entre chaves dentro dos lados direitos das produções. A posição da ação define quando ela executa em relação ao reconhecimento dos símbolos vizinhos.\n\n' +
+    'É esse detalhe que distingue o esquema de tradução da definição dirigida pela sintaxe: a definição associa regras semânticas aos atributos sem fixar ordem de avaliação, enquanto o esquema já prescreve a ordem, sendo assim diretamente implementável em um parser (é o que se escreve em ferramentas como Yacc/Bison).\n\n' +
+    'As distratoras descrevem outros conceitos: o grafo que relaciona atributos é o grafo de dependências; uma sequência informal de etapas não define nada formalmente; recuperação de erros e verificação de tipos são outras tarefas do compilador, a última pertencente à análise semântica.',
+  'tec-2024-59':
+    'Sommerville organiza o processo de software em quatro atividades fundamentais: especificação, desenvolvimento (projeto e implementação), validação e evolução. A definição do enunciado — entender e definir quais serviços são exigidos e identificar as restrições de operação e desenvolvimento — é a de especificação de software, também chamada de engenharia de requisitos.\n\n' +
+    'As outras três aparecem como distratoras justamente porque vêm depois na cadeia: desenvolvimento é projetar e programar o sistema especificado; validação é verificar se o que foi construído atende ao que o cliente quer; evolução é modificar o software conforme as necessidades mudam. Projeto de software é uma etapa dentro do desenvolvimento, não uma das atividades fundamentais.\n\n' +
+    'Duas palavras do enunciado entregam a resposta: "serviços exigidos" (requisitos funcionais) e "restrições" (requisitos não funcionais) — o vocabulário padrão da engenharia de requisitos.',
+  'mat-2019-12':
+    'Primeiro, formalize a proposição. "Em todos os cursos de Computação existe pelo menos uma disciplina de Lógica" é ∀x ∃y (y é disciplina de Lógica em x), com x percorrendo os cursos.\n\n' +
+    'Negar uma cadeia de quantificadores troca cada um pelo seu dual e empurra a negação para dentro: ∼∀x ∃y P(x, y) ≡ ∃x ∀y ∼P(x, y). Em português: existe pelo menos um curso de Computação no qual nenhuma disciplina é de Lógica.\n\n' +
+    'O erro clássico — cometido por três das alternativas — é negar demais. "Em nenhum curso há disciplina de Lógica", "em cada um dos cursos não há disciplina de Lógica" e "não há curso no qual tenha disciplina de Lógica" são todas ∀x ∀y ∼P, afirmações muito mais fortes: basta um único curso sem Lógica para a original ser falsa, e não é preciso que todos sejam assim.\n\n' +
+    'A alternativa do "no máximo uma disciplina" muda de assunto: é compatível com haver exatamente uma disciplina de Lógica, caso em que a proposição original continua verdadeira.',
+  'mat-2024-13':
+    'Aplique a lei da contrapositiva, A → B ≡ ∼B → ∼A, com A = ∼p e B = ∼q. Negando os dois lados e invertendo a flecha, ∼p → ∼q torna-se q → p.\n\n' +
+    'Confirme pela tabela-verdade se quiser: ∼p → ∼q só é falsa quando ∼p é verdadeira e ∼q é falsa, ou seja, quando p é falsa e q é verdadeira — precisamente o único caso em que q → p também é falsa.\n\n' +
+    'A pegadinha é a alternativa ∼q → ∼p, que é a recíproca (troca os lados sem negar) e não é equivalente. Também caem q → ∼p, p → q e a conjunção ∼q ∧ ∼p, que é verdadeira apenas quando p e q são ambas falsas.\n\n' +
+    'Fixe a diferença: contrapositiva (nega e inverte) é equivalente; recíproca (só inverte) e inversa (só nega) não são.',
+  'fun-2010-21':
+    'Simule as operações mantendo a pilha à vista, lembrando que a pilha é LIFO: o POP devolve sempre o elemento empilhado mais recentemente.\n\n' +
+    'Depois de PUSH P, E, R, T, O a pilha é [P, E, R, T, O] com O no topo. Os dois POPs retiram O e depois T, que entram na fila nessa ordem: O, T.\n\n' +
+    'A pilha volta a [P, E, R] e recebe PUSH S, O, L, ficando [P, E, R, S, O, L]. Os três POPs finais retiram L, O e S, nessa ordem.\n\n' +
+    'Concatenando as saídas na ordem em que foram produzidas, a fila recebe O – T – L – O – S. As distratoras correspondem a erros típicos: ler a pilha como FIFO (P – E – R – T – O), inverter o resultado (O – T – R – E – P) ou embaralhar as duas rodadas de POP.',
+  'fun-2010-26':
+    'Os três caminhamentos de árvore binária diferem apenas em quando a raiz é visitada em relação às subárvores — e o nome vem daí.\n\n' +
+    'Em (1) visita-se a subárvore esquerda, escreve-se o valor e visita-se a direita: a raiz fica no meio, é o caminhamento em-ordem (in-order, também chamado simétrico ou central). Em uma árvore binária de busca, ele produz as chaves em ordem crescente.\n\n' +
+    'Em (2) escreve-se o valor antes de descer: raiz primeiro, é pré-ordem (pre-order, ou pré-fixado) — o percurso usado para copiar uma árvore ou gerar notação prefixa.\n\n' +
+    'Em (3) escreve-se depois de percorrer os dois filhos: raiz por último, é pós-ordem (post-order, ou pós-fixado) — usado para liberar uma árvore da memória ou avaliar expressões em notação posfixa.\n\n' +
+    'A ordem pedida é, portanto, em-ordem, pré-ordem e pós-ordem. Todas as distratoras apenas permutam esses três nomes.',
+  'fun-2010-50':
+    'A questão trata "P ≠ NP?" como um problema de decisão sem entrada: a resposta é uma constante — ou é sim, ou é não — mesmo que ninguém saiba qual.\n\n' +
+    'Ora, um dos dois algoritmos triviais, "retorne sim" ou "retorne não", está necessariamente correto. Esse algoritmo é determinístico, roda em tempo O(1) (portanto polinomial) e decide o problema. Isso torna III e IV verdadeiras e, ao mesmo tempo, falsifica I (que nega a existência de algoritmo polinomial determinístico) e II (que restringe a solução a algoritmos não determinísticos).\n\n' +
+    'O ponto conceitual é o que torna a questão difícil: decidibilidade é uma afirmação sobre a existência de um algoritmo, não sobre nós sabermos qual algoritmo é. Não saber a resposta não impede que o problema seja decidível — apenas nos impede de apontar qual dos dois programas triviais é o correto.\n\n' +
+    'Cuidado para não confundir com o Problema da Parada: lá a indecidibilidade é sobre uma família infinita de entradas (programa, entrada), e não sobre uma única pergunta de resposta fixa.',
+  'fun-2022-24':
+    'A condição sᵢ ≤ s⌊i/2⌋ diz que todo elemento é menor ou igual ao que está na posição ⌊i/2⌋ do vetor. Em um vetor que representa uma árvore binária começando em 1, ⌊i/2⌋ é exatamente o pai de i — então a condição é "todo filho ≤ pai", que é a propriedade do max-heap.\n\n' +
+    'O heap é a estrutura que implementa a fila de prioridade: o máximo está sempre na raiz (posição 1), e inserção e remoção do máximo custam O(log n), pois só percorrem um caminho da árvore. Ordenar com ela é o HeapSort: construir o heap e extrair o máximo repetidamente, dando O(n log n) no pior caso.\n\n' +
+    'As distratoras não têm essa propriedade estrutural: inserção e seleção são métodos elementares O(n²) sobre a lista, o Quicksort baseia-se em particionamento por pivô e o Shellsort em inserções com incrementos decrescentes — nenhum deles mantém relação fixa entre as posições i e ⌊i/2⌋.',
+  'fun-2022-25':
+    'O custo de um algoritmo recursivo é descrito por uma equação de recorrência: uma equação que define T(n) em função do custo das chamadas menores mais o trabalho feito fora delas. O MergeSort, por exemplo, dá T(n) = 2T(n/2) + Θ(n), com T(1) = Θ(1).\n\n' +
+    'Resolvê-la significa encontrar uma forma fechada ou uma cota assintótica, e há três técnicas padrão: substituição (chutar a resposta e provar por indução), árvore de recursão (somar o custo por nível) e teorema mestre (comparar f(n) com n^(log_b a)).\n\n' +
+    'As demais alternativas descrevem ferramentas de outros contextos: variável aleatória e função de probabilidade aparecem na análise de algoritmos randomizados ou no caso médio, não na análise de recursão em si; somatórios são úteis, mas são o que se obtém ao expandir a recorrência, não o instrumento que a define; e a alternativa dos logaritmos não descreve técnica alguma.',
+  'fun-2022-28':
+    'Siga as declarações. p = &a faz p apontar para a, que vale −1. r = &p faz r apontar para p, então r é ponteiro para ponteiro para int.\n\n' +
+    'Em **r, a primeira desreferência devolve p e a segunda chega ao valor de a: **r vale −1.\n\n' +
+    'Agora o pós-decremento: em b--, o valor usado na expressão é o valor atual de b, isto é, 10; só depois b passa a valer 9. Portanto c = −1 + 10 = 9, e é 9 que o printf imprime.\n\n' +
+    'As distratoras cobrem os erros clássicos: usar 9 no lugar de 10 (confundindo b-- com --b, o que daria 8), somar em vez de subtrair o sinal de a (dando 11) ou ignorar a desreferência dupla.',
+  'fun-2024-21':
+    'Na busca sequencial, se a chave está na posição k, examinam-se k registros. Supondo que a chave procurada tenha a mesma probabilidade de estar em qualquer uma das n posições, o número médio de consultas é a média aritmética de 1 a n.\n\n' +
+    'Essa média é (1 + 2 + ... + n)/n = [n(n + 1)/2]/n = (n + 1)/2 — pouco mais da metade do arquivo, o que confirma o custo Θ(n) do caso médio.\n\n' +
+    'Os outros cenários também são simples: o melhor caso é f(n) = 1 (a chave está no primeiro registro) e o pior caso é f(n) = n (último registro ou chave ausente). As alternativas invertem exatamente esses dois valores ou inventam expressões sem sentido para o problema.',
+  'fun-2024-24':
+    'Duas informações do enunciado precisam ser lidas em conjunto. "Um ponteiro para o próximo elemento" — apenas um — significa lista simplesmente encadeada; se houvesse também ponteiro para o anterior, seria duplamente encadeada.\n\n' +
+    '"Há um campo-chave pelo qual uma determinada ordenação é mantida" significa lista ordenada: as inserções respeitam a ordem da chave, o que encarece a inserção (é preciso achar a posição) mas permite parar a busca ao passar do valor procurado.\n\n' +
+    'Juntando as duas, a lacuna é "simplesmente encadeada ordenada". As distratoras erram em um dos dois eixos: as duplamente encadeadas exigem dois ponteiros, a circular não ordenada dispensa a ordenação (e faz o último apontar para o primeiro), e a lista de prioridades organiza-se por prioridade de atendimento, não por um campo-chave de ordenação.',
+  'fun-2024-25':
+    'A diferença entre os laços está no momento do teste. No do...while a condição é avaliada depois do corpo, então o corpo executa pelo menos uma vez. No while e no for a condição é avaliada antes, e se ela já for falsa na primeira avaliação o corpo nunca executa — exatamente o que a alternativa correta afirma.\n\n' +
+    'As outras alternativas invertem esses papéis ou trocam de assunto: dizer que o while testa a condição depois do corpo é descrever o do...while; dizer que o for testa depois comete o mesmo erro. A instrução if não é um laço, e portanto não serve para número conhecido de iterações (esse é o uso típico do for). E break não avança para a próxima iteração — ele encerra o laço; quem pula para a próxima iteração é o continue.\n\n' +
+    'Resumo prático: teste no início (while, for) pode executar zero vezes; teste no fim (do...while) executa uma ou mais vezes.',
+  'tec-2019-43':
+    'Contar endereços em um intervalo fechado é uma contagem inclusiva: de A até B, inclusive, há B − A + 1 posições.\n\n' +
+    'Convertendo os limites: 0x20 = 32 e 0xFF = 255. Logo, 255 − 32 + 1 = 224 endereços.\n\n' +
+    'O erro clássico é esquecer o +1 e responder 223, ou calcular apenas 0x100 − 0x20 pensando em potências de 2. As distratoras 128 e 160 correspondem a intervalos diferentes, e 236 não tem base no cálculo.\n\n' +
+    'Note também que 224 endereços não formam uma potência de 2, ou seja, a faixa de E/S não é um bloco alinhado — algo comum em mapas de memória de microcontroladores, onde os primeiros endereços ficam reservados para outra finalidade.',
+  'tec-2019-45':
+    'O fork() duplica o processo que o chama, e o filho continua a execução do mesmo ponto — inclusive dentro do laço, com o mesmo valor de i. Isso faz a população dobrar em cada iteração.\n\n' +
+    'Começando com 1 processo: após a primeira iteração há 2, após a segunda 4 e após a terceira 8. Em geral, k forks em sequência produzem 2^k processos, logo 2³ = 8.\n\n' +
+    'Nenhuma thread é criada explicitamente pelo programa, mas todo processo tem sua thread principal de execução. Assim, 8 processos e 8 threads.\n\n' +
+    'As distratoras vêm de erros comuns: contar apenas os filhos (7), contar uma iteração de menos (4) ou supor que fork() cria thread e não processo.',
+  'tec-2019-46':
+    'Código reentrante é aquele que pode ser invocado de novo — por outra CPU, outra thread ou uma interrupção — antes de a invocação anterior terminar, sem corromper estado. Consegue isso mantendo os dados por invocação na pilha ou em estruturas passadas por parâmetro, em vez de usar variáveis globais ou estáticas compartilhadas.\n\n' +
+    'É exatamente o requisito descrito no enunciado: o driver está tratando um pacote e chega outro, gerando nova interrupção que reentra no mesmo código. Sem reentrância, a segunda execução sobrescreveria o estado da primeira.\n\n' +
+    'Assíncrono descreve o modelo de operação (a chamada retorna antes de a E/S terminar), não a segurança da reentrada; recursivo é o caso particular em que a função chama a si mesma; assimétrico e elástico não são propriedades de código de driver.',
+  'tec-2019-61':
+    'A visão estéreo imita a visão binocular: duas câmeras captam a mesma cena de referenciais ligeiramente diferentes. Um ponto do mundo projeta-se em posições distintas nas duas imagens, e essa diferença de posição é a disparidade.\n\n' +
+    'Calculando a disparidade para cada pixel obtém-se o mapa de disparidade, do qual se extrai a profundidade: a distância é inversamente proporcional à disparidade (Z = f·B/d, com B a distância entre as câmeras e f a distância focal). Objetos próximos deslocam-se muito entre as imagens; objetos distantes, quase nada.\n\n' +
+    'As distratoras confundem estéreo com outras subáreas: reconhecer imagens similares é casamento/recuperação de imagens; subdividir a imagem é segmentação; "dispersão" e "desconstruir as imagens em apenas uma" não correspondem a etapas do pipeline estéreo (o que se faz é retificar e correlacionar as duas imagens, preservando ambas).',
+  'tec-2019-62':
+    'Transparência, em sistemas distribuídos, é esconder do usuário algum aspecto da distribuição — e cada tipo esconde um aspecto específico. A alternativa correta é a de replicação: o usuário vê um recurso único, sem perceber que há várias cópias mantidas consistentes entre si.\n\n' +
+    'As demais trocam as definições entre si. Ocultar diferenças de representação de dados é transparência de acesso, não de concorrência — concorrência é ocultar que outros usuários compartilham o recurso. Ocultar que o recurso pode ser movido enquanto está sendo acessado é transparência de migração, e movê-lo sem afetar como é acessado é relocação — a alternativa embaralha as duas. E não poder dizer a localização física do recurso é transparência de localização, não de acesso.\n\n' +
+    'Para não errar, associe cada nome à pergunta que ele responde: acesso = "como eu acesso?"; localização = "onde está?"; migração/relocação = "mudou de lugar?"; replicação = "quantas cópias?"; concorrência = "quem mais usa?"; falha = "quebrou?".',
+  'tec-2022-46':
+    'Antes do fork, i (global) vale 0. O fork cria um segundo processo, e a partir daí os dois têm espaços de endereçamento independentes: alterar i em um não afeta o outro.\n\n' +
+    'No pai, fork() retorna o PID do filho (> 0), então o if incrementa i. No filho, fork() retorna 0, então o else incrementa i. Cada processo, portanto, executa exatamente um dos dois incrementos e chega a i = 1.\n\n' +
+    'Em seguida ambos executam o i++ que está fora do if/else, chegando a i = 2, e cada um imprime "2 ". A saída combinada é "2 2".\n\n' +
+    'A resposta "indeterminado" é tentadora, mas a indeterminação aqui é só na ordem de impressão, não nos valores — os dois processos imprimem 2 independentemente de quem rodar primeiro. E a resposta "1 1" ignora o incremento fora do condicional; "4 4" supõe memória compartilhada, o que fork não faz.',
+  'tec-2022-54':
+    'Item a item. Roteadores precisam implementar até a camada de rede porque encaminham com base no endereço IP de destino, que está no cabeçalho dessa camada — verdadeiro.\n\n' +
+    'No TCP/IP o controle de congestionamento é feito pelo TCP, na camada de transporte, com mecanismos como janela de congestionamento, slow start e reação a perdas — verdadeiro.\n\n' +
+    'Controle de acesso ao meio é função da subcamada MAC, dentro da camada de enlace, e não da camada de rede — falso.\n\n' +
+    'Quem esconde os detalhes do meio físico das camadas superiores são as camadas inferiores (física e enlace); a camada de transporte abstrai a rede fim a fim, não o meio de transmissão — falso.\n\n' +
+    'A sequência é, portanto, V – V – F – F.',
+  'tec-2024-51':
+    'Em um RIGHT OUTER JOIN, todas as tuplas do lado direito (aqui, o apelido PAI) aparecem no resultado — casando com o lado esquerdo quando houver correspondência, e completadas com NULL quando não houver. A condição é FILHO.Fk = PAI.Id.\n\n' +
+    'Percorrendo cada PAI: o item 1 é apontado pelos itens 2 e 3 (Fk = 1), gerando 2 tuplas; o item 2 não é apontado por ninguém, gerando 1 tupla com NULLs; o item 3 é apontado pelo item 4, gerando 1 tupla; o item 4 não é apontado por ninguém, gerando 1 tupla com NULLs.\n\n' +
+    'Somando: 2 + 1 + 1 + 1 = 5 tuplas.\n\n' +
+    'Os erros típicos que as distratoras capturam: contar só as correspondências reais, o que daria 3 (é o resultado de um INNER JOIN), ou esquecer que o item 1, com Fk NULL, jamais casa com nenhum PAI — NULL não é igual a nada em SQL, nem a outro NULL.',
+  'tec-2024-53':
+    'A diferença estrutural entre B e B⁺ está em onde ficam os ponteiros de dados (as referências aos registros no arquivo).\n\n' +
+    'Na árvore B, cada chave armazenada — em qualquer nó, interno ou folha — vem acompanhada do seu ponteiro de dados. Isso torna verdadeiros os itens I e II, e permite que uma busca termine em um nó interno, se a chave estiver lá.\n\n' +
+    'Na árvore B⁺, os nós internos guardam apenas chaves de roteamento, servindo para direcionar a busca; todos os ponteiros de dados ficam nas folhas. Logo IV é verdadeiro e III é falso, e toda busca desce necessariamente até uma folha.\n\n' +
+    'A resposta é I, II e IV. Vale saber por que a B⁺ é a preferida em bancos de dados: sem ponteiros de dados, cabem mais chaves por nó interno, o que reduz a altura da árvore e o número de acessos a disco; e as folhas são encadeadas entre si, tornando eficiente a varredura sequencial e as consultas por faixa.',
+  'tec-2024-58':
+    'A questão pede o item que NÃO é resultado de software de alta qualidade. Aumentar a complexidade dos processos de negócio é justamente o oposto do que Pressman e Maxim apontam: software de qualidade simplifica e agiliza os processos que apoia.\n\n' +
+    'Os outros quatro itens são benefícios citados pelos autores: maior receita gerada pelo produto, maior rentabilidade quando a aplicação sustenta um processo de negócio, maior disponibilidade de informações cruciais e menor exigência de manutenção, com menos correções e menos suporte ao cliente.\n\n' +
+    'A dica de prova é mecânica: em questões com "EXCETO", quatro alternativas puxam para o mesmo lado (aqui, benefícios) e uma foge do padrão. Achar a de sinal invertido resolve sem precisar lembrar a lista exata dos autores.',
+  'mat-2024-05':
+    'Um grafo sem ciclos é, por definição, uma floresta. Uma floresta com n vértices e c componentes conexas tem exatamente n − c arestas, e como c ≥ 1, o máximo de arestas acontece com c = 1, isto é, quando a floresta é uma árvore: n − 1 arestas.\n\n' +
+    'Para n = 7, o máximo é 6 arestas. Acrescentar qualquer aresta a uma árvore fecha um ciclo, pois já existe um caminho entre os dois extremos — não há como passar de 6 mantendo o grafo acíclico.\n\n' +
+    'A fórmula n(n−1)/2 citada no enunciado é uma distratora deliberada: ela dá 21, o número de arestas do grafo completo K₇, que é cheio de ciclos. As alternativas 7, 10 e 11 correspondem a grafos que já contêm ciclos.\n\n' +
+    'Vale guardar a caracterização: um grafo conexo com n vértices é árvore se e somente se tem n − 1 arestas e nenhum ciclo — duas dessas três propriedades implicam a terceira.',
+  'mat-2024-14':
+    'A pergunta é: qual proposição precisa ser falsa para que ∼(p ∨ q) seja verdadeira? Como ∼(p ∨ q) é verdadeira exatamente quando p ∨ q é falsa, basta achar entre as alternativas aquela que é equivalente a p ∨ q.\n\n' +
+    'Use a equivalência da implicação material: A → B ≡ ∼A ∨ B. Assim, ∼p → q ≡ ∼(∼p) ∨ q ≡ p ∨ q. É a alternativa correta.\n\n' +
+    'Confirmando as outras: p ∧ q pode ser falsa sem que p ∨ q o seja (basta p verdadeira e q falsa); ∼p e ∼q, isoladamente, dizem respeito a uma variável só; e ∼p → ∼q ≡ p ∨ ∼q, que é falsa quando p é falsa e q verdadeira — caso em que ∼(p ∨ q) também é falsa, logo não serve.\n\n' +
+    'Note ainda que, por De Morgan, ∼(p ∨ q) ≡ ∼p ∧ ∼q: as duas proposições precisam ser falsas simultaneamente.',
+  'mat-2024-15':
+    'Trate as premissas como implicações e aplique modus tollens. A premissa (1) é (A ∨ J) → V, onde A = "Ana Paula joga vôlei", J = "Joaquim joga videogame" e V = "Victória vai à praia". A premissa (2) diz ∼V.\n\n' +
+    'De (1) e ∼V conclui-se ∼(A ∨ J), e por De Morgan ∼A ∧ ∼J: nem Ana Paula jogou vôlei, nem Joaquim jogou videogame.\n\n' +
+    'A premissa (3) é S → (A ∧ C), com S = "hoje é sábado". Como já sabemos ∼A, a conjunção A ∧ C é falsa, e novamente por modus tollens conclui-se ∼S: hoje não é sábado.\n\n' +
+    'Juntando ∼S e ∼J, a alternativa correta é "hoje não é sábado e Joaquim não jogou videogame". As demais afirmam A, J ou S, todos negados pelas conclusões — e nada se pode concluir sobre Caio treinar boxe, já que a premissa (3) só foi usada no sentido contrário.',
+  'fun-2024-26':
+    'O nome de cada caminhamento vem da posição em que a raiz é visitada. Se a raiz vem primeiro e só depois as subárvores dos filhos são percorridas recursivamente, o percurso é pré-fixado — também chamado de pré-ordem (pre-order).\n\n' +
+    'Os sinônimos das distratoras é que confundem: simétrico e central são nomes do percurso em-ordem, em que a raiz é visitada entre as subárvores; pós-fixado é o pós-ordem, com a raiz por último.\n\n' +
+    '"Em largura" é a distratora conceitualmente diferente: ela percorre a árvore nível por nível, usando uma fila, e não é um dos três percursos em profundidade definidos recursivamente.\n\n' +
+    'Uso típico do pré-fixado: serializar ou copiar uma árvore preservando a estrutura, já que a raiz é registrada antes dos filhos.',
+  'fun-2024-28':
+    'A divisão clássica do chipset é simples: a ponte norte (northbridge) fica perto do processador e faz a interface com os componentes de alta velocidade — memória RAM e placa de vídeo (barramento AGP/PCI Express); a ponte sul (southbridge) cuida dos dispositivos mais lentos — armazenamento, USB, áudio, rede e demais periféricos de E/S.\n\n' +
+    'Só a assertiva III descreve esse arranjo corretamente. As assertivas I e II invertem os papéis das duas pontes, e a IV é falsa: as pontes têm funções e conexões distintas, não são intercambiáveis.\n\n' +
+    'Vale um contexto atual: nos processadores modernos o controlador de memória e a controladora gráfica foram integrados ao próprio die da CPU, e a ponte norte praticamente desapareceu — restou um único chip (PCH na Intel, FCH na AMD) que desempenha o papel da ponte sul. A questão cobra o modelo tradicional, ainda padrão nos livros de arquitetura.',
+  'fun-2024-29':
+    'O DMA (Direct Memory Access) existe precisamente para tirar a CPU do caminho das transferências volumosas. A CPU programa a controladora de DMA informando endereço de memória, quantidade de bytes e sentido da transferência; a controladora então move os dados entre o dispositivo e a memória principal por conta própria, avisando a CPU por interrupção apenas no fim.\n\n' +
+    'Todas as demais alternativas envolvem a CPU em cada dado transferido. No polling e na E/S programada a CPU testa o estado do dispositivo e copia byte a byte (ou palavra a palavra). Com interrupções ela deixa de ficar em espera ocupada, mas ainda executa o tratador para mover cada dado. E na E/S mapeada em memória os registradores do dispositivo apenas aparecem no espaço de endereçamento — a cópia continua sendo feita por instruções da CPU.\n\n' +
+    'É por isso que disco, rede e placas de som usam DMA: sem ele, copiar alguns megabytes consumiria o processador integralmente.',
+  'fun-2024-36':
+    "Uma linguagem é regular quando um autômato finito a reconhece — ou seja, quando basta uma quantidade fixa de memória (os estados) para decidir a pertinência, sem armazenar quantidades arbitrárias.\n\n" +
+    "Contar a's módulo 3 e b's módulo 2 é exatamente isso: bastam 3 × 2 = 6 estados, cada um representando um par (resto da divisão do número de a's por 3, paridade do número de b's), com estado de aceitação em (0, ímpar). Memória finita resolve, logo a linguagem é regular.\n\n" +
+    "As outras quatro alternativas comparam as quantidades de a's e b's (igual, maior, diferente, o dobro). Para isso seria preciso guardar a diferença entre as contagens, que não tem limite — e o lema do bombeamento formaliza a impossibilidade. Essas linguagens são livres de contexto (reconhecidas com uma pilha), não regulares.\n\n" +
+    'A regra prática que a questão cobra: contar módulo uma constante é regular; comparar contagens sem limite não é.',
+  'fun-2024-38':
+    'São dois resultados fundacionais de autores diferentes, e a questão só troca as atribuições. O Teorema da Incompletude é de Kurt Gödel (1931): em qualquer sistema formal consistente e suficientemente expressivo para a aritmética existem afirmações verdadeiras que o sistema não consegue provar.\n\n' +
+    'O Problema da Parada é de Alan Turing (1936): não existe algoritmo que, dado um programa e uma entrada, decida sempre se aquela execução termina ou entra em loop infinito. A prova é por diagonalização — supor que o decisor existe permite construir um programa que o contradiz.\n\n' +
+    'Alonzo Church aparece como distratora com razão histórica: ele chegou a um resultado equivalente no mesmo período usando o cálculo lambda, e daí vem a Tese de Church-Turing. Mas o Problema da Parada, na formulação do enunciado, é atribuído a Turing.\n\n' +
+    'Os dois teoremas são parentes conceituais: ambos exibem limites intrínsecos — um da demonstrabilidade em sistemas formais, outro da computabilidade.',
+  'fun-2024-39':
+    'A alternativa correta é a que descreve o bloco: o sistema operacional agrupa os dados em blocos, que são a unidade de transferência entre a memória secundária e a principal. Ler um único byte do disco custa praticamente o mesmo que ler o bloco inteiro, porque o tempo é dominado por posicionamento e latência — daí o ganho de eficiência em transferir blocos.\n\n' +
+    'As demais alternativas erram em pontos específicos: o item individual dentro de um arquivo é o registro (ou campo), não o byte; um programa executável é sim um arquivo, apenas com conteúdo binário e formato próprio; páginas e segmentos são unidades do gerenciamento de memória virtual e coexistem com arquivos e registros, não os substituem; e a organização em diretórios é justamente hierárquica na esmagadora maioria dos sistemas de arquivos.\n\n' +
+    'Vale conectar os conceitos: o bloco lógico do sistema de arquivos costuma agrupar vários setores físicos do disco, e é essa granularidade que explica a fragmentação interna quando o arquivo não preenche o último bloco.',
+  'fun-2024-40':
+    'A afirmação correta enuncia o princípio da codificação de comprimento variável: dar descrições curtas aos resultados mais frequentes e longas aos menos frequentes reduz o comprimento médio da mensagem. É o que fazem Huffman e a codificação aritmética, e o limite teórico desse ganho é a entropia da fonte.\n\n' +
+    'A alternativa do comprimento uniforme descreve exatamente o caso que não comprime: se todos os códigos têm o mesmo tamanho, o comprimento médio não cai (é o código de tamanho fixo que se quer melhorar).\n\n' +
+    'A desigualdade de Kraft é o oposto do que a alternativa diz: ela impõe uma restrição precisa aos comprimentos, ∑ 2^(−lᵢ) ≤ 1, condição necessária e suficiente para existir um código de prefixo com aqueles comprimentos.\n\n' +
+    'As duas últimas alternativas confundem compressão com perda: Huffman é rigorosamente sem perdas (a mensagem original é reconstruída bit a bit), e algoritmos como ZIP, PNG e FLAC também são. Perda existe em JPEG, MP3 e afins, por escolha de projeto, não por necessidade.',
+  'fun-2024-42':
+    'Siga o caminho de um evento de E/S de baixo para cima. O dispositivo termina a operação e sinaliza uma interrupção, normalmente via APIC; quem recebe esse sinal é a camada de tratadores de interrupção, a mais próxima do hardware.\n\n' +
+    'O tratador faz o mínimo necessário e informa o resultado à camada de controladores de dispositivo (os device drivers), que conhecem a semântica daquele hardware específico e sabem o que fazer com o dado recebido.\n\n' +
+    'No sentido inverso, quando o sistema operacional precisa programar o dispositivo — escrever em seus registradores, iniciar uma transferência — é também a camada de controladores de dispositivo que fala diretamente com ele. Nenhuma outra camada acessa registradores de hardware.\n\n' +
+    'Daí a sequência: tratadores de interrupção – controladores de dispositivo – controladores de dispositivo. As camadas acima (software independente de dispositivo e interface de chamadas de sistema) oferecem a visão uniforme para os programas de usuário e nunca tocam o hardware.',
+  'fun-2024-45':
+    'A alternativa correta é a definição usual do tipo inteiro: valores numéricos sem parte fracionária, abrangendo positivos, negativos e o zero, dentro da faixa permitida pela quantidade de bits do tipo.\n\n' +
+    'As demais alternativas trocam os tipos entre si. Uma variável de tipo caractere guarda um único caractere; para uma sequência de caracteres usa-se string, ou um vetor de caracteres. O tipo inteiro admite negativos por padrão (é o modificador unsigned que os proíbe, e não o contrário). Vetor não é tipo numérico fracionário, mas um agregado homogêneo de qualquer tipo — quem tem parte fracionária é float ou double.\n\n' +
+    'A última alternativa exige cuidado: em C, caracteres são internamente códigos numéricos e aceitam aritmética, mas isso é uma particularidade da linguagem, não parte do conjunto de operações conceitualmente associado ao tipo caractere, cujas operações próprias são comparação e ordenação.',
+  'tec-2024-46':
+    'Todas as quatro assertivas descrevem corretamente estruturas (structs), por isso a resposta é I, II, III e IV. Vale ver por quê, uma a uma.\n\n' +
+    'I e IV são as duas faces da mesma definição: a struct agrupa variáveis sob um único nome, e esses componentes podem ser de tipos distintos — é justamente o que a diferencia do vetor, que é homogêneo.\n\n' +
+    'II é a que costuma gerar dúvida: declarar uma struct define um novo tipo, e não cria variáveis. Em C é preciso um passo adicional (struct Ponto p; ou um typedef) para que exista uma variável daquele tipo.\n\n' +
+    'III é verdadeira e importante: os campos podem ser variáveis simples, vetores, ponteiros ou outras structs. É essa composição aninhada que permite construir listas, árvores e grafos — um nó que contém dados e um ponteiro para outro nó do mesmo tipo.',
+  'tec-2024-47':
+    'O problema tem três faixas mutuamente exclusivas: salário ≤ 0 (erro), salário > 1000 (imposto de 10%) e o caso restante, entre 0 e 1000 (imposto de 5%). Testar faixas sucessivas exige uma condicional encadeada — o if / else if / else, em que cada teste só é avaliado se os anteriores falharam.\n\n' +
+    'O encadeamento não é só elegância: ele garante que apenas um dos ramos execute e evita reavaliar condições já descartadas (dentro do else, já se sabe que o salário é positivo).\n\n' +
+    'As distratoras não servem ao problema: não há repetição envolvida, o que elimina laço encadeado e laço infinito; atribuição simples e composta apenas armazenam valores, sem tomar decisão alguma.',
+  'tec-2024-49':
+    'Quando as arestas são tratadas como coleção (multiconjunto) em vez de conjunto, torna-se possível ter duas ou mais arestas com os mesmos extremos — no caso dirigido, mesma origem e mesmo destino. Essas arestas repetidas são chamadas paralelas (ou múltiplas), e um grafo que as admite é um multigrafo.\n\n' +
+    'Os outros termos designam coisas distintas: laço é a aresta que liga um vértice a si mesmo; adjacentes são dois vértices ligados por uma aresta (ou duas arestas que compartilham um vértice); incidência é a relação entre uma aresta e os vértices que ela toca; e "finais" não é conceito de teoria dos grafos.\n\n' +
+    'Consequência prática: um multigrafo não pode ser representado por matriz de adjacência booleana — é preciso guardar a multiplicidade de cada par, ou usar lista de arestas.',
+  'tec-2024-50':
+    'Ciclo é o caminho fechado: começa e termina no mesmo vértice. É esse fechamento que o enunciado descreve.\n\n' +
+    'As distratoras exigem precisão terminológica. Laço é a aresta que liga um vértice a si mesmo — um caso degenerado, não um caminho em geral. Caminho simples é o que não repete vértices, portanto justamente o que não fecha. Arco é outro nome para aresta dirigida. E k-cubo é uma família específica de grafos (o hipercubo Qₖ), sem relação com caminhos fechados.\n\n' +
+    'Detectar ciclos é operação básica em vários contextos: uma busca em profundidade que encontra uma aresta de retorno acusa ciclo, e é assim que se verifica se um dígrafo é acíclico (DAG) antes de fazer ordenação topológica.',
+  'tec-2024-55':
+    'As três primeiras assertivas estão corretas e a quarta é falsa, por isso a resposta é I, II e III.\n\n' +
+    'I: árvores sintáticas e código de três endereços são, de fato, duas representações intermediárias clássicas — a primeira mais próxima da estrutura do fonte, a segunda mais próxima do código de máquina.\n\n' +
+    'II: a forma geral x := y op z é exatamente a do código de três endereços (no máximo um operador por instrução, com temporários criados pelo compilador), e o repertório inclui outras formas, como desvios condicionais e incondicionais, chamadas e atribuições indexadas.\n\n' +
+    'III: RIs podem ser geradas por Definições Dirigidas pela Sintaxe, associando a cada produção regras que constroem o trecho de código correspondente.\n\n' +
+    'IV é a assertiva falsa: autômatos finitos são o formalismo da análise léxica (reconhecer tokens), e não uma forma de representação intermediária — seus estados não representam variáveis do programa nem suas transições, instruções.',
+  'tec-2024-57':
+    'A resposta é que todas as três assertivas estão incorretas, cada uma por um motivo diferente.\n\n' +
+    'I: Ray Tracing realmente simula a propagação da luz, mas é computacionalmente caro — historicamente foi a técnica do cinema, não dos jogos. Só recentemente, com hardware dedicado, entrou em tempo real de forma parcial (híbrida com rasterização), e chamá-lo de "eficiente em tempo real" contraria o motivo pelo qual foi preterido nos jogos.\n\n' +
+    'II: o Z-Buffer é um algoritmo de determinação de visibilidade — guarda a profundidade de cada pixel para decidir o que fica na frente. Ele não produz realismo cinematográfico nem representa o estado da arte em geração 3D; é um mecanismo básico de rasterização.\n\n' +
+    'III: o modelo de Phong é iluminação local, calculada por superfície a partir de fontes diretas, sem considerar a luz refletida entre objetos. Justamente por ser barato, é muito usado em tempo real — o oposto do que a assertiva afirma. Iluminação global é o que fazem ray tracing, path tracing e radiosidade.',
+  'tec-2024-60':
+    'As três assertivas estão corretas, por isso a resposta é "todas". Elas cobrem, em sequência, os três conceitos centrais do gerenciamento de configuração de software (GCS).\n\n' +
+    'I define a configuração de software: o conjunto de todos os artefatos gerados no processo — código, requisitos, projeto, casos de teste, documentação, scripts de build —, e não apenas o código-fonte.\n\n' +
+    'II descreve a hierarquia de itens de configuração (SCIs) que se forma conforme o trabalho avança, com itens agregando outros itens e sendo versionados em conjunto.\n\n' +
+    'III define o GCS como o conjunto de atividades para administrar mudanças ao longo de todo o ciclo de vida — identificação de itens, controle de versões, controle de mudanças (com baselines e solicitações formais), auditoria e relato de situação.\n\n' +
+    'É esse arcabouço que, na prática, se materializa em controle de versão, revisão de mudanças e rastreabilidade entre requisito, código e teste.',
+  'tec-2024-61':
+    'Em um Algoritmo Genético, o crossover (recombinação) toma dois indivíduos-pais e combina partes de seus cromossomos para gerar descendentes — por exemplo, no crossover de um ponto, cortando os dois cromossomos na mesma posição e trocando os pedaços.\n\n' +
+    'O papel dele é a exploração de combinações promissoras: se cada pai carrega um bom pedaço de solução, o filho pode herdar os dois. É o operador que dá ao AG seu caráter de busca populacional, em vez de busca local.\n\n' +
+    'As demais alternativas descrevem outros componentes do ciclo, todos distintos: avaliar a aptidão é a função de fitness; manter os melhores indivíduos entre gerações é elitismo; modificar aleatoriamente genes é mutação (que preserva diversidade e evita mínimos locais); e escolher quem se reproduz é a seleção (roleta, torneio, ranking).\n\n' +
+    'A divisão de trabalho a fixar: seleção decide quem cruza, crossover combina, mutação perturba.',
+  'tec-2024-62':
+    'Um Sistema Especialista tem duas partes principais: a base de conhecimento, com fatos e regras do domínio (tipicamente na forma "SE condição ENTÃO conclusão"), e o motor de inferência, que aplica essas regras aos fatos disponíveis para derivar novas conclusões — emulando o raciocínio de um especialista humano.\n\n' +
+    'O motor pode encadear as regras para frente (forward chaining: dos fatos para as conclusões) ou para trás (backward chaining: parte da hipótese e busca fatos que a sustentem), e normalmente registra o caminho percorrido, o que permite explicar a conclusão ao usuário.\n\n' +
+    'As distratoras deslocam o papel do motor: interface de usuário é outro módulo do sistema; otimizar algoritmos de aprendizado de máquina não é sua função (sistemas especialistas clássicos são baseados em regras, não em aprendizado); e ele não substitui a base de conhecimento — depende inteiramente dela, pois sem regras não há o que inferir.',
+  'tec-2024-63':
+    'Digitalizar uma imagem envolve discretizar duas coisas distintas, e cada uma tem seu nome. A amostragem discretiza o domínio espacial: define em quais coordenadas a imagem será medida, determinando o número de pixels (a resolução espacial).\n\n' +
+    'A quantização discretiza a amplitude: converte a intensidade contínua medida em cada amostra para um número finito de níveis — 256 níveis em 8 bits por canal, por exemplo.\n\n' +
+    'A ordem do enunciado é essa: primeiro amostragem, depois quantização. A alternativa que inverte os dois termos é a distratora principal, e as outras trocam de assunto: interpolação e ampliação são operações de redimensionamento posteriores; modulação e codificação pertencem à transmissão e ao armazenamento do sinal.\n\n' +
+    'Os efeitos de errar cada uma são visíveis e diferentes: amostragem insuficiente causa serrilhado e aliasing; quantização grosseira causa falsos contornos (banding) em regiões de variação suave.',
+  'tec-2024-64':
+    'A resposta é I e III. O filtro espacial de média substitui cada pixel pela média da vizinhança, atenuando variações rápidas — ou seja, suaviza a imagem e reduz ruído, ao custo de borrar bordas (I correta).\n\n' +
+    'O operador laplaciano é uma derivada de segunda ordem, que realça justamente onde a intensidade muda depressa. Somado à imagem original, produz aguçamento das bordas (III correta).\n\n' +
+    'II está errada porque inverte o efeito: um filtro passa-baixa preserva as frequências baixas e atenua as altas, portanto suaviza. Quem aguça é o passa-alta.\n\n' +
+    'IV está errada porque suaviza e aguça não são exclusivos de um domínio. O teorema da convolução garante a correspondência: convoluir no domínio espacial equivale a multiplicar no domínio das frequências, então ambos os efeitos podem ser obtidos nos dois domínios — a escolha é de conveniência e custo computacional.',
+  'tec-2024-65':
+    'O encaminhamento IP olha somente o endereço de destino; o de origem (13.1.2.3) é irrelevante para essa decisão e está no enunciado apenas para distrair. Isso já elimina as três rotas 13.x, que nem casam com o destino 11.1.2.5.\n\n' +
+    'Restam duas rotas compatíveis: 11.1.0.0/16 e 11.1.2.0/24. Ambas contêm o destino, e o critério de desempate é o do prefixo mais longo (longest prefix match): vence a rota mais específica, isto é, a de máscara maior.\n\n' +
+    'Como /24 é mais específica que /16, o pacote é encaminhado por 11.1.2.0/24.\n\n' +
+    'Esse critério é o que torna possível ter uma rota default 0.0.0.0/0 convivendo com rotas específicas: a default só é usada quando nenhuma outra entrada casa com o destino.',
+  'tec-2024-66':
+    'O IP é um protocolo sem conexão e de melhor esforço (best-effort): cada datagrama é roteado de forma independente, sem estabelecimento prévio de conexão e sem garantia de entrega, de ordem ou de unicidade. Como datagramas podem seguir caminhos diferentes e retransmissões ocorrem em camadas inferiores, é perfeitamente possível que várias cópias de um pacote cheguem ao destino — a alternativa correta.\n\n' +
+    'As demais contradizem essa natureza: "baseado em datagramas e orientado à conexão" é contraditório (datagrama implica ausência de conexão); "melhor esforço garantindo a entrega" também se autocontradiz, pois melhor esforço é justamente a ausência de garantia; e o apelido de "cola da Internet" vem de o IP unificar redes heterogêneas sob um único formato de endereçamento, não de poder ser substituído por outros protocolos.\n\n' +
+    'A última alternativa erra de camada: o datagrama IP identifica o destino apenas pelo endereço IP. Números de porta são da camada de transporte, nos cabeçalhos TCP ou UDP — quem garante entrega, ordem e ausência de duplicatas é o TCP, acima do IP.',
+  'tec-2024-67':
+    'Consultas DNS regulares usam UDP na porta 53. A escolha faz sentido: a consulta e a resposta são pequenas e cabem em um datagrama, e abrir uma conexão TCP custaria um three-way handshake antes de qualquer dado — sobrecarga desproporcional para uma resposta que chega em milissegundos. Se a resposta não vier, o próprio cliente simplesmente repete a consulta.\n\n' +
+    'O TCP é reservado para os casos em que o UDP não serve: transferência de zona entre servidores (AXFR) e respostas grandes que não caberiam no limite do datagrama — situação sinalizada pelo bit de truncamento, que faz o cliente repetir a consulta sobre TCP.\n\n' +
+    'As distratoras não são alternativas válidas aqui: "TCP/IP" é o nome da arquitetura, não um protocolo de transporte; HTTP é de aplicação; e CoAP é um protocolo de aplicação para IoT (que, aliás, roda sobre UDP).',
+  'tec-2024-68':
+    'O enunciado descreve transparência de acesso: as mesmas operações servem para arquivos locais e remotos, e programas escritos para arquivos locais funcionam sem modificação sobre arquivos remotos. O que está sendo escondido é a diferença de forma de acesso.\n\n' +
+    'As outras transparências escondem outros aspectos: localização esconde onde o recurso está (o nome não revela o servidor); mobilidade permite que o arquivo mude de lugar sem que o cliente precise ser alterado; desempenho mantém o serviço aceitável sob carga variável; e mudança de escala permite crescer o sistema sem alterar sua estrutura ou os aplicativos.\n\n' +
+    'A distinção entre acesso e localização é a que mais cai em prova: acesso responde "como eu chego ao recurso?" e localização, "onde ele está?". O enunciado fala de um único conjunto de operações — logo, acesso.',
+  'tec-2024-69':
+    'A falha por queda (crash failure) é o modelo em que o servidor funcionava corretamente e simplesmente para: depois disso não emite mais nada, e o único remédio é reiniciá-lo. É o cenário do sistema operacional que trava.\n\n' +
+    'Os outros modelos de falha descrevem comportamentos diferentes: na falha por omissão o servidor está de pé, mas deixa de responder a algumas requisições (ou perde mensagens); na falha de temporização a resposta vem correta, porém fora do intervalo de tempo esperado; na falha de resposta o servidor responde, mas com valor errado ou violando o protocolo; e a falha arbitrária (bizantina) é a pior de todas, com o servidor podendo produzir saídas quaisquer, inclusive maliciosas ou inconsistentes entre destinatários.\n\n' +
+    'A dificuldade prática que essa taxonomia expõe: em um sistema assíncrono, um cliente não distingue um servidor que caiu de um que está apenas muito lento — é por isso que a detecção de falhas depende de temporizadores e o problema do consenso é tão difícil.',
+  'tec-2024-70':
+    'No algoritmo centralizado de exclusão mútua, um processo é eleito coordenador e controla o acesso à região crítica. O protocolo é mínimo: o processo envia REQUEST ao coordenador, recebe GRANT quando pode entrar e envia RELEASE ao sair — três mensagens por uso da região crítica, exatamente o que o enunciado descreve.\n\n' +
+    'Se a região está ocupada, o coordenador enfileira o pedido (ou responde negando) e concede a permissão ao primeiro da fila quando o RELEASE chega. É simples, justo e livre de inanição — mas o coordenador é ponto único de falha e gargalo de desempenho.\n\n' +
+    'As alternativas correspondem a custos maiores: o algoritmo distribuído de Ricart-Agrawala precisa de 2(n − 1) mensagens por entrada; o token-ring circula o token continuamente, com número de mensagens sem limite fixo entre dois usos; a versão descentralizada usa vários coordenadores e votação por maioria. Relógios vetoriais, por sua vez, não são algoritmo de exclusão mútua, mas mecanismo de ordenação causal de eventos.',
+};
+
 export const QUIZ_QUESTIONS: QuizQuestion[] = RAW_QUESTIONS.map((q) => ({
   ...q,
   difficulty: DIFFICULTY_BY_ID[q.id] ?? 3,
   topic: TOPIC_BY_ID[q.id] ?? 'Outros',
+  explanationLong: LONG_EXPLANATION_BY_ID[q.id] ?? '',
 }));
 
 /** Distinct topics, in a sensible display order. */
