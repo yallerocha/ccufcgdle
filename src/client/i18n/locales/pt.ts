@@ -139,9 +139,10 @@ export const pt = {
     },
     cards: {
       title: 'Cartas da sorte',
-      flip: 'Escolha 1 carta — ela pode eliminar de 1 a 4 alternativas erradas. Só vale uma!',
+      flip: 'Vire uma carta e veja quantas alternativas erradas ela corta.',
       flipOne: 'Virar esta carta',
-      done: 'Sua carta eliminou {{count}} alternativa(s)! Foram riscadas.',
+      done_one: 'Sua carta cortou 1 alternativa errada. Ela já saiu do quadro.',
+      done_other: 'Sua carta cortou {{count}} alternativas erradas. Elas já saíram do quadro.',
     },
     resultWonTitle: 'Você chegou ao milhão!',
     resultStoppedTitle: 'Você parou a tempo!',

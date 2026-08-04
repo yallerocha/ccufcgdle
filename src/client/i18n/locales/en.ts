@@ -143,9 +143,10 @@ export const en: Dictionary = {
     },
     cards: {
       title: 'Lucky cards',
-      flip: 'Pick 1 card — it may eliminate 1 to 4 wrong options. You get only one!',
+      flip: 'Turn one card and see how many wrong options it cuts.',
       flipOne: 'Flip this card',
-      done: 'Your card eliminated {{count}} option(s)! They were crossed out.',
+      done_one: 'Your card cut 1 wrong option. It is already off the board.',
+      done_other: 'Your card cut {{count}} wrong options. They are already off the board.',
     },
     resultWonTitle: 'You reached the million!',
     resultStoppedTitle: 'You stopped in time!',
