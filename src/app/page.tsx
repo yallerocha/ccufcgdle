@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, BookOpen, X, ListChecks } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
@@ -12,6 +13,7 @@ import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { ShowResultModal } from '@/client/components/ShowResultModal';
 import { ShowHost } from '@/client/components/ShowHost';
+import { ShowLifelineScene } from '@/client/components/ShowLifelineScene';
 import { useModalDismiss } from '@/client/hooks/useModalDismiss';
 import {
   unlockAudio, isMuted, toggleMuted,
@@ -94,6 +96,13 @@ const LIFELINE_USES: Record<LifelineType, number> = { fifty: 1, skip: 3, audienc
 const usesLeft = (used: LifelineType[], type: LifelineType) =>
   LIFELINE_USES[type] - used.filter((t) => t === type).length;
 
+/** One random line out of an i18n array key. '' when the key is missing. */
+const randomPhrase = (t: TFunction, key: string) => {
+  const value = t(key, { returnObjects: true });
+  const list = Array.isArray(value) ? (value as string[]) : [];
+  return list.length ? list[Math.floor(Math.random() * list.length)] : '';
+};
+
 export default function ShowPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
@@ -104,6 +113,12 @@ export default function ShowPage() {
   // Whether the long-explanation modal is open. Every new reveal starts closed,
   // so the short explanation stays the default.
   const [detailOpen, setDetailOpen] = useState(false);
+  // The aid cutscene on screen, if any. `hint` is the students' advice, shown
+  // inside the card; a scene carrying text holds longer so it can be read.
+  const [scene, setScene] = useState<{ type: LifelineType; hint?: string } | null>(null);
+  // What the host is saying under his window. Stays until the next event
+  // replaces it, so there is always something to read.
+  const [speech, setSpeech] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [result, setResult] = useState<ShowRun | null>(null);
@@ -129,6 +144,23 @@ export default function ShowPage() {
   // stage is immersive, like the real show). The class drives CSS in globals.
   // Escape closes the long-explanation modal and the board behind it stops scrolling.
   useModalDismiss(detailOpen, () => setDetailOpen(false));
+  useModalDismiss(!!scene, () => setScene(null));
+  // Lines clear themselves, so the host is not left holding a stale comment.
+  // Long ones stay up longer: the bubble types at ~26ms a character.
+  useEffect(() => {
+    if (!speech) return;
+    const id = setTimeout(() => setSpeech(null), Math.min(3000 + speech.length * 60, 8000));
+    return () => clearTimeout(id);
+  }, [speech]);
+
+  // The cutscene is dismissed by its own animationend. If animations are off
+  // (extension, OS setting) that event never fires and the blocking overlay
+  // would trap the run, so time it out a little past the animation's length.
+  useEffect(() => {
+    if (!scene) return;
+    const id = setTimeout(() => setScene(null), scene.hint ? 5500 : 3000);
+    return () => clearTimeout(id);
+  }, [scene]);
 
   const playing = !!run && run.status === 'playing';
   useEffect(() => {
@@ -205,7 +237,6 @@ export default function ShowPage() {
   // Per-question lifeline UI state (reset when the question changes).
   const [hidden, setHidden] = useState<number[]>([]);
   const [audience, setAudience] = useState<number[] | null>(null);
-  const [studentsHint, setStudentsHint] = useState<string | null>(null);
   const [lifelineBusy, setLifelineBusy] = useState<LifelineType | null>(null);
   // Card lifeline (former 50:50): 4 cards, the player flips ONE. The server sends
   // the actual cut (removedIndices, 1–4 wrong options); flipping reveals & applies it.
@@ -227,7 +258,6 @@ export default function ShowPage() {
   const resetQuestionAids = () => {
     setHidden([]);
     setAudience(null);
-    setStudentsHint(null);
     setSelected(null);
     setQuitOpen(false);
     setCardCut(null);
@@ -249,7 +279,6 @@ export default function ShowPage() {
           // / students), so a reload doesn't waste a used lifeline.
           if (data.aids?.removedIndices) setHidden(data.aids.removedIndices);
           if (data.aids?.distribution) setAudience(data.aids.distribution);
-          if (data.aids?.hint) setStudentsHint(data.aids.hint);
         } else localStorage.removeItem(RUN_KEY);
       })
       .catch(() => localStorage.removeItem(RUN_KEY));
@@ -280,12 +309,11 @@ export default function ShowPage() {
         sfxStart();
         // Opening host message before the first question (same overlay as the
         // between-questions transition). Suspense music starts when it clears.
-        const phrases = t('show.startPhrases', { returnObjects: true });
-        const list = Array.isArray(phrases) ? (phrases as string[]) : [];
-        const phrase = list.length ? list[Math.floor(Math.random() * list.length)] : '';
+            const phrase = randomPhrase(t, 'show.startPhrases');
         setTransition({ prize: data.ladder[data.currentStep - 1], phrase });
         window.setTimeout(() => {
           setTransition(null);
+          setSpeech(randomPhrase(t, 'show.host.newQuestion'));
           startMusic();
         }, 2600);
       } else {
@@ -302,7 +330,11 @@ export default function ShowPage() {
   const pick = (index: number) => {
     if (reveal || submitting) return;
     sfxSelect();
-    setSelected((cur) => (cur === index ? null : index));
+    setSelected((cur) => {
+      const next = cur === index ? null : index;
+      if (next !== null) setSpeech(randomPhrase(t, 'show.host.ask'));
+      return next;
+    });
   };
 
   const confirmAnswer = async () => {
@@ -319,6 +351,7 @@ export default function ShowPage() {
       if (res.ok) {
         stopMusic();
         if (data.correct) sfxCorrect(); else sfxWrong();
+        setSpeech(randomPhrase(t, data.correct ? 'show.host.correct' : 'show.host.wrong'));
         setSelected(null);
         setDetailOpen(false);
         setReveal({
@@ -360,15 +393,14 @@ export default function ShowPage() {
     }
     setReveal(null);
     // Between-questions transition: a host phrase + the next prize, then advance.
-    const phrases = t('show.transitionPhrases', { returnObjects: true });
-    const list = Array.isArray(phrases) ? (phrases as string[]) : [];
-    const phrase = list.length ? list[Math.floor(Math.random() * list.length)] : '';
+    const phrase = randomPhrase(t, 'show.transitionPhrases');
     setTransition({ prize: next.ladder[next.currentStep - 1], phrase });
     window.setTimeout(() => {
       resetQuestionAids();
       setQuestionDeadline(next.question?.secondsLeft);
       setRun(next);
       setTransition(null);
+      setSpeech(randomPhrase(t, 'show.host.newQuestion'));
       startMusic();
     }, 1600);
   };
@@ -385,6 +417,7 @@ export default function ShowPage() {
       if (res.ok) {
         stopMusic();
         sfxWrong();
+        setSpeech(randomPhrase(t, 'show.host.timeout'));
         setSelected(null);
         setDetailOpen(false);
         setReveal({
@@ -402,7 +435,7 @@ export default function ShowPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [run, reveal, submitting]);
+  }, [run, reveal, submitting, t]);
 
   // Per-question countdown: (re)starts on each fresh question, pauses on reveal /
   // transition, and fires the server timeout when it hits zero.
@@ -414,12 +447,20 @@ export default function ShowPage() {
     const dl = questionDeadline.current ?? Date.now() + (run?.question?.secondsLeft ?? QUESTION_SECONDS) * 1000;
     const tick = () => setTimeLeft(Math.max(0, Math.round((dl - Date.now()) / 1000)));
     tick();
-    const id = window.setInterval(tick, 250);
+    let urged = false;
+    const id = window.setInterval(() => {
+      tick();
+      if (!urged && dl - Date.now() <= TIMER_DANGER * 1000) {
+        urged = true;
+        setSpeech(randomPhrase(t, 'show.host.hurry'));
+      }
+    }, 250);
     return () => window.clearInterval(id);
-  }, [timerActive, run?.runId, run?.currentStep, run?.question?.secondsLeft]);
+  }, [timerActive, run?.runId, run?.currentStep, run?.question?.secondsLeft, t]);
   useEffect(() => {
     if (timerActive && timeLeft === 0) handleTimeout();
   }, [timeLeft, timerActive, handleTimeout]);
+
 
   const stop = async () => {
     if (!run || reveal || submitting) return;
@@ -485,19 +526,27 @@ export default function ShowPage() {
         return;
       }
       sfxLifeline();
+      setScene({ type, hint: type === 'students' ? data.hint : undefined });
       setRun((r) => (r ? { ...r, usedLifelines: data.usedLifelines } : r));
       if (type === 'fifty' && data.removedIndices) {
         setCardCut(data.removedIndices);
         setPicked(null);
+        setSpeech(t('show.host.fifty', { count: data.removedIndices.length }));
       } else if (type === 'audience' && data.distribution) {
         setAudience(data.distribution);
+        setSpeech(randomPhrase(t, 'show.host.audience'));
       } else if (type === 'students') {
         if (data.distribution) setAudience(data.distribution);
-        setStudentsHint(data.hint ?? null);
+        // Their pick is the option they backed most.
+        const top = data.distribution
+          ? data.distribution.indexOf(Math.max(...data.distribution))
+          : -1;
+        if (top >= 0) setSpeech(t('show.host.students', { letter: LETTERS[top] }));
       } else if (type === 'skip' && data.question) {
         resetQuestionAids();
         setQuestionDeadline(data.question.secondsLeft);
         setRun((r) => (r ? { ...r, question: data.question!, usedLifelines: data.usedLifelines } : r));
+        setSpeech(randomPhrase(t, 'show.host.skip'));
       }
     } catch {
       setErrorMsg(t('show.errorGeneric'));
@@ -512,9 +561,18 @@ export default function ShowPage() {
     setPicked(i);
     setHidden(cardCut);
   };
-  const cardsDone = cardCut ? picked !== null : true;
+  // Once a card is flipped there is nothing left to decide, so the cut is held
+  // on screen long enough to read and then the modal dismisses itself.
+  useEffect(() => {
+    if (!cardCut || picked === null) return;
+    const id = setTimeout(() => {
+      setCardCut(null);
+      setPicked(null);
+    }, 3000);
+    return () => clearTimeout(id);
+  }, [cardCut, picked]);
 
-  // Close the card modal with Escape once a card has been flipped.
+  // Escape closes it early, once a card has been flipped.
   useEffect(() => {
     if (!cardCut) return;
     const onKey = (e: KeyboardEvent) => {
@@ -751,7 +809,8 @@ export default function ShowPage() {
         document.body
       )}
 
-      {mounted && cardCut && createPortal(
+      {/* Held back until the cutscene has passed — the cut is already in state. */}
+      {mounted && cardCut && !scene && createPortal(
         <div className="show-cards-overlay" role="dialog" aria-modal="true" aria-label={t('show.cards.title')}>
           <div className="show-cards-box">
             <h3 className="show-cards-title">{t('show.cards.title')}</h3>
@@ -793,14 +852,6 @@ export default function ShowPage() {
                 );
               })}
             </div>
-            <button
-              type="button"
-              className="btn btn-primary show-cards-close"
-              onClick={() => { setCardCut(null); setPicked(null); }}
-              disabled={!cardsDone}
-            >
-              {t('show.cards.close')}
-            </button>
           </div>
         </div>,
         document.body
@@ -808,6 +859,7 @@ export default function ShowPage() {
 
       <div className="show-layout">
         <ShowHost
+          speech={speech}
           mood={
             reveal ? (reveal.correct ? 'correct' : 'wrong')
               : timeLeft <= TIMER_DANGER ? 'scared'
@@ -875,10 +927,6 @@ export default function ShowPage() {
             </button>
           )}
 
-          {studentsHint && !reveal && (
-            <p className="show-hint"><GraduationCap size={16} /> {studentsHint}</p>
-          )}
-
           {reveal ? (
             <div className={`show-reveal ${reveal.correct ? 'is-correct' : 'is-wrong'}`}>
               <p className="show-reveal-verdict">
@@ -911,7 +959,7 @@ export default function ShowPage() {
                   return (
                     <button
                       key={type}
-                      className={`show-lifeline ${used ? 'is-used' : ''}`}
+                      className={`show-lifeline show-lifeline--${type} ${used ? 'is-used' : ''}`}
                       disabled={used || !!lifelineBusy}
                       onClick={() => spendLifeline(type)}
                       title={t(`show.lifeline.${type}`)}
@@ -924,9 +972,8 @@ export default function ShowPage() {
                 })}
               </div>
               )}
-              <button onClick={stop} disabled={submitting || run.currentStep === 1} className="btn btn-secondary show-stop-btn">
-                <HandCoins size={18} /> {t('show.stopWith', { prize: formatPrize(run.securedPrize) })}
-              </button>
+              {/* Stopping lives under the ladder — the prize it names is the
+                  one the ladder is showing. Quitting stays here, quiet. */}
               <button
                 onClick={() => setQuitOpen(true)}
                 disabled={submitting}
@@ -959,8 +1006,31 @@ export default function ShowPage() {
               );
             })}
           </ol>
+          {!reveal && (
+            <button onClick={stop} disabled={submitting || run.currentStep === 1} className="btn btn-secondary show-stop-btn">
+              <HandCoins size={16} />
+              <span>{t('show.stopLabel')}</span>
+              <strong>{formatPrize(run.securedPrize)}</strong>
+            </button>
+          )}
         </aside>
       </div>
+
+      {/* Aid cutscene: the art sweeps in from the right, holds, and carries on
+          out to the left. Nothing to click — clearing the state when the
+          animation ends is what lets the aid's own flow continue. */}
+      {mounted && scene && createPortal(
+        <div className={`show-scene-overlay${scene.hint ? ' has-hint' : ''}`} aria-hidden="true">
+          <div
+            className={`show-scene-card is-${scene.type}`}
+            onAnimationEnd={() => setScene(null)}
+          >
+            <ShowLifelineScene type={scene.type} />
+            {scene.hint && <p className="show-scene-hint">{scene.hint}</p>}
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {mounted && detailOpen && reveal?.explanationLong && createPortal(
         <div className="modal-overlay" onClick={() => setDetailOpen(false)}>

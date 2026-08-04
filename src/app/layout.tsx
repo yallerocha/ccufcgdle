@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 };
 
 const FONTS_URL =
-  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap';
+  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&family=Pixelify+Sans:wght@400;600&display=swap';
 
 export default function RootLayout({
   children,

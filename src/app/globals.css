@@ -4,6 +4,7 @@
 :root {
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Fira Code', monospace;
+  --font-pixel: 'Pixelify Sans', 'Courier New', monospace;
 
   /* Brand palette (shared across themes) */
   --brand-teal: #4ab5c4;
@@ -4150,19 +4151,22 @@ a:focus-visible,
 @media (max-width: 920px) {
   .show-layout { grid-template-columns: 1fr; }
   .show-main, .show-ladder { grid-column: auto; }
-  /* The full 15-rung ladder would push the question below the fold on phones. */
-  .show-ladder { display: none; }
 }
 
 /* ── Host: pixel-art presenter, left column of the playing layout ─────────── */
 /* Studio-monitor frame. It stays put; only the sprite inside bobs, which is
    what stops the character reading as floating in empty space. */
-.show-host-frame {
+.show-host-col {
   grid-column: 1;
   justify-self: end;
   align-self: start;
   position: sticky;
   top: 1rem;
+  width: 192px;
+  pointer-events: none;
+  user-select: none;
+}
+.show-host-frame {
   width: 192px;   /* 48x57 sprite at 4px per pixel */
   height: 224px;  /* 4px shorter than the sprite: the bob rides up into it */
   display: flex;
@@ -4178,11 +4182,11 @@ a:focus-visible,
   pointer-events: none;
   user-select: none;
 }
-.show-host-frame.is-correct {
+.is-correct .show-host-frame {
   border-color: rgba(255, 210, 74, 0.45);
   box-shadow: inset 0 1px 0 rgba(255, 210, 74, 0.2), 0 0 20px rgba(255, 210, 74, 0.28);
 }
-.show-host-frame.is-wrong { filter: saturate(0.7); }
+.is-wrong .show-host-frame { filter: saturate(0.7); }
 
 .show-host {
   display: block;
@@ -4207,10 +4211,53 @@ a:focus-visible,
   from { transform: translateX(-1px); }
   to { transform: translateX(1px); }
 }
-.show-host-frame.is-scared {
+.is-scared .show-host-frame {
   border-color: rgba(222, 93, 96, 0.5);
   box-shadow: inset 0 1px 0 rgba(222, 93, 96, 0.2), 0 0 18px rgba(222, 93, 96, 0.3);
 }
+
+/* Speech bubble under the host window. No border, so the tail is a single
+   triangle in the fill colour; the background is lifted off the page a little
+   to keep the box readable without an outline. */
+.show-host-speech {
+  position: relative;
+  /* Clear of the window: the tail tip stops short of the frame's edge. */
+  margin: 1.1rem 0 0;
+  padding: 0.6rem 0.7rem;
+  background: #16224f;
+  color: var(--sc-text, #eef3ff);
+  font-family: var(--font-pixel);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  text-align: center;
+  border-radius: 8px;
+  /* The typed span and the sizing ghost stack in the same box. */
+  display: grid;
+  animation: hostSpeechIn 0.18s steps(2, jump-none) both;
+}
+.show-host-speech::before {
+  content: '';
+  position: absolute;
+  left: 34px;
+  top: -9px;
+  margin-left: -6px;
+  border: solid transparent;
+  border-width: 0 6px 9px;
+  border-bottom-color: #16224f;
+}
+@keyframes hostSpeechIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Full line, invisible: it holds the box at its final size so the bubble does
+   not grow line by line while the text types in. */
+.show-host-speech-ghost {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+.show-host-speech > span:first-child { grid-area: 1 / 1; }
+
 
 /* Blink: the shut-lid layer flashes on for ~100ms. Durations are coprime with
    the bob so the blink never lands on the same phase of it. */
@@ -4242,9 +4289,10 @@ a:focus-visible,
 }
 
 /* Column 1 is only real estate on wide screens; below that it would squeeze the board. */
-@media (max-width: 1180px) { .show-host-frame { display: none; } }
+@media (max-width: 1180px) { .show-host-col { display: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .show-host, .show-host .host-blink, .show-host .host-glance { animation: none; }
+  .show-host, .show-host .host-blink, .show-host .host-glance,
+  .show-host-speech { animation: none; }
 }
 
 .show-qmeta {
@@ -4366,21 +4414,6 @@ a:focus-visible,
 /* Tactile press feedback on tap (feedback; subtle, within budget). */
 .show-option:active:not(:disabled) { transform: scale(0.985); }
 
-.show-hint {
-  margin-top: 0.85rem;
-  padding: 0.7rem 1rem;
-  border-radius: 12px;
-  background: rgba(60, 224, 230, 0.08);
-  border: 1px solid rgba(60, 224, 230, 0.28);
-  color: #bff3f6;
-  font-size: 0.9rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  /* Fades in rather than snapping when the "universitários" hint arrives. */
-  animation: scRise 0.3s ease both;
-}
-
 /* ── Reveal ───────────────────────────────────────────────────────────────── */
 .show-reveal {
   margin-top: 1.2rem;
@@ -4448,7 +4481,7 @@ a:focus-visible,
   gap: 0.35rem;
   padding: 0.7rem 0.4rem;
   border-radius: 12px;
-  border: 1px solid rgba(60, 224, 230, 0.22);
+  border: 1px solid var(--lf-soft);
   background: rgba(10, 22, 60, 0.55);
   color: var(--sc-muted);
   cursor: pointer;
@@ -4458,7 +4491,12 @@ a:focus-visible,
   transition: transform 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease, opacity 0.25s ease;
 }
 .show-lifeline:active:not(:disabled) { transform: scale(0.97); }
-.show-lifeline svg { color: var(--sc-tech); }
+/* One accent per aid, so they are told apart by colour and not only by icon. */
+.show-lifeline { --lf: var(--sc-tech); --lf-soft: rgba(60, 224, 230, 0.22); }
+.show-lifeline--fifty { --lf: #dd86c0; --lf-soft: rgba(221, 134, 192, 0.24); }
+.show-lifeline--audience { --lf: #f0a95c; --lf-soft: rgba(240, 169, 92, 0.24); }
+.show-lifeline--students { --lf: #5ed99a; --lf-soft: rgba(94, 217, 154, 0.24); }
+.show-lifeline svg { color: var(--lf); }
 .show-lifeline-count {
   position: absolute;
   top: -7px;
@@ -4479,21 +4517,31 @@ a:focus-visible,
 .show-lifeline.is-used .show-lifeline-count { display: none; }
 .show-lifeline:hover:not(:disabled) {
   transform: translateY(-2px);
-  border-color: var(--sc-tech);
+  border-color: var(--lf);
   color: var(--sc-text);
   box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.55);
 }
 .show-lifeline.is-used { opacity: 0.32; text-decoration: line-through; cursor: default; }
 .show-lifeline.is-used svg { color: var(--sc-muted); }
+/* Stopping sits at the foot of the ladder: the prize it names is the rung the
+   ladder is highlighting, so the two belong together. */
 .show-stop-btn {
   width: 100%;
   justify-content: center;
+  /* Wraps between the label and the prize, never inside the money value. */
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.82rem;
   font-weight: 700;
+  line-height: 1.35;
   color: var(--sc-gold);
   background: rgba(255, 210, 74, 0.06);
-  border: 1px solid var(--sc-gold);
+  border: 1px solid rgba(255, 210, 74, 0.55);
 }
-.show-stop-btn:hover:not(:disabled) { background: rgba(255, 210, 74, 0.14); }
+.show-stop-btn strong { font-family: var(--font-mono); font-weight: 800; }
+.show-stop-btn:hover:not(:disabled) { background: rgba(255, 210, 74, 0.14); border-color: var(--sc-gold); }
 
 /* ── Prize ladder / money tree ────────────────────────────────────────────── */
 .show-ladder {
@@ -4547,6 +4595,23 @@ a:focus-visible,
 }
 .show-rung.is-current .show-rung-step,
 .show-rung.is-current .show-rung-prize { color: #1a1200; }
+
+/* Phones: the full 15-rung ladder would push the question below the fold, so
+   only the rungs go — the aside stays, stripped of its panel, for the stop
+   button it now holds. Placed after the rules above so it actually wins. */
+@media (max-width: 920px) {
+  .show-ladder-title, .show-ladder-list { display: none; }
+  .show-ladder {
+    width: 100%;
+    justify-self: stretch;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+    position: static;
+  }
+  .show-stop-btn { margin-top: 0; }
+}
 
 /* ── Result modal prize ───────────────────────────────────────────────────── */
 .show-result-prize {
@@ -4828,6 +4893,72 @@ input:focus, select:focus, textarea:focus {
   100% { opacity: 0; transform: scale(1.04) translateY(-6px); }
 }
 /* Card lifeline modal */
+/* ── Lifeline cutscene ────────────────────────────────────────────────────── */
+/* Above the cards overlay (z 950): spending "cartas" opens both, and the scene
+   plays first. Nothing here is interactive — it clears itself when it ends. */
+.show-scene-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 980;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The art travels past both edges, so it must not widen the page. */
+  overflow: hidden;
+  background: rgba(3, 7, 20, 0.82);
+  backdrop-filter: blur(4px);
+  /* Inherited by the card, so the dim and the pass always run in step. */
+  --scene-dur: 2.1s;
+  animation: showSceneDim var(--scene-dur) ease both;
+}
+/* A scene carrying advice has to be readable, not just seen. */
+.show-scene-overlay.has-hint { --scene-dur: 4.6s; }
+@keyframes showSceneDim {
+  0% { opacity: 0; }
+  12%, 88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.show-scene-card {
+  width: min(460px, 84vw);
+  border: 2px solid var(--lf, var(--sc-gold));
+  border-radius: 14px;
+  overflow: hidden;
+  line-height: 0;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
+  animation: showScenePass var(--scene-dur) ease-in-out both;
+}
+@keyframes showScenePass {
+  0% { transform: translateX(115vw); }
+  26%, 74% { transform: translateX(0); }
+  100% { transform: translateX(-115vw); }
+}
+.show-scene-art { display: block; width: 100%; height: auto; }
+.show-scene-hint {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-top: 2px solid var(--lf, var(--sc-gold));
+  background: rgba(6, 12, 34, 0.96);
+  color: var(--sc-text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  text-align: center;
+}
+/* Same accents as the aid buttons, so the two are visibly the same thing. */
+.show-scene-card.is-fifty { --lf: #dd86c0; }
+.show-scene-card.is-skip { --lf: var(--sc-tech); }
+.show-scene-card.is-audience { --lf: #f0a95c; }
+.show-scene-card.is-students { --lf: #5ed99a; }
+/* Reduced motion still needs an animation of the same length: its end event is
+   what dismisses the cutscene and resumes the aid. */
+@media (prefers-reduced-motion: reduce) {
+  .show-scene-card { animation: showSceneHold var(--scene-dur) ease both; }
+  @keyframes showSceneHold {
+    0% { opacity: 0; }
+    12%, 88% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+
 .show-cards-overlay {
   position: fixed;
   inset: 0;
@@ -4934,7 +5065,6 @@ input:focus, select:focus, textarea:focus {
 .show-card-center svg { color: inherit; opacity: 0.85; }
 .show-card-center em { font-style: normal; font-weight: 800; font-size: 1.1rem; }
 .show-card.is-dimmed { opacity: 0.4; }
-.show-cards-close:disabled { opacity: 0.45; cursor: default; }
 
 .show-transition {
   position: fixed;
@@ -5072,7 +5202,6 @@ input:focus, select:focus, textarea:focus {
   .show-option,
   .show-option.is-selected,
   .show-option.is-correct,
-  .show-hint,
   .show-result-badge,
   .podium-col:nth-child(2)::before,
   .show-intro-card,

@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 /**
  * Auditorium host, 16-bit style pixel art. The sprite is a 48x57 char grid
  * drawn as SVG rects — one source row is one row of pixels, each letter a
@@ -182,23 +184,55 @@ const rects = (row: string, y: number) =>
     <rect key={`${y}-${x}`} x={x} y={y} width={w} height={1} fill={PALETTE[ch]} />
   ));
 
-export function ShowHost({ mood }: { mood: HostMood }) {
+function Typewriter({ text }: { text: string }) {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    // Reduced motion still types, just fast enough not to read as motion.
+    const step = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 26;
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setShown(i);
+      if (i >= text.length) clearInterval(id);
+    }, step);
+    return () => clearInterval(id);
+  }, [text]);
+  // The full line is kept in the DOM but hidden, so the bubble is sized from
+  // the start and does not grow line by line while it types.
+  return (
+    <>
+      <span aria-hidden="true">{text.slice(0, shown)}</span>
+      <span className="show-host-speech-ghost">{text}</span>
+    </>
+  );
+}
+
+export function ShowHost({ mood, speech }: { mood: HostMood; speech?: string | null }) {
   const overrides = MOOD_ROWS[mood];
   return (
-    // The frame holds still and the sprite bobs inside it, so the character
-    // does not read as floating in empty space.
-    <div className={`show-host-frame is-${mood}`} aria-hidden="true">
-      <svg className="show-host" viewBox="0 0 48 57" shapeRendering="crispEdges">
-        {SPRITE.map((base, y) => rects(overrides[y] ?? base, y))}
-        {/* Both overlays sit on top of the open eyes and are flashed by CSS.
-            Blink is rendered last so it wins if the two ever coincide. */}
-        <g className="host-glance">
-          {Object.entries(GLANCE_ROWS).map(([y, row]) => rects(row, Number(y)))}
-        </g>
-        <g className="host-blink">
-          {Object.entries(BLINK_ROWS).map(([y, row]) => rects(row, Number(y)))}
-        </g>
-      </svg>
+    <div className={`show-host-col is-${mood}`}>
+      {/* The frame holds still and the sprite bobs inside it, so the character
+          does not read as floating in empty space. */}
+      <div className="show-host-frame" aria-hidden="true">
+        <svg className="show-host" viewBox="0 0 48 57" shapeRendering="crispEdges">
+          {SPRITE.map((base, y) => rects(overrides[y] ?? base, y))}
+          {/* Both overlays sit on top of the open eyes and are flashed by CSS.
+              Blink is rendered last so it wins if the two ever coincide. */}
+          <g className="host-glance">
+            {Object.entries(GLANCE_ROWS).map(([y, row]) => rects(row, Number(y)))}
+          </g>
+          <g className="host-blink">
+            {Object.entries(BLINK_ROWS).map(([y, row]) => rects(row, Number(y)))}
+          </g>
+        </svg>
+      </div>
+      {/* Announced politely rather than interrupting: the board is the primary
+          content, the host is commentary. */}
+      {speech && (
+        <p className="show-host-speech" role="status">
+          <Typewriter text={speech} key={speech} />
+        </p>
+      )}
     </div>
   );
 }
