@@ -41,6 +41,10 @@ export const ALL_LIFELINES: LifelineType[] = ['fifty', 'skip', 'audience', 'stud
 // How many times each lifeline can be spent in a run. Most are once; "skip" is
 // generous (up to 3). Encoded by repeating the type in the usedLifelines CSV.
 export const LIFELINE_USES: Record<LifelineType, number> = { fifty: 1, skip: 3, audience: 1, students: 1 };
+// Aids that help answer the question in front of the player — at most one of
+// these per question. "skip" is outside the rule: it hands over a different
+// question rather than helping with this one, so it can be paired with an aid.
+export const ANSWER_AIDS: LifelineType[] = ['fifty', 'audience', 'students'];
 
 export type ShowStatus = 'playing' | 'won' | 'stopped' | 'lost' | 'abandoned';
 
@@ -63,6 +67,7 @@ export interface ShowRunView {
   securedPrize: number; // amount banked if the player stops right now
   ladder: number[];
   usedLifelines: LifelineType[];
+  answerAidUsed: boolean; // this question's single answer aid is already spent
   question: ShowQuestionView | null; // null once the run has ended
   // On-screen effect of single-use aids already spent ON THE CURRENT step, so a
   // reload restores them (eliminated options, audience/students results).
@@ -140,22 +145,32 @@ function parseIds(csv: string): string[] {
   return csv ? csv.split(',') : [];
 }
 
-// Tokens are `type` or `type@step` (the step it was spent on, used to restore the
-// aid's on-screen effect after a reload). This strips the step for the used-count.
+// Tokens are `type@step:questionId` — the step and the exact question the aid was
+// spent on. Older rows may carry `type` or `type@step`; those still parse for the
+// used-count, they just can't be tied back to a question.
 function parseLifelines(csv: string): LifelineType[] {
   return csv ? csv.split(',').map((t) => t.split('@')[0] as LifelineType) : [];
 }
 
-// The step a single-use aid was spent on (null if unused or a legacy token).
-function lifelineStep(csv: string, type: LifelineType): number | null {
+// The question a single-use aid was spent on (null if unused or a legacy token).
+// Keyed by question rather than step because "skip" swaps the question while
+// staying on the same rung — the skipped question's aids must not carry over.
+function lifelineQuestion(csv: string, type: LifelineType): string | null {
   for (const tok of csv ? csv.split(',') : []) {
-    const [t, s] = tok.split('@');
-    if (t === type) {
-      const n = Number(s);
-      return Number.isFinite(n) ? n : null;
-    }
+    const [t, rest] = tok.split('@');
+    if (t === type) return rest?.split(':')[1] ?? null;
   }
   return null;
+}
+
+// Which aids have already been spent on this exact question.
+export function aidsOnQuestion(csv: string, questionId: string): LifelineType[] {
+  const out: LifelineType[] = [];
+  for (const tok of csv ? csv.split(',') : []) {
+    const [t, rest] = tok.split('@');
+    if (rest && rest.split(':')[1] === questionId) out.push(t as LifelineType);
+  }
+  return out;
 }
 
 // A small seeded PRNG (FNV-1a hash of the seed → mulberry32). Deterministic, so
@@ -241,7 +256,7 @@ function toView(run: RunRow): ShowRunView {
     const correctDisplayed = optionPerm(run.id, q.id, q.options.length).indexOf(q.answer);
     const merged: AidResult = {};
     for (const type of ['fifty', 'audience', 'students'] as const) {
-      if (lifelineStep(run.usedLifelines, type) === run.currentStep) {
+      if (lifelineQuestion(run.usedLifelines, type) === q.id) {
         Object.assign(merged, resolveAid(type, run.id, q, correctDisplayed));
       }
     }
@@ -255,6 +270,7 @@ function toView(run: RunRow): ShowRunView {
     securedPrize: run.prize,
     ladder: PRIZE_LADDER,
     usedLifelines: parseLifelines(run.usedLifelines),
+    answerAidUsed: !!q && aidsOnQuestion(run.usedLifelines, q.id).some((a) => ANSWER_AIDS.includes(a)),
     question: playing
       ? questionView(ids[run.currentStep - 1], run.currentStep, run.id, secondsLeftFor(run.stepStartedAt))
       : null,
@@ -525,6 +541,11 @@ export async function useLifeline(
   const ids = parseIds(run.questionIds);
   const q = QUESTION_BY_ID.get(ids[run.currentStep - 1]);
   if (!q) return { error: 'bad-state' };
+  // One answer aid per question. Skipping is exempt, and the question it hands
+  // over gets a fresh allowance because tokens are keyed by question id.
+  if (ANSWER_AIDS.includes(type) && aidsOnQuestion(run.usedLifelines, q.id).some((a) => ANSWER_AIDS.includes(a))) {
+    return { error: 'one-per-question' };
+  }
 
   const result: LifelineResult = { type, usedLifelines: [...used, type] };
   let questionIds = run.questionIds;
@@ -552,9 +573,9 @@ export async function useLifeline(
     }
   }
 
-  // Append `type@step` so a reload can tell which step the aid was spent on and
-  // restore its on-screen effect (deterministic via resolveAid).
-  const newToken = `${type}@${run.currentStep}`;
+  // Append `type@step:questionId` so a reload can tell which question the aid was
+  // spent on and restore its on-screen effect (deterministic via resolveAid).
+  const newToken = `${type}@${run.currentStep}:${q.id}`;
   const newCsv = run.usedLifelines ? `${run.usedLifelines},${newToken}` : newToken;
   await prisma.showRun.update({
     where: { id: run.id },

@@ -43,6 +43,7 @@ interface ShowRun {
   securedPrize: number;
   ladder: number[];
   usedLifelines: LifelineType[];
+  answerAidUsed: boolean;
   question: ShowQuestion | null;
   // Effect of single-use aids already spent on the current step (for reload restore).
   aids?: { removedIndices?: number[]; distribution?: number[]; pick?: number };
@@ -119,6 +120,20 @@ export default function ShowPage() {
   // What the host is saying under his window. Stays until the next event
   // replaces it, so there is always something to read.
   const [speech, setSpeech] = useState<string | null>(null);
+  // What an aid actually does waits here while its cutscene plays: the board is
+  // covered, so anything applied now happens where nobody can see it.
+  const pendingEffect = useRef<(() => void) | null>(null);
+  // Consume before running: an effect is allowed to queue the next one, which is
+  // how the cards aid holds its line back until the picker is done.
+  const flushPending = useCallback(() => {
+    const next = pendingEffect.current;
+    pendingEffect.current = null;
+    next?.();
+  }, []);
+  const closeScene = useCallback(() => {
+    setScene(null);
+    flushPending();
+  }, [flushPending]);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [result, setResult] = useState<ShowRun | null>(null);
@@ -144,7 +159,7 @@ export default function ShowPage() {
   // stage is immersive, like the real show). The class drives CSS in globals.
   // Escape closes the long-explanation modal and the board behind it stops scrolling.
   useModalDismiss(detailOpen, () => setDetailOpen(false));
-  useModalDismiss(!!scene, () => setScene(null));
+  useModalDismiss(!!scene, closeScene);
   // Lines clear themselves, so the host is not left holding a stale comment.
   // Long ones stay up longer: the bubble types at ~26ms a character.
   useEffect(() => {
@@ -158,9 +173,9 @@ export default function ShowPage() {
   // would trap the run, so time it out a little past the animation's length.
   useEffect(() => {
     if (!scene) return;
-    const id = setTimeout(() => setScene(null), 5500);
+    const id = setTimeout(closeScene, 5500);
     return () => clearTimeout(id);
-  }, [scene]);
+  }, [scene, closeScene]);
 
   const playing = !!run && run.status === 'playing';
   useEffect(() => {
@@ -239,6 +254,8 @@ export default function ShowPage() {
   const [audience, setAudience] = useState<number[] | null>(null);
   // Option index the students backed, marked with a cap on the board.
   const [studentsPick, setStudentsPick] = useState<number | null>(null);
+  // One answer aid per question ("skip" is exempt). Restored from the run on reload.
+  const [answerAidUsed, setAnswerAidUsed] = useState(false);
   const [lifelineBusy, setLifelineBusy] = useState<LifelineType | null>(null);
   // Card lifeline (former 50:50): 4 cards, the player flips ONE. The server sends
   // the actual cut (removedIndices, 1–4 wrong options); flipping reveals & applies it.
@@ -261,6 +278,7 @@ export default function ShowPage() {
     setHidden([]);
     setAudience(null);
     setStudentsPick(null);
+    setAnswerAidUsed(false);
     setSelected(null);
     setQuitOpen(false);
     setCardCut(null);
@@ -283,6 +301,7 @@ export default function ShowPage() {
           if (data.aids?.removedIndices) setHidden(data.aids.removedIndices);
           if (data.aids?.distribution) setAudience(data.aids.distribution);
           if (data.aids?.pick !== undefined) setStudentsPick(data.aids.pick);
+          setAnswerAidUsed(data.answerAidUsed);
         } else localStorage.removeItem(RUN_KEY);
       })
       .catch(() => localStorage.removeItem(RUN_KEY));
@@ -530,23 +549,42 @@ export default function ShowPage() {
         return;
       }
       sfxLifeline();
+      if (type !== 'skip') setAnswerAidUsed(true);
       setScene(type);
       setRun((r) => (r ? { ...r, usedLifelines: data.usedLifelines } : r));
+      // The aid lands when the cutscene lifts. For "skip" that also matters to
+      // the clock: starting the new question's countdown now would burn those
+      // seconds behind the overlay. The server's own timer has a 15s grace, so
+      // the few seconds of drift this introduces are well inside it.
       if (type === 'fifty' && data.removedIndices) {
-        setCardCut(data.removedIndices);
-        setPicked(null);
-        setSpeech(t('show.host.fifty', { count: data.removedIndices.length }));
+        const cut = data.removedIndices;
+        pendingEffect.current = () => {
+          setCardCut(cut);
+          setPicked(null);
+          // Announcing the count here would give away the flip before the player
+          // makes it, so the line queues for when the picker closes.
+          pendingEffect.current = () => setSpeech(t('show.host.fifty', { count: cut.length }));
+        };
       } else if (type === 'audience' && data.distribution) {
-        setAudience(data.distribution);
-        setSpeech(randomPhrase(t, 'show.host.audience'));
+        const dist = data.distribution;
+        pendingEffect.current = () => {
+          setAudience(dist);
+          setSpeech(randomPhrase(t, 'show.host.audience'));
+        };
       } else if (type === 'students' && data.pick !== undefined) {
-        setStudentsPick(data.pick);
-        setSpeech(t('show.host.students', { letter: LETTERS[data.pick] }));
+        const pick = data.pick;
+        pendingEffect.current = () => {
+          setStudentsPick(pick);
+          setSpeech(t('show.host.students', { letter: LETTERS[pick] }));
+        };
       } else if (type === 'skip' && data.question) {
-        resetQuestionAids();
-        setQuestionDeadline(data.question.secondsLeft);
-        setRun((r) => (r ? { ...r, question: data.question!, usedLifelines: data.usedLifelines } : r));
-        setSpeech(randomPhrase(t, 'show.host.skip'));
+        const next = data.question;
+        pendingEffect.current = () => {
+          resetQuestionAids();
+          setQuestionDeadline(next.secondsLeft);
+          setRun((r) => (r ? { ...r, question: next, usedLifelines: data.usedLifelines } : r));
+          setSpeech(randomPhrase(t, 'show.host.skip'));
+        };
       }
     } catch {
       setErrorMsg(t('show.errorGeneric'));
@@ -561,29 +599,29 @@ export default function ShowPage() {
     setPicked(i);
     setHidden(cardCut);
   };
+  const closeCards = useCallback(() => {
+    setCardCut(null);
+    setPicked(null);
+    flushPending();
+  }, [flushPending]);
+
   // Once a card is flipped there is nothing left to decide, so the cut is held
   // on screen long enough to read and then the modal dismisses itself.
   useEffect(() => {
     if (!cardCut || picked === null) return;
-    const id = setTimeout(() => {
-      setCardCut(null);
-      setPicked(null);
-    }, 3000);
+    const id = setTimeout(closeCards, 3000);
     return () => clearTimeout(id);
-  }, [cardCut, picked]);
+  }, [cardCut, picked, closeCards]);
 
   // Escape closes it early, once a card has been flipped.
   useEffect(() => {
     if (!cardCut) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && picked !== null) {
-        setCardCut(null);
-        setPicked(null);
-      }
+      if (e.key === 'Escape' && picked !== null) closeCards();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [cardCut, picked]);
+  }, [cardCut, picked, closeCards]);
 
   const toggleSound = () => {
     const m = toggleMuted();
@@ -809,8 +847,7 @@ export default function ShowPage() {
         document.body
       )}
 
-      {/* Held back until the cutscene has passed — the cut is already in state. */}
-      {mounted && cardCut && !scene && createPortal(
+      {mounted && cardCut && createPortal(
         <div className="show-cards-overlay" role="dialog" aria-modal="true" aria-label={t('show.cards.title')}>
           <div className="show-cards-box">
             <h3 className="show-cards-title">{t('show.cards.title')}</h3>
@@ -960,12 +997,16 @@ export default function ShowPage() {
               <div className="show-lifelines">
                 {LIFELINES.map(({ type, icon: Icon }) => {
                   const left = usesLeft(run.usedLifelines, type);
+                  // Struck through when the run is out of them; merely disabled
+                  // when this question's answer aid is spent — skipping is still
+                  // allowed, it moves on rather than helping with this question.
                   const used = left <= 0;
+                  const blocked = answerAidUsed && type !== 'skip';
                   return (
                     <button
                       key={type}
                       className={`show-lifeline show-lifeline--${type} ${used ? 'is-used' : ''}`}
-                      disabled={used || !!lifelineBusy}
+                      disabled={used || blocked || !!lifelineBusy}
                       onClick={() => spendLifeline(type)}
                       title={t(`show.lifeline.${type}`)}
                     >
@@ -1026,7 +1067,7 @@ export default function ShowPage() {
           animation ends is what lets the aid's own flow continue. */}
       {mounted && scene && createPortal(
         <div className="show-scene-overlay" aria-hidden="true">
-          <div className={`show-scene-card is-${scene}`} onAnimationEnd={() => setScene(null)}>
+          <div className={`show-scene-card is-${scene}`} onAnimationEnd={closeScene}>
             <ShowLifelineScene type={scene} />
           </div>
         </div>,

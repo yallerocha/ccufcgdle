@@ -8,6 +8,8 @@ import {
   guaranteedFloor,
   pickLadder,
   resolveAid,
+  aidsOnQuestion,
+  ANSWER_AIDS,
   PRIZE_LADDER,
   LADDER_SIZE,
   LIFELINE_USES,
@@ -183,6 +185,29 @@ test('the crowd can be fooled: the peak is not always the correct option', () =>
   }
   assert.ok(peakedCorrect > 0, 'usually still points at the correct option');
   assert.ok(peakedWrong > 0, 'but is sometimes fooled onto a wrong option');
+});
+
+// ── one aid per question ─────────────────────────────────────────────────────
+test('aidsOnQuestion only counts aids spent on that exact question', () => {
+  const csv = 'audience@3:q-alpha,skip@3:q-alpha,fifty@4:q-beta';
+  assert.deepStrictEqual(aidsOnQuestion(csv, 'q-alpha'), ['audience', 'skip']);
+  assert.deepStrictEqual(aidsOnQuestion(csv, 'q-beta'), ['fifty']);
+  // A skip swaps the question on the same rung, so the replacement starts clean.
+  assert.deepStrictEqual(aidsOnQuestion(csv, 'q-fresh'), []);
+});
+
+test('skip sits outside the one-answer-aid-per-question rule', () => {
+  assert.ok(!ANSWER_AIDS.includes('skip'), 'skipping moves on, it does not answer');
+  for (const t of ANSWER_AIDS) assert.ok(ALL_LIFELINES.includes(t));
+  // An aid plus a skip on the same question is allowed; two aids are not.
+  const spent = aidsOnQuestion('audience@3:q-alpha,skip@3:q-alpha', 'q-alpha');
+  assert.strictEqual(spent.filter((a) => ANSWER_AIDS.includes(a)).length, 1);
+});
+
+test('aidsOnQuestion ignores legacy tokens that carry no question', () => {
+  for (const csv of ['audience', 'audience@3', 'audience,skip@2']) {
+    assert.deepStrictEqual(aidsOnQuestion(csv, 'q-alpha'), [], csv);
+  }
 });
 
 // ── lifeline uses ────────────────────────────────────────────────────────────
