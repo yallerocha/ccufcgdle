@@ -444,8 +444,8 @@ export interface LifelineResult {
   type: LifelineType;
   usedLifelines: LifelineType[];
   removedIndices?: number[]; // fifty
-  distribution?: number[]; // audience/students — percentage per option (sums 100)
-  hint?: string; // students
+  distribution?: number[]; // audience — percentage per option (sums 100)
+  pick?: number; // students
   question?: ShowQuestionView; // skip — the replacement question
 }
 
@@ -474,8 +474,8 @@ function biasedDistribution(count: number, correctIndex: number, correctShare: n
 // (run, question) pair so it can be recomputed on resume without persisting it.
 export interface AidResult {
   removedIndices?: number[]; // fifty (cards)
-  distribution?: number[]; // audience/students
-  hint?: string; // students
+  distribution?: number[]; // audience — percentage per option
+  pick?: number; // students — the single option they backed
 }
 
 export function resolveAid(type: LifelineType, runId: string, q: QuizQuestion, correctDisplayed: number): AidResult {
@@ -504,12 +504,7 @@ export function resolveAid(type: LifelineType, runId: string, q: QuizQuestion, c
   }
   if (type === 'students') {
     const fooled = rng() < foolChance * 0.6; // students are fooled less often
-    const target = fooled ? pickWrong() : correctDisplayed;
-    const share = fooled ? 44 + Math.floor(rng() * 12) // 44–55% confident but wrong
-                         : 60 + Math.floor(rng() * 25); // 60–84% confidence
-    const distribution = biasedDistribution(n, target, share, rng);
-    const letter = String.fromCharCode(65 + target);
-    return { distribution, hint: `A galera dos universitários fechou na alternativa ${letter} — mas confira você mesmo!` };
+    return { pick: fooled ? pickWrong() : correctDisplayed };
   }
   return {};
 }

@@ -45,7 +45,7 @@ interface ShowRun {
   usedLifelines: LifelineType[];
   question: ShowQuestion | null;
   // Effect of single-use aids already spent on the current step (for reload restore).
-  aids?: { removedIndices?: number[]; distribution?: number[]; hint?: string };
+  aids?: { removedIndices?: number[]; distribution?: number[]; pick?: number };
 }
 
 interface AnswerResult {
@@ -61,7 +61,7 @@ interface LifelineResult {
   usedLifelines: LifelineType[];
   removedIndices?: number[];
   distribution?: number[];
-  hint?: string;
+  pick?: number;
   question?: ShowQuestion;
 }
 
@@ -115,7 +115,7 @@ export default function ShowPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   // The aid cutscene on screen, if any. `hint` is the students' advice, shown
   // inside the card; a scene carrying text holds longer so it can be read.
-  const [scene, setScene] = useState<{ type: LifelineType; hint?: string } | null>(null);
+  const [scene, setScene] = useState<LifelineType | null>(null);
   // What the host is saying under his window. Stays until the next event
   // replaces it, so there is always something to read.
   const [speech, setSpeech] = useState<string | null>(null);
@@ -158,7 +158,7 @@ export default function ShowPage() {
   // would trap the run, so time it out a little past the animation's length.
   useEffect(() => {
     if (!scene) return;
-    const id = setTimeout(() => setScene(null), scene.hint ? 5500 : 3000);
+    const id = setTimeout(() => setScene(null), 5500);
     return () => clearTimeout(id);
   }, [scene]);
 
@@ -237,6 +237,8 @@ export default function ShowPage() {
   // Per-question lifeline UI state (reset when the question changes).
   const [hidden, setHidden] = useState<number[]>([]);
   const [audience, setAudience] = useState<number[] | null>(null);
+  // Option index the students backed, marked with a cap on the board.
+  const [studentsPick, setStudentsPick] = useState<number | null>(null);
   const [lifelineBusy, setLifelineBusy] = useState<LifelineType | null>(null);
   // Card lifeline (former 50:50): 4 cards, the player flips ONE. The server sends
   // the actual cut (removedIndices, 1–4 wrong options); flipping reveals & applies it.
@@ -258,6 +260,7 @@ export default function ShowPage() {
   const resetQuestionAids = () => {
     setHidden([]);
     setAudience(null);
+    setStudentsPick(null);
     setSelected(null);
     setQuitOpen(false);
     setCardCut(null);
@@ -279,6 +282,7 @@ export default function ShowPage() {
           // / students), so a reload doesn't waste a used lifeline.
           if (data.aids?.removedIndices) setHidden(data.aids.removedIndices);
           if (data.aids?.distribution) setAudience(data.aids.distribution);
+          if (data.aids?.pick !== undefined) setStudentsPick(data.aids.pick);
         } else localStorage.removeItem(RUN_KEY);
       })
       .catch(() => localStorage.removeItem(RUN_KEY));
@@ -526,7 +530,7 @@ export default function ShowPage() {
         return;
       }
       sfxLifeline();
-      setScene({ type, hint: type === 'students' ? data.hint : undefined });
+      setScene(type);
       setRun((r) => (r ? { ...r, usedLifelines: data.usedLifelines } : r));
       if (type === 'fifty' && data.removedIndices) {
         setCardCut(data.removedIndices);
@@ -535,13 +539,9 @@ export default function ShowPage() {
       } else if (type === 'audience' && data.distribution) {
         setAudience(data.distribution);
         setSpeech(randomPhrase(t, 'show.host.audience'));
-      } else if (type === 'students') {
-        if (data.distribution) setAudience(data.distribution);
-        // Their pick is the option they backed most.
-        const top = data.distribution
-          ? data.distribution.indexOf(Math.max(...data.distribution))
-          : -1;
-        if (top >= 0) setSpeech(t('show.host.students', { letter: LETTERS[top] }));
+      } else if (type === 'students' && data.pick !== undefined) {
+        setStudentsPick(data.pick);
+        setSpeech(t('show.host.students', { letter: LETTERS[data.pick] }));
       } else if (type === 'skip' && data.question) {
         resetQuestionAids();
         setQuestionDeadline(data.question.secondsLeft);
@@ -913,6 +913,11 @@ export default function ShowPage() {
                 >
                   <span className="show-option-letter">{LETTERS[i]}</span>
                   <span className="show-option-text">{opt}</span>
+                  {studentsPick === i && !reveal && (
+                    <span className="show-option-students" title={t('show.lifeline.students')}>
+                      <GraduationCap size={18} />
+                    </span>
+                  )}
                   {audience && !reveal && (
                     <span className="show-option-pct">{audience[i]}%</span>
                   )}
@@ -1020,13 +1025,9 @@ export default function ShowPage() {
           out to the left. Nothing to click — clearing the state when the
           animation ends is what lets the aid's own flow continue. */}
       {mounted && scene && createPortal(
-        <div className={`show-scene-overlay${scene.hint ? ' has-hint' : ''}`} aria-hidden="true">
-          <div
-            className={`show-scene-card is-${scene.type}`}
-            onAnimationEnd={() => setScene(null)}
-          >
-            <ShowLifelineScene type={scene.type} />
-            {scene.hint && <p className="show-scene-hint">{scene.hint}</p>}
+        <div className="show-scene-overlay" aria-hidden="true">
+          <div className={`show-scene-card is-${scene}`} onAnimationEnd={() => setScene(null)}>
+            <ShowLifelineScene type={scene} />
           </div>
         </div>,
         document.body,

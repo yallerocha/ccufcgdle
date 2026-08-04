@@ -144,16 +144,30 @@ test('cards (fifty) removes 1..n-1 wrong options, never the correct one', () => 
   }
 });
 
-test('audience/students distribution always sums to 100', () => {
+test('audience distribution always sums to 100', () => {
   const q = QUIZ_QUESTIONS[3];
   const correctDisplayed = 0;
-  for (const type of ['audience', 'students'] as const) {
-    for (let i = 0; i < 100; i++) {
-      const { distribution } = resolveAid(type, 'seed-' + i, q, correctDisplayed);
-      assert.ok(distribution);
-      assert.strictEqual(distribution.reduce((a, b) => a + b, 0), 100);
-    }
+  for (let i = 0; i < 100; i++) {
+    const { distribution } = resolveAid('audience', 'seed-' + i, q, correctDisplayed);
+    assert.ok(distribution);
+    assert.strictEqual(distribution.reduce((a, b) => a + b, 0), 100);
   }
+});
+
+test('students back exactly one option, usually the correct one', () => {
+  const q = QUIZ_QUESTIONS[3];
+  const correctDisplayed = 0;
+  let right = 0;
+  let fooled = 0;
+  for (let i = 0; i < 300; i++) {
+    const { pick, distribution } = resolveAid('students', 'seed-' + i, q, correctDisplayed);
+    assert.strictEqual(distribution, undefined, 'no percentages: the board marks a single option');
+    assert.ok(pick !== undefined && pick >= 0 && pick < q.options.length);
+    if (pick === correctDisplayed) right++;
+    else fooled++;
+  }
+  assert.ok(right > fooled, 'the students are right more often than not');
+  assert.ok(fooled > 0, 'but they can still be fooled');
 });
 
 test('the crowd can be fooled: the peak is not always the correct option', () => {
