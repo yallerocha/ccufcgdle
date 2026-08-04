@@ -121,7 +121,7 @@ export default function Navbar() {
             >
               <div className="nav-menu-drawer-header">
                 <Link href="/" className="nav-menu-drawer-brand" onClick={closeMenu} aria-label="O Show da Computação">
-                  <Logo variant="icon" alt="O Show da Computação" style={{ height: '32px', width: 'auto' }} />
+                  <Logo variant="wide" alt="O Show da Computação" style={{ height: '32px', width: 'auto' }} />
                 </Link>
                 <button
                   type="button"
