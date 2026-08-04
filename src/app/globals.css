@@ -4154,6 +4154,86 @@ a:focus-visible,
   .show-ladder { display: none; }
 }
 
+/* ── Host: pixel-art presenter, left column of the playing layout ─────────── */
+/* Studio-monitor frame. It stays put; only the sprite inside bobs, which is
+   what stops the character reading as floating in empty space. */
+.show-host-frame {
+  grid-column: 1;
+  justify-self: end;
+  align-self: start;
+  position: sticky;
+  top: 1rem;
+  width: 192px;   /* 48x57 sprite at 4px per pixel */
+  height: 224px;  /* 4px shorter than the sprite: the bob rides up into it */
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border: 1px solid var(--sc-panel-brd);
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 78% at 50% 12%, rgba(255, 210, 74, 0.16), transparent 62%),
+    linear-gradient(180deg, rgba(11, 22, 56, 0.92), rgba(4, 10, 28, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 210, 74, 0.12), 0 10px 26px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
+.show-host-frame.is-correct {
+  border-color: rgba(255, 210, 74, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 210, 74, 0.2), 0 0 20px rgba(255, 210, 74, 0.28);
+}
+.show-host-frame.is-wrong { filter: saturate(0.7); }
+
+.show-host {
+  display: block;
+  width: 192px;
+  height: 228px;
+  /* The overhang keeps the bottom edge covered while the sprite bobs up. */
+  margin-bottom: -4px;
+  /* Bob by whole sprite pixels — a smooth tween would blur the pixel grid. */
+  animation: hostBob 2.4s steps(2, jump-none) infinite alternate;
+}
+@keyframes hostBob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+.is-tense .show-host { animation-duration: 1s; }
+.is-correct .show-host { animation-duration: 0.5s; }
+.is-wrong .show-host { animation: none; }
+
+/* Blink: the shut-lid layer flashes on for ~100ms. Durations are coprime with
+   the bob so the blink never lands on the same phase of it. */
+.show-host .host-blink {
+  opacity: 0;
+  animation: hostBlink 5.3s infinite;
+}
+@keyframes hostBlink {
+  0%, 95.4% { opacity: 0; }
+  95.5%, 97.4% { opacity: 1; }
+  97.5%, 100% { opacity: 0; }
+}
+/* Wide-eyed on a right answer, so it blinks less; squinting when tense, more. */
+.is-correct .host-blink { animation-duration: 9.1s; }
+.is-tense .host-blink { animation-duration: 3.1s; }
+
+/* Glance: cuts the eyes to the right for ~1.5s, like checking the audience.
+   Off while celebrating, and off when sad because that mood already overrides
+   the same rows with heavy lids. */
+.show-host .host-glance { opacity: 0; }
+.is-idle .host-glance { animation: hostGlance 11s infinite; }
+.is-tense .host-glance { animation: hostGlance 7s infinite; }
+@keyframes hostGlance {
+  0%, 62% { opacity: 0; }
+  63%, 76% { opacity: 1; }
+  77%, 100% { opacity: 0; }
+}
+
+/* Column 1 is only real estate on wide screens; below that it would squeeze the board. */
+@media (max-width: 1180px) { .show-host-frame { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .show-host, .show-host .host-blink, .show-host .host-glance { animation: none; }
+}
+
 .show-qmeta {
   display: flex;
   flex-wrap: wrap;

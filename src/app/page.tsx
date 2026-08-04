@@ -11,6 +11,7 @@ import { formatPrize } from '@/client/lib/format';
 import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { ShowResultModal } from '@/client/components/ShowResultModal';
+import { ShowHost } from '@/client/components/ShowHost';
 import {
   unlockAudio, isMuted, toggleMuted,
   sfxSelect, sfxCorrect, sfxWrong, sfxLifeline, sfxStart, sfxWin, sfxStop,
@@ -797,6 +798,8 @@ export default function ShowPage() {
       )}
 
       <div className="show-layout">
+        <ShowHost mood={reveal ? (reveal.correct ? 'correct' : 'wrong') : timeLeft <= 15 ? 'tense' : 'idle'} />
+
         {/* Question + options */}
         <div className="show-main">
           <div className="show-qmeta">
