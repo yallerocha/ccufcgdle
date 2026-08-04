@@ -158,6 +158,15 @@ GLANCE = [
     ' oooooo ',
 ]
 
+# Startled: a thin iris ringed by white on every side.
+EYE_WIDE = [
+    ' oooooo ',
+    'oeeeeeeo',
+    'oeeIqIeo',
+    'oeeeeeeo',
+    ' oooooo ',
+]
+
 # Closed lids, stamped over the same 8x5 box as EYE for the blink layer.
 LIDS = [
     '22222222',
@@ -169,6 +178,7 @@ LIDS = [
 BROW = ['bbbbbbbb', ' bbbbbb ']
 BROW_ANGRY = ['bbbbb   ', '  bbbbbb']   # inner end low: furrowed, concentrating
 BROW_SAD = ['   bbbbb', 'bbbbbb  ']     # inner end high: crestfallen
+BROW_SCARED = ['    bbbb', 'bbbbbb  ']  # inner end high and steeper: alarmed
 
 MOODS = {
     'idle': dict(
@@ -178,6 +188,12 @@ MOODS = {
     'tense': dict(
         brow=22, bl=BROW_ANGRY, br=[r[::-1] for r in BROW_ANGRY],
         mouth=[(36, 18, 'mmmmmmmmmmmm'), (37, 20, 'tttttttt')],
+    ),
+    'scared': dict(
+        brow=20, bl=BROW_SCARED, br=[r[::-1] for r in BROW_SCARED], eyes=EYE_WIDE,
+        # Small round gasp, plus a sweat bead on the temple.
+        mouth=[(35, 21, ' mmmm '), (36, 21, 'mnnnnm'), (37, 21, ' mmmm ')],
+        sweat=True,
     ),
     'correct': dict(
         brow=20, bl=BROW, br=[r[::-1] for r in BROW],
@@ -214,10 +230,16 @@ def build(mood):
         g[y][34 - i // 3] = 'k'
     for y, x, art in MIC:
         paint(g, y, x, art)
-    for dy, art in enumerate(EYE):        # the eyes themselves never change
+    cfg = MOODS[mood]
+    eyes = cfg.get('eyes', EYE)
+    for dy, art in enumerate(eyes):
         paint(g, 24 + dy, 13, art)
         paint(g, 24 + dy, 27, art[::-1])
-    cfg = MOODS[mood]
+    if cfg.get('sweat'):
+        # Floating beside the head: on the temple it collided with the eyebrow.
+        # Teardrop shape — a plain rectangle read as a stray blue box.
+        for dy, art in enumerate(['  o  ', ' oBo ', ' oBo ', 'oWBBo', 'oBBBo', ' ooo ']):
+            paint(g, 17 + dy, 41, art)
     if cfg.get('droop'):                      # heavy lids over the top of the iris
         paint(g, 25, 13, 'oooooooo')
         paint(g, 25, 27, 'oooooooo')
@@ -252,7 +274,7 @@ for name, doc, rows in (
     print()
 print()
 print('const MOOD_ROWS: Record<HostMood, Record<number, string>> = {')
-for mood in ('idle', 'tense', 'correct', 'wrong'):
+for mood in MOODS:
     print(f'  {mood}: {{')
     for i, r in enumerate(build(mood)):
         if r != base[i]:

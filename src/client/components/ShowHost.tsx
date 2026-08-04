@@ -5,7 +5,7 @@
  * drawn as SVG rects — one source row is one row of pixels, each letter a
  * PALETTE entry. Regenerate with `python3 scripts/gen-host-sprite.py`; editable by hand too.
  */
-export type HostMood = 'idle' | 'tense' | 'correct' | 'wrong';
+export type HostMood = 'idle' | 'tense' | 'scared' | 'correct' | 'wrong';
 
 const PALETTE: Record<string, string> = {
   o: '#2b2333', // outline
@@ -19,6 +19,7 @@ const PALETTE: Record<string, string> = {
   b: '#8e98b8', // eyebrow
   e: '#ffffff', // eye white
   I: '#4a7ac4', // iris
+  B: '#5ab7e8', // sweat bead
   q: '#2b2333', // pupil
   w: '#ffffff', // eye specular
   5: '#8f5c3d', // nostril
@@ -128,6 +129,20 @@ const MOOD_ROWS: Record<HostMood, Record<number, string>> = {
     23: '........okii222bbbbbb222222bbbbbb233iiko........',
     35: '........o322222222222222222222222222223o........',
     36: '........o322222222mmmmmmmmmmmm222222223o........',
+  },
+  scared: {
+    17: '........oHhhHiiiiiiiiiiiiiiiiiiikiiiikko...o....',
+    18: '........okii122222222222222222222233iiko..oBo...',
+    19: '........okii222222222222222222222233iiko..oBo...',
+    20: '........okii22222bbbb222222bbbb22233iiko.oWBBo..',
+    21: '........okii2bbbbbb2222222222bbbbbb3iiko.oBBBo..',
+    22: '........okii222222222222222222222233iiko..ooo...',
+    25: '........okii2oeeeeeeo222222oeeeeeeo3iiko........',
+    26: '........okii2oeeIqIeo222222oeIqIeeo3iiko........',
+    27: '........okii2oeeeeeeo222222oeeeeeeo3iiko........',
+    35: '........o3222222222222mmmm2222222222223o........',
+    36: '........o322222222222mnnnnm222222222223o........',
+    37: '........o3222222222222mmmm2222222222223o........',
   },
   correct: {
     20: '........okii2bbbbbbbb222222bbbbbbbb3iiko........',

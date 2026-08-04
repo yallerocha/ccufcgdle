@@ -4200,6 +4200,17 @@ a:focus-visible,
 .is-tense .show-host { animation-duration: 1s; }
 .is-correct .show-host { animation-duration: 0.5s; }
 .is-wrong .show-host { animation: none; }
+/* Red clock: a 1px horizontal shiver instead of the bob. The sprite has empty
+   margin on both sides, so shifting it never exposes the frame edge. */
+.is-scared .show-host { animation: hostShiver 0.12s steps(2, jump-none) infinite alternate; }
+@keyframes hostShiver {
+  from { transform: translateX(-1px); }
+  to { transform: translateX(1px); }
+}
+.show-host-frame.is-scared {
+  border-color: rgba(222, 93, 96, 0.5);
+  box-shadow: inset 0 1px 0 rgba(222, 93, 96, 0.2), 0 0 18px rgba(222, 93, 96, 0.3);
+}
 
 /* Blink: the shut-lid layer flashes on for ~100ms. Durations are coprime with
    the bob so the blink never lands on the same phase of it. */
@@ -4212,9 +4223,11 @@ a:focus-visible,
   95.5%, 97.4% { opacity: 1; }
   97.5%, 100% { opacity: 0; }
 }
-/* Wide-eyed on a right answer, so it blinks less; squinting when tense, more. */
+/* Wide-eyed on a right answer, so it blinks less; squinting when tense, more.
+   Frozen in fear on the red clock: it does not blink at all. */
 .is-correct .host-blink { animation-duration: 9.1s; }
 .is-tense .host-blink { animation-duration: 3.1s; }
+.is-scared .host-blink { animation: none; }
 
 /* Glance: cuts the eyes to the right for ~1.5s, like checking the audience.
    Off while celebrating, and off when sad because that mood already overrides

@@ -76,6 +76,10 @@ interface Reveal {
 
 const RUN_KEY = 'show-run-id';
 const QUESTION_SECONDS = 200;
+// Seconds at which the timer turns yellow / red. The host's mood follows the
+// same thresholds, so the two can never drift apart.
+const TIMER_WARN = 45;
+const TIMER_DANGER = 15;
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const CARD_SUITS = ['♠', '♥', '♦', '♣'];
 
@@ -803,7 +807,14 @@ export default function ShowPage() {
       )}
 
       <div className="show-layout">
-        <ShowHost mood={reveal ? (reveal.correct ? 'correct' : 'wrong') : timeLeft <= 15 ? 'tense' : 'idle'} />
+        <ShowHost
+          mood={
+            reveal ? (reveal.correct ? 'correct' : 'wrong')
+              : timeLeft <= TIMER_DANGER ? 'scared'
+              : timeLeft <= TIMER_WARN ? 'tense'
+              : 'idle'
+          }
+        />
 
         {/* Question + options */}
         <div className="show-main">
@@ -815,7 +826,7 @@ export default function ShowPage() {
 
           {(() => {
             const pct = (timeLeft / QUESTION_SECONDS) * 100;
-            const level = timeLeft <= 15 ? 'danger' : timeLeft <= 45 ? 'warn' : 'ok';
+            const level = timeLeft <= TIMER_DANGER ? 'danger' : timeLeft <= TIMER_WARN ? 'warn' : 'ok';
             return (
               <div className={`show-timer show-timer--${level}`} role="timer" aria-label={t('show.timeLeft')}>
                 <div className="show-timer-track"><div className="show-timer-fill" style={{ width: `${reveal ? 100 : pct}%` }} /></div>
