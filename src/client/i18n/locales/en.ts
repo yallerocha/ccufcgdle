@@ -117,7 +117,7 @@ export const en: Dictionary = {
     timeLeft: 'Time left',
     wrong: 'Wrong answer!',
     seeDetail: 'See detailed explanation',
-    hideDetail: 'Hide detailed explanation',
+    detailTitle: 'Detailed explanation',
     continue: 'Continue',
     seeResult: 'See result',
     stopWith: 'Stop and take {{prize}}',

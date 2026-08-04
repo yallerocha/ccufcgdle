@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, ChevronDown, BookOpen, X, ListChecks } from 'lucide-react';
+import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, BookOpen, X, ListChecks } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
@@ -12,6 +12,7 @@ import { LoadingState } from '@/client/components/LoadingState';
 import { Toast } from '@/client/components/Toast';
 import { ShowResultModal } from '@/client/components/ShowResultModal';
 import { ShowHost } from '@/client/components/ShowHost';
+import { useModalDismiss } from '@/client/hooks/useModalDismiss';
 import {
   unlockAudio, isMuted, toggleMuted,
   sfxSelect, sfxCorrect, sfxWrong, sfxLifeline, sfxStart, sfxWin, sfxStop,
@@ -96,8 +97,8 @@ export default function ShowPage() {
   const [run, setRun] = useState<ShowRun | null>(null);
   const [starting, setStarting] = useState(false);
   const [reveal, setReveal] = useState<Reveal | null>(null);
-  // Whether the long explanation is expanded in the current reveal. Every new
-  // reveal starts collapsed, so the short explanation stays the default.
+  // Whether the long-explanation modal is open. Every new reveal starts closed,
+  // so the short explanation stays the default.
   const [detailOpen, setDetailOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -122,6 +123,9 @@ export default function ShowPage() {
 
   // While a run is live, lock the navbar (no wandering off mid-question — the
   // stage is immersive, like the real show). The class drives CSS in globals.
+  // Escape closes the long-explanation modal and the board behind it stops scrolling.
+  useModalDismiss(detailOpen, () => setDetailOpen(false));
+
   const playing = !!run && run.status === 'playing';
   useEffect(() => {
     document.body.classList.toggle('show-live', playing);
@@ -343,6 +347,7 @@ export default function ShowPage() {
 
   const proceed = () => {
     if (!reveal) return;
+    setDetailOpen(false);   // otherwise the modal would pop open on the next reveal
     const next = reveal.nextRun;
     if (next.status !== 'playing') {
       if (next.status === 'won') sfxWin();
@@ -874,19 +879,11 @@ export default function ShowPage() {
                   <button
                     type="button"
                     className="show-detail-toggle"
-                    onClick={() => setDetailOpen((open) => !open)}
-                    aria-expanded={detailOpen}
-                    aria-controls="show-detail-text"
+                    onClick={() => setDetailOpen(true)}
                   >
                     <BookOpen size={16} />
-                    <span>{detailOpen ? t('show.hideDetail') : t('show.seeDetail')}</span>
-                    <ChevronDown size={16} className="show-detail-caret" />
+                    <span>{t('show.seeDetail')}</span>
                   </button>
-                  {detailOpen && (
-                    <div id="show-detail-text" className="show-detail-text">
-                      {reveal.explanationLong}
-                    </div>
-                  )}
                 </div>
               )}
               <button onClick={proceed} className="btn show-continue-btn">
@@ -953,6 +950,27 @@ export default function ShowPage() {
           </ol>
         </aside>
       </div>
+
+      {mounted && detailOpen && reveal?.explanationLong && createPortal(
+        <div className="modal-overlay" onClick={() => setDetailOpen(false)}>
+          <div
+            className="modal-content show-detail-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="show-detail-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="modal-title" id="show-detail-title">
+              <BookOpen size={20} /> {t('show.detailTitle')}
+            </h2>
+            <div className="show-detail-text">{reveal.explanationLong}</div>
+            <button onClick={() => setDetailOpen(false)} className="btn btn-secondary show-detail-close" autoFocus>
+              {t('common.close')}
+            </button>
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {mounted && quitOpen && createPortal(
         <div className="modal-overlay" onClick={() => setQuitOpen(false)}>

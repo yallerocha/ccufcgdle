@@ -113,7 +113,7 @@ export const pt = {
     timeLeft: 'Tempo restante',
     wrong: 'Resposta errada!',
     seeDetail: 'Ver explicação detalhada',
-    hideDetail: 'Ocultar explicação detalhada',
+    detailTitle: 'Explicação detalhada',
     continue: 'Continuar',
     seeResult: 'Ver resultado',
     stopWith: 'Parar e levar {{prize}}',
