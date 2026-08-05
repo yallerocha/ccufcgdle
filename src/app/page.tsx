@@ -79,10 +79,11 @@ interface Reveal {
 
 const RUN_KEY = 'show-run-id';
 const QUESTION_SECONDS = 200;
-// Seconds at which the timer turns yellow / red. The host's mood follows the
-// same thresholds, so the two can never drift apart.
-const TIMER_WARN = 45;
-const TIMER_DANGER = 15;
+// Segundos restantes em que a barra vira amarela / vermelha: metade e três
+// quartos do tempo gasto. Derivados de QUESTION_SECONDS para não descolarem se o
+// tempo por pergunta mudar. O humor do apresentador usa os mesmos limites.
+const TIMER_WARN = QUESTION_SECONDS * 0.5;
+const TIMER_DANGER = QUESTION_SECONDS * 0.25;
 // Quanto o overlay do apresentador fica na tela. A abertura da partida é mais
 // longa porque a frase é maior.
 const START_TRANSITION_MS = 2600;
