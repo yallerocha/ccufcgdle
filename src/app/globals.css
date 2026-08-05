@@ -6055,3 +6055,26 @@ input:focus, select:focus, textarea:focus {
   .admin-toolbar select { flex: 1 1 100%; }
   .admin-scroll-table { max-height: none; }
 }
+
+/* ── Mobile: "Parar e levar" acima de "Desistir" ──────────────────────────────
+   Os dois botões vivem em contêineres diferentes — "Desistir" dentro de
+   .show-actions (coluna do meio) e "Parar e levar" dentro da aside da escada,
+   que vem depois no DOM. Numa coluna só isso força a ordem invertida, e `order`
+   não alcança elementos aninhados. Achatar os dois contêineres promove os botões
+   a itens do próprio grid, e aí `order` consegue trocá-los.
+
+   Precisa ficar no fim do arquivo: .show-actions declara `display: flex` na
+   linha ~4496, depois do bloco mobile lá de cima. Mesma especificidade, quem vem
+   por último vence — foi por isso que a primeira tentativa não surtiu efeito.
+
+   Só abaixo de 920px; no desktop as colunas continuam como estão. O apresentador
+   nem entra na conta, já é display:none abaixo de 1180px. */
+@media (max-width: 920px) {
+  /* .show-main era um flex sem gap: cada filho já traz a própria margem, então
+     herdar o gap do grid afastaria a tela inteira. */
+  .show-layout { row-gap: 0; }
+  .show-main, .show-actions { display: contents; }
+  .show-lifelines { margin-top: 1.5rem; }  /* era o margin-top de .show-actions */
+  .show-ladder { order: 1; margin-top: 1.25rem; }
+  .show-quit-btn { order: 2; margin-top: 1rem; justify-self: center; }
+}
