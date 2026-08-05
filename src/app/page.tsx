@@ -378,9 +378,14 @@ export default function ShowPage() {
           startMusic();
         }, START_TRANSITION_MS);
       } else {
+        // Falhou: volta ao lobby. Manter o run antigo aqui reabriria o mesmo
+        // furo — ele ainda consta como 'playing' e o relógio voltaria a correr
+        // contra um deadline vencido assim que `starting` caísse.
+        setRun(null);
         setErrorMsg(data.error || t('show.errorGeneric'));
       }
     } catch {
+      setRun(null);
       setErrorMsg(t('show.errorGeneric'));
     } finally {
       setStarting(false);
@@ -500,7 +505,12 @@ export default function ShowPage() {
 
   // Per-question countdown: (re)starts on each fresh question, pauses on reveal /
   // transition, and fires the server timeout when it hits zero.
-  const timerActive = playing && !reveal && !transition;
+  // `starting` também desliga o relógio: start() limpa reveal e transition antes
+  // do await, e nesse instante `run` ainda é o da partida anterior (o modal de
+  // resultado não troca o run). Sem esse gate o cronômetro voltava a rodar contra
+  // o deadline vencido da partida velha, zerando a barra — e ainda disparava o
+  // timeout no servidor — antes da partida nova chegar.
+  const timerActive = playing && !reveal && !transition && !starting;
   useEffect(() => {
     if (!timerActive) return;
     // Deadline is set when the question's clock starts (start / advance / skip /
