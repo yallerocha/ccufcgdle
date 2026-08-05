@@ -601,10 +601,8 @@ export default function ShowPage() {
       if (type !== 'skip') setAnswerAidUsed(true);
       setScene(type);
       setRun((r) => (r ? { ...r, usedLifelines: data.usedLifelines } : r));
-      // The aid lands when the cutscene lifts. For "skip" that also matters to
-      // the clock: starting the new question's countdown now would burn those
-      // seconds behind the overlay. The server's own timer has a 15s grace, so
-      // the few seconds of drift this introduces are well inside it.
+      // The aid lands when the cutscene lifts, para o jogador não perder o efeito
+      // atrás do overlay. O relógio segue correndo normalmente durante a cutscene.
       if (type === 'fifty' && data.removedIndices) {
         const cut = data.removedIndices;
         pendingEffect.current = () => {
@@ -630,7 +628,9 @@ export default function ShowPage() {
         const next = data.question;
         pendingEffect.current = () => {
           resetQuestionAids();
-          setQuestionDeadline(next.secondsLeft);
+          // Sem mexer no deadline: pular troca a pergunta, não o relógio do passo.
+          // Reatribuí-lo aqui faria a barra saltar para o valor lido antes da
+          // cutscene, em vez de simplesmente continuar de onde estava.
           setRun((r) => (r ? { ...r, question: next, usedLifelines: data.usedLifelines } : r));
           setSpeech(randomPhrase(t, 'show.host.skip'));
         };

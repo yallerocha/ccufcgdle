@@ -571,7 +571,9 @@ export async function useLifeline(
   if (type === 'fifty' || type === 'audience' || type === 'students') {
     Object.assign(result, resolveAid(type, run.id, q, correctDisplayed));
   } else if (type === 'skip') {
-    // Swap the current question for an unused one of similar difficulty.
+    // Swap the current question for an unused one of similar difficulty. O relógio
+    // do passo continua correndo: quem pula recebe outra pergunta, não tempo novo.
+    const secondsLeft = secondsLeftFor(run.stepStartedAt);
     const usedSet = new Set(ids);
     const pool = shuffle(
       QUIZ_QUESTIONS.filter((c) => !usedSet.has(c.id))
@@ -581,9 +583,10 @@ export async function useLifeline(
       const newIds = [...ids];
       newIds[run.currentStep - 1] = replacement.id;
       questionIds = newIds.join(',');
-      result.question = questionView(replacement.id, run.currentStep, run.id) ?? undefined;
+      result.question = questionView(replacement.id, run.currentStep, run.id, secondsLeft) ?? undefined;
     } else {
-      result.question = questionView(q.id, run.currentStep, run.id) ?? undefined; // nothing left to swap to
+      // nothing left to swap to
+      result.question = questionView(q.id, run.currentStep, run.id, secondsLeft) ?? undefined;
     }
   }
 
@@ -593,8 +596,9 @@ export async function useLifeline(
   const newCsv = run.usedLifelines ? `${run.usedLifelines},${newToken}` : newToken;
   await prisma.showRun.update({
     where: { id: run.id },
-    // Skipping swaps in a fresh question, so its countdown restarts.
-    data: { usedLifelines: newCsv, questionIds, ...(type === 'skip' ? { stepStartedAt: new Date() } : {}) },
+    // stepStartedAt fica como está, inclusive no skip: a contagem do passo não
+    // reinicia só porque a pergunta trocou.
+    data: { usedLifelines: newCsv, questionIds },
   });
   return result;
 }

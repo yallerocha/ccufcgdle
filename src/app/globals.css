@@ -4551,7 +4551,14 @@ a:focus-visible,
   background: rgba(255, 210, 74, 0.06);
   border: 1px solid rgba(255, 210, 74, 0.55);
 }
-.show-stop-btn strong { font-family: var(--font-mono); font-weight: 800; }
+/* O valor é a informação que decide o clique; o rótulo é só contexto. */
+.show-stop-btn span { font-size: 0.72rem; font-weight: 600; opacity: 0.72; }
+.show-stop-btn strong {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
 .show-stop-btn:hover:not(:disabled) { background: rgba(255, 210, 74, 0.14); border-color: var(--sc-gold); }
 
 /* ── Prize ladder / money tree ────────────────────────────────────────────── */
