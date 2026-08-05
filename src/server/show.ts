@@ -2,6 +2,7 @@ import { prisma } from './db';
 import {
   QUIZ_QUESTIONS,
   QUESTION_BY_ID,
+  DIFFICULTY_COUNT,
   questionSource,
   type QuizQuestion,
   type QuizSource,
@@ -98,14 +99,13 @@ export function guaranteedFloor(cleared: number): number {
   return 0;
 }
 
-// Builds a ladder of LADDER_SIZE question ids ramping from easy to hard: each step
-// targets a difficulty (1..5) proportional to its position and takes an unused
-// question of the nearest available difficulty. Random within a difficulty, so
-// runs vary. When `topics` is given, questions from those topics are preferred;
-// if they can't fill all 15 steps, the rest of the bank tops the ladder up.
+// Builds a ladder of LADDER_SIZE question ids in three equal blocks: the first
+// third is fácil, the middle médio and the last difícil. Within a block the pick
+// is random, so runs vary. When `topics` is given, questions from those topics
+// are preferred; if they can't fill all 15 steps, the rest of the bank tops up.
 function bucketize(pool: QuizQuestion[]): Map<number, QuizQuestion[]> {
   const byDiff = new Map<number, QuizQuestion[]>();
-  for (let d = 1; d <= 5; d++) {
+  for (let d = 1; d <= DIFFICULTY_COUNT; d++) {
     byDiff.set(d, shuffle(pool.filter((q) => q.difficulty === d)));
   }
   return byDiff;
@@ -119,7 +119,7 @@ export function pickLadder(topics?: string[], disabled?: Set<string>): string[] 
 
   const used = new Set<string>();
   const takeNearest = (buckets: Map<number, QuizQuestion[]>, target: number): string | null => {
-    for (let radius = 0; radius <= 4; radius++) {
+    for (let radius = 0; radius < DIFFICULTY_COUNT; radius++) {
       for (const d of [target - radius, target + radius]) {
         const pool = buckets.get(d);
         if (!pool) continue;
@@ -131,7 +131,8 @@ export function pickLadder(topics?: string[], disabled?: Set<string>): string[] 
   };
   const ladder: string[] = [];
   for (let step = 1; step <= LADDER_SIZE; step++) {
-    const target = Math.min(5, Math.max(1, Math.ceil((step / LADDER_SIZE) * 5)));
+    // 15 steps over 3 buckets: 1-5 fácil, 6-10 médio, 11-15 difícil.
+    const target = Math.min(DIFFICULTY_COUNT, Math.ceil((step / LADDER_SIZE) * DIFFICULTY_COUNT));
     const id = takeNearest(primary, target) ?? takeNearest(fallback, target);
     if (id) {
       used.add(id);
@@ -506,7 +507,8 @@ export function resolveAid(type: LifelineType, runId: string, q: QuizQuestion, c
   }
   // The crowd/students can be fooled — more often on harder questions — so the
   // top-percentage option isn't always the right one (like the real show).
-  const foolChance = (q.difficulty - 1) * 0.09 + 0.05; // d1≈5% .. d5≈41%
+  // Same span as before the three-bucket change: fácil ≈5%, difícil ≈41%.
+  const foolChance = (q.difficulty - 1) * 0.18 + 0.05;
   const pickWrong = () => {
     const wrong = Array.from({ length: n }, (_, i) => i).filter((i) => i !== correctDisplayed);
     return wrong[Math.floor(rng() * wrong.length)];

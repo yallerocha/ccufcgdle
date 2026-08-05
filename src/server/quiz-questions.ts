@@ -10,6 +10,12 @@
 // the player answers, to reinforce the micro-learning goal. Areas/answers are
 // domain values and stay in Portuguese.
 
+/** Difficulty buckets. Numeric so they stay comparable and sortable, but always
+ *  referred to by name — the ladder, the aids and the admin panel all depend on
+ *  the ordering FACIL < MEDIO < DIFICIL. */
+export const DIFFICULTY = { FACIL: 1, MEDIO: 2, DIFICIL: 3 } as const;
+export const DIFFICULTY_COUNT = 3;
+
 export type QuizArea = 'Matemática' | 'Fundamentos da Computação' | 'Tecnologia da Computação';
 
 export interface QuizQuestion {
@@ -23,9 +29,9 @@ export interface QuizQuestion {
   // the short explanation. Assigned per id in LONG_EXPLANATION_BY_ID below; ids
   // without an entry get '' and the UI hides the expander.
   explanationLong: string;
-  // Difficulty on a 1 (fácil) .. 5 (difícil) scale, used to order the Show's
-  // prize ladder from easy to hard. Assigned per id in DIFFICULTY_BY_ID below;
-  // absent ids default to 3. Values are an initial estimate, refinable later.
+  // Difficulty bucket: DIFFICULTY.FACIL, .MEDIO or .DIFICIL. The Show's prize
+  // ladder is split evenly across the three. Assigned per id in
+  // DIFFICULTY_BY_ID below; absent ids default to médio.
   difficulty: number;
   // Fine-grained theme (players can filter runs by it) — see TOPIC_BY_ID below.
   topic: string;
@@ -1889,49 +1895,50 @@ const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty' | 'topic' | 'explanationLon
   },
 ];
 
-// Per-question difficulty (1 fácil .. 5 difícil). Ids not listed default to 3.
+// Per-question difficulty: 1 fácil, 2 médio, 3 difícil. Ids not listed default
+// to médio.
 // Kept as a compact map so it can be retuned without touching the question data.
 const DIFFICULTY_BY_ID: Record<string, number> = {
-  'tec-2025-51': 5, 'tec-2025-52': 4, 'tec-2025-53': 4, 'tec-2025-54': 4,
-  'tec-2025-55': 4, 'tec-2025-56': 3, 'tec-2025-57': 3, 'tec-2025-58': 3,
-  'tec-2025-59': 2, 'tec-2025-60': 3, 'tec-2025-61': 3, 'tec-2025-62': 2,
-  'tec-2025-63': 2, 'tec-2025-64': 2, 'tec-2025-65': 3, 'tec-2025-66': 3,
-  'tec-2025-67': 2, 'tec-2025-68': 3, 'tec-2025-69': 3, 'tec-2025-70': 3,
-  'fun-2025-21': 2, 'fun-2025-22': 3, 'fun-2025-23': 2, 'fun-2025-24': 3,
-  'fun-2025-25': 2, 'fun-2025-26': 2, 'fun-2025-27': 2, 'fun-2025-28': 2,
-  'fun-2025-29': 3, 'fun-2025-30': 4, 'fun-2025-31': 5, 'fun-2025-33': 3,
-  'fun-2025-34': 3, 'fun-2025-35': 3, 'fun-2025-36': 4, 'fun-2025-37': 4,
-  'fun-2025-38': 4, 'fun-2025-39': 2, 'fun-2025-40': 3, 'fun-2025-41': 2,
-  'fun-2025-42': 5, 'fun-2025-45': 1, 'fun-2025-46': 1, 'fun-2025-47': 2,
-  'fun-2025-48': 3, 'fun-2025-49': 2, 'fun-2025-50': 1,
-  'mat-2025-01': 2, 'mat-2025-02': 2, 'mat-2025-03': 2, 'mat-2025-04': 4,
-  'mat-2025-05': 4, 'mat-2025-06': 4, 'mat-2025-07': 2, 'mat-2025-08': 3,
-  'mat-2025-09': 2, 'mat-2025-10': 1, 'mat-2025-11': 3, 'mat-2025-12': 1,
-  'mat-2025-14': 1, 'mat-2025-15': 1, 'mat-2025-16': 1, 'mat-2025-17': 3,
-  'mat-2025-18': 2, 'mat-2025-19': 3, 'mat-2025-20': 4,
-  'mat-2019-15': 2, 'fun-2019-21': 5, 'fun-2019-22': 4, 'fun-2019-23': 3,
-  'fun-2019-24': 1, 'fun-2019-25': 4, 'tec-2019-52': 2, 'tec-2019-54': 2,
-  'tec-2019-57': 2, 'tec-2019-58': 2, 'tec-2019-60': 3, 'tec-2019-64': 3,
-  'fun-2010-27': 4, 'fun-2010-46': 3, 'tec-2010-47': 4, 'tec-2010-49': 3,
-  'mat-2022-11': 3, 'fun-2022-21': 3, 'fun-2022-22': 3, 'fun-2022-26': 1,
-  'tec-2022-50': 3, 'tec-2022-52': 2, 'fun-2024-22': 1, 'fun-2024-23': 2,
-  'fun-2024-48': 2, 'tec-2024-52': 3, 'tec-2024-54': 4, 'tec-2024-59': 2,
-  'mat-2019-12': 3, 'mat-2024-13': 2, 'fun-2010-21': 4, 'fun-2010-26': 2,
-  'fun-2010-50': 5, 'fun-2022-24': 3, 'fun-2022-25': 2, 'fun-2022-28': 4,
-  'fun-2024-21': 3, 'fun-2024-24': 2, 'fun-2024-25': 2, 'tec-2019-43': 3,
-  'tec-2019-45': 4, 'tec-2019-46': 2, 'tec-2019-61': 2, 'tec-2019-62': 3,
-  'tec-2022-46': 4, 'tec-2022-54': 4, 'tec-2024-51': 5, 'tec-2024-53': 4,
-  'tec-2024-58': 2,
+  'tec-2025-51': 3, 'tec-2025-52': 3, 'tec-2025-53': 3, 'tec-2025-54': 3,
+  'tec-2025-55': 3, 'tec-2025-56': 2, 'tec-2025-57': 2, 'tec-2025-58': 2,
+  'tec-2025-59': 1, 'tec-2025-60': 2, 'tec-2025-61': 2, 'tec-2025-62': 1,
+  'tec-2025-63': 1, 'tec-2025-64': 1, 'tec-2025-65': 2, 'tec-2025-66': 2,
+  'tec-2025-67': 1, 'tec-2025-68': 2, 'tec-2025-69': 2, 'tec-2025-70': 2,
+  'fun-2025-21': 1, 'fun-2025-22': 2, 'fun-2025-23': 1, 'fun-2025-24': 2,
+  'fun-2025-25': 1, 'fun-2025-26': 1, 'fun-2025-27': 1, 'fun-2025-28': 1,
+  'fun-2025-29': 2, 'fun-2025-30': 3, 'fun-2025-31': 3, 'fun-2025-33': 2,
+  'fun-2025-34': 2, 'fun-2025-35': 2, 'fun-2025-36': 3, 'fun-2025-37': 3,
+  'fun-2025-38': 3, 'fun-2025-39': 1, 'fun-2025-40': 2, 'fun-2025-41': 1,
+  'fun-2025-42': 3, 'fun-2025-45': 1, 'fun-2025-46': 1, 'fun-2025-47': 1,
+  'fun-2025-48': 2, 'fun-2025-49': 1, 'fun-2025-50': 1,
+  'mat-2025-01': 1, 'mat-2025-02': 1, 'mat-2025-03': 1, 'mat-2025-04': 3,
+  'mat-2025-05': 3, 'mat-2025-06': 3, 'mat-2025-07': 1, 'mat-2025-08': 2,
+  'mat-2025-09': 1, 'mat-2025-10': 1, 'mat-2025-11': 2, 'mat-2025-12': 1,
+  'mat-2025-14': 1, 'mat-2025-15': 1, 'mat-2025-16': 1, 'mat-2025-17': 2,
+  'mat-2025-18': 1, 'mat-2025-19': 2, 'mat-2025-20': 3,
+  'mat-2019-15': 1, 'fun-2019-21': 3, 'fun-2019-22': 3, 'fun-2019-23': 2,
+  'fun-2019-24': 1, 'fun-2019-25': 3, 'tec-2019-52': 1, 'tec-2019-54': 1,
+  'tec-2019-57': 1, 'tec-2019-58': 1, 'tec-2019-60': 2, 'tec-2019-64': 2,
+  'fun-2010-27': 3, 'fun-2010-46': 2, 'tec-2010-47': 3, 'tec-2010-49': 2,
+  'mat-2022-11': 2, 'fun-2022-21': 2, 'fun-2022-22': 2, 'fun-2022-26': 1,
+  'tec-2022-50': 2, 'tec-2022-52': 1, 'fun-2024-22': 1, 'fun-2024-23': 1,
+  'fun-2024-48': 1, 'tec-2024-52': 2, 'tec-2024-54': 3, 'tec-2024-59': 1,
+  'mat-2019-12': 2, 'mat-2024-13': 1, 'fun-2010-21': 3, 'fun-2010-26': 1,
+  'fun-2010-50': 3, 'fun-2022-24': 2, 'fun-2022-25': 1, 'fun-2022-28': 3,
+  'fun-2024-21': 2, 'fun-2024-24': 1, 'fun-2024-25': 1, 'tec-2019-43': 2,
+  'tec-2019-45': 3, 'tec-2019-46': 1, 'tec-2019-61': 1, 'tec-2019-62': 2,
+  'tec-2022-46': 3, 'tec-2022-54': 3, 'tec-2024-51': 3, 'tec-2024-53': 3,
+  'tec-2024-58': 1,
   // POSCOMP 2024 (adicionais)
-  'mat-2024-05': 2, 'mat-2024-14': 3, 'mat-2024-15': 3,
-  'fun-2024-26': 2, 'fun-2024-28': 3, 'fun-2024-29': 1, 'fun-2024-36': 4,
-  'fun-2024-38': 3, 'fun-2024-39': 2, 'fun-2024-40': 3, 'fun-2024-42': 4,
+  'mat-2024-05': 1, 'mat-2024-14': 2, 'mat-2024-15': 2,
+  'fun-2024-26': 1, 'fun-2024-28': 2, 'fun-2024-29': 1, 'fun-2024-36': 3,
+  'fun-2024-38': 2, 'fun-2024-39': 1, 'fun-2024-40': 2, 'fun-2024-42': 3,
   'fun-2024-45': 1,
-  'tec-2024-46': 3, 'tec-2024-47': 1, 'tec-2024-49': 2, 'tec-2024-50': 1,
-  'tec-2024-55': 4, 'tec-2024-57': 4, 'tec-2024-60': 2, 'tec-2024-61': 2,
-  'tec-2024-62': 2, 'tec-2024-63': 3, 'tec-2024-64': 4, 'tec-2024-65': 3,
-  'tec-2024-66': 3, 'tec-2024-67': 2, 'tec-2024-68': 3, 'tec-2024-69': 3,
-  'tec-2024-70': 3,
+  'tec-2024-46': 2, 'tec-2024-47': 1, 'tec-2024-49': 1, 'tec-2024-50': 1,
+  'tec-2024-55': 3, 'tec-2024-57': 3, 'tec-2024-60': 1, 'tec-2024-61': 1,
+  'tec-2024-62': 1, 'tec-2024-63': 2, 'tec-2024-64': 3, 'tec-2024-65': 2,
+  'tec-2024-66': 2, 'tec-2024-67': 1, 'tec-2024-68': 2, 'tec-2024-69': 2,
+  'tec-2024-70': 2,
 };
 
 // Fine-grained theme per question (players can filter the run by these). Same
@@ -2723,7 +2730,7 @@ const LONG_EXPLANATION_BY_ID: Record<string, string> = {
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = RAW_QUESTIONS.map((q) => ({
   ...q,
-  difficulty: DIFFICULTY_BY_ID[q.id] ?? 3,
+  difficulty: DIFFICULTY_BY_ID[q.id] ?? DIFFICULTY.MEDIO,
   topic: TOPIC_BY_ID[q.id] ?? 'Outros',
   explanationLong: LONG_EXPLANATION_BY_ID[q.id] ?? '',
 }));

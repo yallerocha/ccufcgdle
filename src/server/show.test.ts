@@ -15,7 +15,7 @@ import {
   LIFELINE_USES,
   ALL_LIFELINES,
 } from './show';
-import { QUESTION_BY_ID, QUIZ_QUESTIONS } from './quiz-questions';
+import { QUESTION_BY_ID, QUIZ_QUESTIONS, DIFFICULTY } from './quiz-questions';
 
 let passed = 0;
 const test = (name: string, fn: () => void) => {
@@ -94,18 +94,23 @@ test('pickLadder builds a full ladder of unique, real questions', () => {
   for (const id of ids) assert.ok(QUESTION_BY_ID.has(id), `unknown id ${id}`);
 });
 
-test('pickLadder ramps difficulty from easy to hard on average', () => {
+test('the ladder is three equal blocks: 1-5 fácil, 6-10 médio, 11-15 difícil', () => {
   const diff = (id: string) => QUESTION_BY_ID.get(id)!.difficulty;
-  // Average over runs to smooth the within-difficulty randomness.
-  let firstThird = 0;
-  let lastThird = 0;
-  const runs = 40;
-  for (let r = 0; r < runs; r++) {
+  for (let r = 0; r < 40; r++) {
     const ids = pickLadder();
-    firstThird += diff(ids[0]) + diff(ids[1]) + diff(ids[2]);
-    lastThird += diff(ids[12]) + diff(ids[13]) + diff(ids[14]);
+    ids.forEach((id, i) => {
+      const expected =
+        i < 5 ? DIFFICULTY.FACIL : i < 10 ? DIFFICULTY.MEDIO : DIFFICULTY.DIFICIL;
+      assert.strictEqual(diff(id), expected, `degrau ${i + 1} deveria ser ${expected}`);
+    });
   }
-  assert.ok(lastThird > firstThird, `late steps should be harder (${firstThird} vs ${lastThird})`);
+});
+
+test('every question sits in one of the three buckets', () => {
+  const valid = new Set<number>([DIFFICULTY.FACIL, DIFFICULTY.MEDIO, DIFFICULTY.DIFICIL]);
+  for (const q of QUIZ_QUESTIONS) {
+    assert.ok(valid.has(q.difficulty), `${q.id}: dificuldade ${q.difficulty} fora das três faixas`);
+  }
 });
 
 test('pickLadder prefers chosen topics but still fills the ladder', () => {

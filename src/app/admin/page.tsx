@@ -290,6 +290,10 @@ export default function AdminPage() {
     return !questionQ || q.question.toLowerCase().includes(questionQ) || q.id.toLowerCase().includes(questionQ);
   });
 
+  // 1 fácil, 2 médio, 3 difícil — a mesma ordem usada pela escada do Show.
+  const diffLabel = (d: number | string) =>
+    t(['admin.qDiffEasy', 'admin.qDiffMedium', 'admin.qDiffHard'][Number(d) - 1] ?? 'admin.qDiffMedium');
+
   const offCount = (n: number) => (n > 0 ? <span className="admin-off-count"> (-{n})</span> : null);
 
   return (
@@ -438,7 +442,7 @@ export default function AdminPage() {
               <h4 className="admin-sub-title">{t('admin.qByDifficulty')}</h4>
               {diffRows.map((r) => (
                 <div key={r.key} className="admin-bar-row">
-                  <span className="admin-bar-lbl">{t('admin.qDiffLevel', { n: r.key })}</span>
+                  <span className="admin-bar-lbl">{diffLabel(r.key)}</span>
                   <div className="admin-bar-track">
                     <div className="admin-bar-fill" style={{ width: `${(r.active / maxCount) * 100}%` }} />
                   </div>
@@ -514,7 +518,7 @@ export default function AdminPage() {
                         </div>
                       </td>
                       <td data-label={t('admin.qThTopic')} style={{ fontSize: '0.85rem' }}>{q.topic}</td>
-                      <td data-label={t('admin.qThDifficulty')} style={{ fontSize: '0.85rem' }}>{t('admin.qDiffLevel', { n: q.difficulty })}</td>
+                      <td data-label={t('admin.qThDifficulty')} style={{ fontSize: '0.85rem' }}>{diffLabel(q.difficulty)}</td>
                       <td data-label={t('admin.qThStatus')}>
                         {q.disabled ? (
                           <span className="badge badge-inactive">{t('admin.qStatusDisabled')}</span>
