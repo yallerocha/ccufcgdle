@@ -99,7 +99,7 @@ export const en: Dictionary = {
     line2: 'It is an independently developed project, created on a personal basis for recreational purposes.',
   },
   show: {
-    title: 'O Show da Computação',
+    title: 'Show da Computação',
     tagline: "Computer science's 'Who Wants to Be a Millionaire': answer POSCOMP questions of increasing difficulty, use your lifelines and try to reach R$ 1,000,000.",
     loading: 'Loading the show...',
     howToTitle: 'How to play',

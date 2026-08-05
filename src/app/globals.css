@@ -376,21 +376,22 @@ body::before {
   display: none;
   align-items: center;
   justify-content: center;
+  /* Só o ícone, sem moldura. Os 40px continuam aqui como área de toque —
+     o alvo precisa do tamanho mesmo sem a borda aparecer. */
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background-color: var(--bg-input);
+  margin-left: -0.5rem;
+  border: none;
+  background: none;
   color: var(--text-muted);
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .nav-menu-btn:hover {
   color: var(--text-primary);
-  border-color: var(--primary);
 }
 
 .nav-menu-overlay {
@@ -4418,9 +4419,9 @@ a:focus-visible,
 .show-option.is-wrong .show-option-letter { background: linear-gradient(180deg, #fca5a5, #dc2626); color: #2a0606; }
 .show-option.is-dim { opacity: 0.4; }
 /* The correct answer locks in with a brief, satisfying pop — state indication on
-   the game's key moment. Overrides the entrance animation (already finished). */
+   the game's key moment. Somada à animação de entrada, nunca no lugar dela. */
 @keyframes scCorrectPop { 0% { transform: scale(1); } 45% { transform: scale(1.035); } 100% { transform: scale(1); } }
-.show-option.is-correct { animation: scCorrectPop 0.4s ease-out both; }
+.show-option.is-correct { animation: scHexIn 0.34s ease both, scCorrectPop 0.4s ease-out both; }
 /* Tactile press feedback on tap (feedback; subtle, within budget). */
 .show-option:active:not(:disabled) { transform: scale(0.985); }
 
@@ -5154,11 +5155,20 @@ input:focus, select:focus, textarea:focus {
 
 /* Picked-but-not-confirmed option: gold rim + lit interior, letter pulses */
 @keyframes scSelectedPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.08); } }
+/* Sobe e desce de leve, no mesmo compasso do brilho. Vem depois de scHexIn na
+   lista porque as duas mexem em transform e a última é a que vale. */
+@keyframes scSelectedFloat { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(2px); } }
 .show-option.is-selected {
   background:
     linear-gradient(180deg, #2a3f7d, #16244f) padding-box,
     linear-gradient(100deg, #ffe27a, var(--gold-deep)) border-box;
-  animation: scSelectedPulse 1.4s ease-in-out infinite;
+  /* scHexIn precisa continuar na lista: se sair, ao desmarcar a alternativa o
+     navegador o readiciona e a animação de entrada toca de novo (a opção some e
+     volta deslizando). Mesmo motivo em .is-correct. */
+  animation:
+    scHexIn 0.34s ease both,
+    scSelectedPulse 1.4s ease-in-out infinite,
+    scSelectedFloat 1.4s ease-in-out infinite;
 }
 .show-option.is-selected .show-option-letter {
   background: linear-gradient(180deg, #ffffff, #ffe27a);

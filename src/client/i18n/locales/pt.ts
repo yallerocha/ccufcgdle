@@ -95,7 +95,7 @@ export const pt = {
     line2: 'Trata-se de um projeto desenvolvido de forma independente, por iniciativa pessoal e fins recreativos.',
   },
   show: {
-    title: 'O Show da Computação',
+    title: 'Show da Computação',
     tagline: 'O Show do Milhão da computação: responda perguntas do POSCOMP de dificuldade crescente, use suas ajudas e tente chegar ao R$ 1.000.000.',
     loading: 'Carregando o show...',
     howToTitle: 'Como jogar',

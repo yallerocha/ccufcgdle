@@ -92,8 +92,8 @@ export default function Navbar() {
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
 
-        <Link href="/" className="nav-logo" onClick={closeMenu} aria-label="O Show da Computação">
-          <Logo variant="wide" alt="O Show da Computação" style={{ height: '32px', width: 'auto' }} />
+        <Link href="/" className="nav-logo" onClick={closeMenu} aria-label="Show da Computação">
+          <Logo variant="wide" alt="Show da Computação" style={{ height: '32px', width: 'auto' }} />
         </Link>
 
         <div className="nav-links nav-links--desktop">
@@ -120,8 +120,8 @@ export default function Navbar() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="nav-menu-drawer-header">
-                <Link href="/" className="nav-menu-drawer-brand" onClick={closeMenu} aria-label="O Show da Computação">
-                  <Logo variant="wide" alt="O Show da Computação" style={{ height: '32px', width: 'auto' }} />
+                <Link href="/" className="nav-menu-drawer-brand" onClick={closeMenu} aria-label="Show da Computação">
+                  <Logo variant="wide" alt="Show da Computação" style={{ height: '32px', width: 'auto' }} />
                 </Link>
                 <button
                   type="button"

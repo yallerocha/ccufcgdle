@@ -1,6 +1,6 @@
 import React from 'react';
 
-/** Theme-specific logo assets in /public. "O Show da Computação" branding — a
+/** Theme-specific logo assets in /public. "Show da Computação" branding — a
  *  gold game-show badge with a terminal (>_) glyph. The badge reads on both
  *  themes; only the wordmark color changes between dark/light variants. */
 export const LOGO_PATHS = {
@@ -21,7 +21,7 @@ interface LogoProps {
 /** Renders the logo matching `data-theme` on `<html>` (dark default). */
 export function Logo({
   variant = 'full',
-  alt = 'O Show da Computação',
+  alt = 'Show da Computação',
   className = '',
   style,
 }: LogoProps) {
