@@ -116,6 +116,12 @@ export default function ShowPage() {
   const [run, setRun] = useState<ShowRun | null>(null);
   const [starting, setStarting] = useState(false);
   const [reveal, setReveal] = useState<Reveal | null>(null);
+  // Espelho de `reveal` para ler depois de um await: o pedido de dica pode voltar
+  // já com a pergunta encerrada, e a closure ainda enxerga o valor antigo.
+  const revealRef = useRef(reveal);
+  useEffect(() => {
+    revealRef.current = reveal;
+  }, [reveal]);
   // Whether the long-explanation modal is open. Every new reveal starts closed,
   // so the short explanation stays the default.
   const [detailOpen, setDetailOpen] = useState(false);
@@ -287,6 +293,16 @@ export default function ShowPage() {
   // the actual cut (removedIndices, 1–4 wrong options); flipping reveals & applies it.
   const [cardCut, setCardCut] = useState<number[] | null>(null); // displayed indices to remove
   const [picked, setPicked] = useState<number | null>(null); // index of the flipped card
+  // O tempo continua correndo durante a cutscene e o modal de cartas, então a
+  // pergunta pode acabar com eles na tela. Quando isso acontece tudo cai de uma
+  // vez — inclusive o efeito que ainda estava na fila, que aplicaria uma dica a
+  // uma pergunta já encerrada.
+  const dropAidUi = useCallback(() => {
+    pendingEffect.current = null;
+    setScene(null);
+    setCardCut(null);
+    setPicked(null);
+  }, []);
   // Two-step answering, like the show: pick an option, then lock it in.
   const [selected, setSelected] = useState<number | null>(null);
   // Quit opens a confirmation modal (it ends the run for good).
@@ -475,6 +491,9 @@ export default function ShowPage() {
   const handleTimeout = useCallback(async () => {
     if (!run || reveal || submitting) return;
     setSubmitting(true);
+    // Sai já: a pergunta acabou, então nenhuma cutscene ou modal de dica deve
+    // continuar na tela por cima do resultado.
+    dropAidUi();
     try {
       const res = await apiFetch('/api/show/timeout', {
         method: 'POST',
@@ -487,7 +506,7 @@ export default function ShowPage() {
         setSpeech(randomPhrase(t, 'show.host.timeout'));
         setSelected(null);
         setDetailOpen(false);
-        setReveal({
+        const revealed: Reveal = {
           correct: false,
           correctIndex: data.correctIndex,
           chosenIndex: -1,
@@ -495,14 +514,21 @@ export default function ShowPage() {
           explanationLong: data.explanationLong,
           nextRun: data.run,
           timedOut: true,
-        });
+        };
+        // Marca o ref na hora, sem esperar o efeito: um pedido de dica que
+        // resolva neste intervalo tem que ver a pergunta já encerrada. E derruba
+        // de novo a UI de dica, caso uma tenha subido enquanto o timeout ia e
+        // voltava do servidor.
+        revealRef.current = revealed;
+        dropAidUi();
+        setReveal(revealed);
       }
     } catch {
       /* leave the question up; the server is the source of truth */
     } finally {
       setSubmitting(false);
     }
-  }, [run, reveal, submitting, t]);
+  }, [run, reveal, submitting, t, dropAidUi]);
 
   // Per-question countdown: (re)starts on each fresh question, pauses on reveal /
   // transition, and fires the server timeout when it hits zero.
@@ -597,6 +623,10 @@ export default function ShowPage() {
         setErrorMsg((data as unknown as { error?: string }).error || t('show.errorGeneric'));
         return;
       }
+      // O tempo pode ter estourado enquanto o pedido estava no ar. Sem isso a
+      // cutscene subiria por cima do resultado e a dica seria aplicada a uma
+      // pergunta que já acabou.
+      if (revealRef.current) return;
       sfxLifeline();
       if (type !== 'skip') setAnswerAidUsed(true);
       setScene(type);
