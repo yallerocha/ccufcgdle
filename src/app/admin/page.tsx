@@ -70,6 +70,7 @@ export default function AdminPage() {
   const [questions, setQuestions] = useState<AdminQuestion[]>([]);
   const [questionSearch, setQuestionSearch] = useState('');
   const [questionTopic, setQuestionTopic] = useState('');
+  const [questionYear, setQuestionYear] = useState('');
   const [questionStatus, setQuestionStatus] = useState<QuestionStatusFilter>('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -276,11 +277,14 @@ export default function AdminPage() {
   const disabledCount = questions.filter((q) => q.disabled).length;
   const diffRows = groupCounts((q) => q.difficulty).sort((a, b) => Number(a.key) - Number(b.key));
   const topicRows = groupCounts((q) => q.topic).sort((a, b) => b.active + b.disabled - (a.active + a.disabled));
+  // Newest edition first — that is the one being added to.
+  const yearRows = groupCounts((q) => q.source?.year ?? '—').sort((a, b) => b.key.localeCompare(a.key));
   const maxCount = Math.max(1, ...diffRows.map((r) => r.active));
 
   const questionQ = questionSearch.trim().toLowerCase();
   const visibleQuestions = questions.filter((q) => {
     if (questionTopic && q.topic !== questionTopic) return false;
+    if (questionYear && String(q.source?.year ?? '—') !== questionYear) return false;
     if (questionStatus === 'active' && q.disabled) return false;
     if (questionStatus === 'disabled' && !q.disabled) return false;
     return !questionQ || q.question.toLowerCase().includes(questionQ) || q.id.toLowerCase().includes(questionQ);
@@ -446,7 +450,17 @@ export default function AdminPage() {
               <h4 className="admin-sub-title">{t('admin.qByTopic')}</h4>
               <div className="admin-chips">
                 {topicRows.map((r) => (
-                  <button key={r.key} type="button" className="admin-chip" onClick={() => setQuestionTopic(questionTopic === r.key ? '' : r.key)} title={t('admin.qFilterByTopic')}>
+                  <button key={r.key} type="button" className={`admin-chip${questionTopic === r.key ? ' is-on' : ''}`} onClick={() => setQuestionTopic(questionTopic === r.key ? '' : r.key)} title={t('admin.qFilterByTopic')}>
+                    {r.key} <strong>{r.active}</strong>{offCount(r.disabled)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="admin-sub-title">{t('admin.qByYear')}</h4>
+              <div className="admin-chips">
+                {yearRows.map((r) => (
+                  <button key={r.key} type="button" className={`admin-chip${questionYear === r.key ? ' is-on' : ''}`} onClick={() => setQuestionYear(questionYear === r.key ? '' : r.key)} title={t('admin.qFilterByYear')}>
                     {r.key} <strong>{r.active}</strong>{offCount(r.disabled)}
                   </button>
                 ))}
@@ -462,6 +476,10 @@ export default function AdminPage() {
             <select value={questionTopic} onChange={(e) => setQuestionTopic(e.target.value)}>
               <option value="">{t('admin.qAllTopics')}</option>
               {topicRows.map((r) => <option key={r.key} value={r.key}>{r.key}</option>)}
+            </select>
+            <select value={questionYear} onChange={(e) => setQuestionYear(e.target.value)}>
+              <option value="">{t('admin.qAllYears')}</option>
+              {yearRows.map((r) => <option key={r.key} value={r.key}>{r.key}</option>)}
             </select>
             <select value={questionStatus} onChange={(e) => setQuestionStatus(e.target.value as QuestionStatusFilter)}>
               <option value="all">{t('admin.qAllStatus')}</option>
