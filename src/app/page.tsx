@@ -1126,7 +1126,9 @@ export default function ShowPage() {
             </div>
           ) : (
             <div className="show-actions">
-              {LIFELINES.some(({ type }) => usesLeft(run.usedLifelines, type) > 0) && (
+              {/* A fileira fica sempre no lugar: gastar a última dica não pode
+                  sumir com a linha inteira e reposicionar o que está embaixo. As
+                  já usadas continuam visíveis, riscadas e desabilitadas. */}
               <div className="show-lifelines">
                 {LIFELINES.map(({ type, icon: Icon }) => {
                   const left = usesLeft(run.usedLifelines, type);
@@ -1150,7 +1152,6 @@ export default function ShowPage() {
                   );
                 })}
               </div>
-              )}
               {/* Stopping lives under the ladder — the prize it names is the
                   one the ladder is showing. Quitting stays here, quiet. */}
               <button
