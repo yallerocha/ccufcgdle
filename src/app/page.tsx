@@ -300,7 +300,12 @@ export default function ShowPage() {
   // transição de width, que só deve valer na contagem regressiva.
   const [clockRun, setClockRun] = useState(0);
   const setQuestionDeadline = (secondsLeft?: number) => {
-    questionDeadline.current = Date.now() + (secondsLeft ?? QUESTION_SECONDS) * 1000;
+    const seconds = secondsLeft ?? QUESTION_SECONDS;
+    questionDeadline.current = Date.now() + seconds * 1000;
+    // timeLeft precisa ser atualizado no mesmo update: sem isso a barra remonta
+    // com o valor da pergunta anterior (baixo) e só sobe quando o tick do
+    // cronômetro chega — que é justamente o deslize de encher aos poucos.
+    setTimeLeft(seconds);
     setClockRun((n) => n + 1);
   };
 
