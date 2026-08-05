@@ -42,7 +42,9 @@ services:
       # de qualquer dispositivo na rede local (cada um acessa por um IP/host
       # diferente); defina um valor explícito no .env para restringir.
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      APP_URL: http://localhost:${WEB_PORT:-3003}
+      # Base dos links de verificação/reset nos emails. Defina APP_URL no .env
+      # quando o front estiver na Vercel apontando pra esta API via túnel.
+      APP_URL: ${APP_URL:-http://localhost:${WEB_PORT:-3003}}
       ENSURE_DEFAULT_ADMIN: "true"
       ALLOW_LOCAL_SEED: "true"
       SEED_DATABASE: ${SEED_DATABASE:-false}
