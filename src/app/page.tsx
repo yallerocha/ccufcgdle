@@ -83,6 +83,10 @@ const QUESTION_SECONDS = 200;
 // same thresholds, so the two can never drift apart.
 const TIMER_WARN = 45;
 const TIMER_DANGER = 15;
+// Quanto o overlay do apresentador fica na tela. A abertura da partida é mais
+// longa porque a frase é maior.
+const START_TRANSITION_MS = 2600;
+const STEP_TRANSITION_MS = 1600;
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const CARD_SUITS = ['♠', '♥', '♦', '♣'];
 
@@ -138,8 +142,11 @@ export default function ShowPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [result, setResult] = useState<ShowRun | null>(null);
   const [muted, setMuted] = useState(false);
-  // Between-questions "host" transition card (phrase + next prize).
-  const [transition, setTransition] = useState<{ prize: number; phrase: string } | null>(null);
+  // Between-questions "host" transition card (phrase + next prize). `ms` é quanto
+  // tempo o overlay fica montado e vira a duração da animação: se a animação
+  // acabar antes, ele fica invisível mas continua cobrindo a tela e engolindo os
+  // cliques nas alternativas.
+  const [transition, setTransition] = useState<{ prize: number; phrase: string; ms: number } | null>(null);
   // Portal target readiness (fixed overlays render on document.body so no
   // ancestor transform/filter can clip them to the container).
   const [mounted, setMounted] = useState(false);
@@ -288,8 +295,13 @@ export default function ShowPage() {
   // of holding the first second, and so Q1 accounts for the opening message.
   const [timeLeft, setTimeLeft] = useState(QUESTION_SECONDS);
   const questionDeadline = useRef<number | null>(null);
+  // Muda a cada relógio novo (início / avanço / pular / reload). Serve de key na
+  // barra: remontar faz ela nascer cheia em vez de deslizar de volta ao topo pela
+  // transição de width, que só deve valer na contagem regressiva.
+  const [clockRun, setClockRun] = useState(0);
   const setQuestionDeadline = (secondsLeft?: number) => {
     questionDeadline.current = Date.now() + (secondsLeft ?? QUESTION_SECONDS) * 1000;
+    setClockRun((n) => n + 1);
   };
 
   const resetQuestionAids = () => {
@@ -346,18 +358,20 @@ export default function ShowPage() {
       const data = await res.json();
       if (res.ok) {
         setRun(data);
-        setQuestionDeadline(data.question?.secondsLeft);
         localStorage.setItem(RUN_KEY, data.runId);
         sfxStart();
         // Opening host message before the first question (same overlay as the
         // between-questions transition). Suspense music starts when it clears.
-            const phrase = randomPhrase(t, 'show.startPhrases');
-        setTransition({ prize: data.ladder[data.currentStep - 1], phrase });
+        const phrase = randomPhrase(t, 'show.startPhrases');
+        setTransition({ prize: data.ladder[data.currentStep - 1], phrase, ms: START_TRANSITION_MS });
         window.setTimeout(() => {
+          // O relógio só arranca quando a mensagem sai, senão a primeira pergunta
+          // já nasce com alguns segundos gastos atrás do overlay.
+          setQuestionDeadline(data.question?.secondsLeft);
           setTransition(null);
           setSpeech(randomPhrase(t, 'show.host.newQuestion'));
           startMusic();
-        }, 2600);
+        }, START_TRANSITION_MS);
       } else {
         setErrorMsg(data.error || t('show.errorGeneric'));
       }
@@ -436,7 +450,7 @@ export default function ShowPage() {
     setReveal(null);
     // Between-questions transition: a host phrase + the next prize, then advance.
     const phrase = randomPhrase(t, 'show.transitionPhrases');
-    setTransition({ prize: next.ladder[next.currentStep - 1], phrase });
+    setTransition({ prize: next.ladder[next.currentStep - 1], phrase, ms: STEP_TRANSITION_MS });
     window.setTimeout(() => {
       resetQuestionAids();
       setQuestionDeadline(next.question?.secondsLeft);
@@ -444,7 +458,7 @@ export default function ShowPage() {
       setTransition(null);
       setSpeech(randomPhrase(t, 'show.host.newQuestion'));
       startMusic();
-    }, 1600);
+    }, STEP_TRANSITION_MS);
   };
 
   const handleTimeout = useCallback(async () => {
@@ -899,7 +913,7 @@ export default function ShowPage() {
 
       {/* Between-questions host transition (portaled: true full-screen) */}
       {mounted && transition && createPortal(
-        <div className="show-transition">
+        <div className="show-transition" style={{ '--trans-dur': `${transition.ms}ms` } as React.CSSProperties}>
           <div className="show-transition-inner">
             {transition.phrase && <p className="show-transition-phrase">{transition.phrase}</p>}
             <p className="show-transition-prize">
@@ -981,7 +995,13 @@ export default function ShowPage() {
             const level = timeLeft <= TIMER_DANGER ? 'danger' : timeLeft <= TIMER_WARN ? 'warn' : 'ok';
             return (
               <div className={`show-timer show-timer--${level}`} role="timer" aria-label={t('show.timeLeft')}>
-                <div className="show-timer-track"><div className="show-timer-fill" style={{ width: `${reveal ? 100 : pct}%` }} /></div>
+                <div className="show-timer-track">
+                  <div
+                    key={`${clockRun}-${reveal ? 'reveal' : 'run'}`}
+                    className="show-timer-fill"
+                    style={{ width: `${reveal ? 100 : pct}%` }}
+                  />
+                </div>
                 <span className="show-timer-count">{reveal ? '—' : `${timeLeft}s`}</span>
               </div>
             );

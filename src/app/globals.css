@@ -5079,11 +5079,13 @@ input:focus, select:focus, textarea:focus {
     radial-gradient(900px 600px at 50% 40%, rgba(46, 96, 226, 0.4), transparent 60%),
     rgba(3, 7, 20, 0.93);
   backdrop-filter: blur(4px);
-  animation: scTransIn 1.6s ease forwards;
+  /* --trans-dur vem do JS e é exatamente quanto o overlay fica montado. Se a
+     animação terminar antes, ele some da vista mas continua cobrindo a tela. */
+  animation: scTransIn var(--trans-dur, 1.6s) ease forwards;
 }
 .show-transition-inner {
   text-align: center;
-  animation: scTransPop 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: scTransPop var(--trans-dur, 1.6s) cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 .show-transition-phrase {
   font-size: clamp(1.6rem, 5vw, 2.6rem);
