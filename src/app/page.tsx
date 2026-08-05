@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, BookOpen, X, ListChecks } from 'lucide-react';
+import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, BookOpen, X, ListChecks, CalendarDays } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
@@ -187,22 +187,26 @@ export default function ShowPage() {
   // is sent to /start, everything else means "all".
   const [topics, setTopics] = useState<{ id: string; count: number }[]>([]);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
+  const [years, setYears] = useState<{ id: number; count: number }[]>([]);
+  const [chosenYears, setChosenYears] = useState<Set<number>>(new Set());
   const [topicsOpen, setTopicsOpen] = useState(false);
   // Settings modal: 'menu' (options list) | 'topics' (theme picker), like the profile.
-  const [settingsView, setSettingsView] = useState<'menu' | 'topics'>('menu');
+  const [settingsView, setSettingsView] = useState<'menu' | 'topics' | 'years'>('menu');
   const [noLifelines, setNoLifelines] = useState(false);
   // Snapshot of the settings when the modal opened, to detect unsaved edits and
   // offer to discard them on close (X / overlay).
-  const settingsSnapshot = useRef<{ topics: Set<string> } | null>(null);
+  const settingsSnapshot = useRef<{ topics: Set<string>; years: Set<number> } | null>(null);
   // Which exit is pending confirmation: leaving the modal, or just stepping back
   // to the options list. Both throw away the same edits, so both must ask.
   const [confirmExitSettings, setConfirmExitSettings] = useState<'close' | 'back' | null>(null);
   useEffect(() => {
     apiFetch('/api/show/topics')
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
-      .then((data: { topics: { id: string; count: number }[] }) => {
+      .then((data: { topics: { id: string; count: number }[]; years: { id: number; count: number }[] }) => {
         setTopics(data.topics);
         setChosen(new Set(data.topics.map((tp) => tp.id)));
+        setYears(data.years);
+        setChosenYears(new Set(data.years.map((y) => y.id)));
       })
       .catch(() => {});
   }, []);
@@ -215,11 +219,20 @@ export default function ShowPage() {
       return next;
     });
   };
+  const toggleYear = (id: number) => {
+    setChosenYears((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const yearsFiltered = chosenYears.size > 0 && chosenYears.size < years.length;
   const topicsFiltered = chosen.size > 0 && chosen.size < topics.length;
-  const settingsChanged = topicsFiltered || noLifelines;
+  const settingsChanged = topicsFiltered || yearsFiltered || noLifelines;
 
   const openSettings = () => {
-    settingsSnapshot.current = { topics: new Set(chosen) };
+    settingsSnapshot.current = { topics: new Set(chosen), years: new Set(chosenYears) };
     setSettingsView('menu');
     setTopicsOpen(true);
   };
@@ -229,6 +242,8 @@ export default function ShowPage() {
     if (!s) return false;
     if (s.topics.size !== chosen.size) return true;
     for (const id of chosen) if (!s.topics.has(id)) return true;
+    if (s.years.size !== chosenYears.size) return true;
+    for (const y of chosenYears) if (!s.years.has(y)) return true;
     return false;
   };
   // X / overlay: confirm before closing if the topics were edited.
@@ -243,7 +258,10 @@ export default function ShowPage() {
   };
   const discardSettings = () => {
     const s = settingsSnapshot.current;
-    if (s) setChosen(new Set(s.topics)); // lifelines switch is left as-is
+    if (s) {
+      setChosen(new Set(s.topics)); // lifelines switch is left as-is
+      setChosenYears(new Set(s.years));
+    }
     if (confirmExitSettings === 'back') setSettingsView('menu');
     else setTopicsOpen(false);
     setConfirmExitSettings(null);
@@ -317,8 +335,9 @@ export default function ShowPage() {
     resetQuestionAids();
     try {
       // Send topics only when a strict, non-empty subset is picked (= filter on).
-      const body: { topics?: string[]; noLifelines?: boolean } = {};
+      const body: { topics?: string[]; years?: number[]; noLifelines?: boolean } = {};
       if (chosen.size > 0 && chosen.size < topics.length) body.topics = [...chosen];
+      if (chosenYears.size > 0 && chosenYears.size < years.length) body.years = [...chosenYears];
       if (noLifelines) body.noLifelines = true;
       const res = await apiFetch('/api/show/start', {
         method: 'POST',
@@ -347,7 +366,7 @@ export default function ShowPage() {
     } finally {
       setStarting(false);
     }
-  }, [t, chosen, topics.length, noLifelines]);
+  }, [t, chosen, topics.length, chosenYears, years.length, noLifelines]);
 
   // Step 1: pick an option (reversible). Step 2 (confirmAnswer) locks it in.
   const pick = (index: number) => {
@@ -749,6 +768,13 @@ export default function ShowPage() {
                     <span className="show-setting-count" style={{ marginLeft: 'auto' }}>{chosen.size}/{topics.length}</span>
                     <ChevronRight size={16} style={{ color: 'var(--text-dim)' }} />
                   </button>
+
+                  <button type="button" className="settings-option" onClick={() => setSettingsView('years')}>
+                    <CalendarDays size={18} style={{ color: 'var(--gold)' }} />
+                    <span>{t('show.yearsTitle')}</span>
+                    <span className="show-setting-count" style={{ marginLeft: 'auto' }}>{chosenYears.size}/{years.length}</span>
+                    <ChevronRight size={16} style={{ color: 'var(--text-dim)' }} />
+                  </button>
                 </div>
               )}
 
@@ -780,7 +806,44 @@ export default function ShowPage() {
                   <button
                     onClick={() => {
                       // Done commits the current selection, so closing won't prompt.
-                      settingsSnapshot.current = { topics: new Set(chosen) };
+                      settingsSnapshot.current = { topics: new Set(chosen), years: new Set(chosenYears) };
+                      setSettingsView('menu');
+                    }}
+                    className="btn show-final-btn show-settings-done"
+                  >
+                    <Check size={18} /> {t('show.topicsDone')}
+                  </button>
+                </>
+              )}
+
+              {settingsView === 'years' && (
+                <>
+                  <p className="show-setting-sub">{t('show.yearsHint')}</p>
+                  <div className="show-topic-chips">
+                    {years.map((y) => (
+                      <button
+                        key={y.id}
+                        type="button"
+                        className={`show-topic-chip${chosenYears.has(y.id) ? ' is-on' : ''}`}
+                        aria-pressed={chosenYears.has(y.id)}
+                        onClick={() => toggleYear(y.id)}
+                      >
+                        {y.id} <small>{y.count}</small>
+                      </button>
+                    ))}
+                  </div>
+                  {chosenYears.size < years.length && (
+                    <button
+                      type="button"
+                      className="show-setting-selectall"
+                      onClick={() => setChosenYears(new Set(years.map((y) => y.id)))}
+                    >
+                      {t('show.yearsSelectAll')}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      settingsSnapshot.current = { topics: new Set(chosen), years: new Set(chosenYears) };
                       setSettingsView('menu');
                     }}
                     className="btn show-final-btn show-settings-done"

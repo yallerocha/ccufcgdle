@@ -2738,6 +2738,11 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = RAW_QUESTIONS.map((q) => ({
 /** Distinct topics, in a sensible display order. */
 export const TOPICS: string[] = [...new Set(Object.values(TOPIC_BY_ID))];
 
+/** Exam editions present in the bank, newest first. */
+export const YEARS: number[] = [...new Set(QUIZ_QUESTIONS.map((q) => questionSource(q)?.year))]
+  .filter((y): y is number => y !== undefined)
+  .sort((a, b) => b - a);
+
 export const QUESTION_BY_ID = new Map(QUIZ_QUESTIONS.map((q) => [q.id, q]));
 
 // Provenance of a question, derived from its id (`area-YEAR-NUMBER`): the exam

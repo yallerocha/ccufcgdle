@@ -13,7 +13,7 @@ import {
   type LifelineType,
 } from '../../server/show';
 import { requireAuth } from '../middleware/auth';
-import { QUIZ_QUESTIONS, TOPICS } from '../../server/quiz-questions';
+import { QUIZ_QUESTIONS, TOPICS, YEARS, questionSource } from '../../server/quiz-questions';
 import { getDisabledIds } from '../../server/disabled-questions';
 
 // O Show da Computação — the whole run is server-authoritative (see server/show.ts),
@@ -29,19 +29,32 @@ router.get('/topics', async (_req, res) => {
   for (const q of QUIZ_QUESTIONS) {
     if (!disabled.has(q.id)) counts[q.topic] = (counts[q.topic] ?? 0) + 1;
   }
-  return res.json({ topics: TOPICS.filter((id) => counts[id]).map((id) => ({ id, count: counts[id] })) });
+  const byYear: Record<number, number> = {};
+  for (const q of QUIZ_QUESTIONS) {
+    const y = questionSource(q)?.year;
+    if (y && !disabled.has(q.id)) byYear[y] = (byYear[y] ?? 0) + 1;
+  }
+  return res.json({
+    topics: TOPICS.filter((id) => counts[id]).map((id) => ({ id, count: counts[id] })),
+    years: YEARS.filter((y) => byYear[y]).map((y) => ({ id: y, count: byYear[y] })),
+  });
 });
 
-// POST /api/show/start — begin a new run. Optional { topics: string[] } filters
-// the question themes (topped up from the rest when they can't fill the ladder).
+// POST /api/show/start — begin a new run. Optional { topics: string[], years:
+// number[] } narrow the pool (topped up from the rest when they can't fill the
+// ladder). A question must match both filters to be preferred.
 router.post('/start', requireAuth, async (req, res) => {
   try {
     const raw = req.body?.topics;
     const topics = Array.isArray(raw)
       ? raw.filter((x): x is string => typeof x === 'string' && TOPICS.includes(x)).slice(0, 24)
       : undefined;
+    const rawYears = req.body?.years;
+    const years = Array.isArray(rawYears)
+      ? rawYears.filter((y): y is number => typeof y === 'number' && YEARS.includes(y))
+      : undefined;
     const noLifelines = req.body?.noLifelines === true;
-    const run = await startRun(req.auth!.userId, { topics, noLifelines });
+    const run = await startRun(req.auth!.userId, { topics, years, noLifelines });
     return res.json(run);
   } catch (error) {
     console.error('Error starting show run:', error);

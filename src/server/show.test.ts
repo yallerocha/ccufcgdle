@@ -15,7 +15,7 @@ import {
   LIFELINE_USES,
   ALL_LIFELINES,
 } from './show';
-import { QUESTION_BY_ID, QUIZ_QUESTIONS, DIFFICULTY } from './quiz-questions';
+import { QUESTION_BY_ID, QUIZ_QUESTIONS, DIFFICULTY, questionSource } from './quiz-questions';
 
 let passed = 0;
 const test = (name: string, fn: () => void) => {
@@ -111,6 +111,31 @@ test('every question sits in one of the three buckets', () => {
   for (const q of QUIZ_QUESTIONS) {
     assert.ok(valid.has(q.difficulty), `${q.id}: dificuldade ${q.difficulty} fora das três faixas`);
   }
+});
+
+test('pickLadder prefers chosen years but still fills the ladder', () => {
+  const year = (id: string) => questionSource(QUESTION_BY_ID.get(id)!)?.year;
+  const ids = pickLadder(undefined, undefined, [2025]);
+  assert.strictEqual(ids.length, LADDER_SIZE);
+  const from2025 = ids.filter((id) => year(id) === 2025).length;
+  assert.ok(from2025 >= LADDER_SIZE * 0.8, `esperava a maioria de 2025, veio ${from2025}`);
+});
+
+test('a year too small to fill the ladder is topped up from the rest', () => {
+  // 2010 has only a handful of questions, so the ladder has to borrow.
+  const ids = pickLadder(undefined, undefined, [2010]);
+  assert.strictEqual(ids.length, LADDER_SIZE);
+  assert.strictEqual(new Set(ids).size, LADDER_SIZE, 'sem questoes repetidas na mesma partida');
+});
+
+test('topic and year filters combine: a question must match both to be preferred', () => {
+  const q = (id: string) => QUESTION_BY_ID.get(id)!;
+  const ids = pickLadder(['Redes'], undefined, [2025]);
+  assert.strictEqual(ids.length, LADDER_SIZE);
+  const both = ids.filter((id) => q(id).topic === 'Redes' && questionSource(q(id))?.year === 2025);
+  // The intersection is tiny, so most of the ladder is topped up — but every
+  // question of the intersection that exists must have been used first.
+  assert.ok(both.length > 0, 'deveria usar as questoes que casam com os dois filtros');
 });
 
 test('pickLadder prefers chosen topics but still fills the ladder', () => {

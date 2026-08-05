@@ -111,11 +111,23 @@ function bucketize(pool: QuizQuestion[]): Map<number, QuizQuestion[]> {
   return byDiff;
 }
 
-export function pickLadder(topics?: string[], disabled?: Set<string>): string[] {
+export function pickLadder(
+  topics?: string[],
+  disabled?: Set<string>,
+  years?: number[]
+): string[] {
   const bank = disabled?.size ? QUIZ_QUESTIONS.filter((q) => !disabled.has(q.id)) : QUIZ_QUESTIONS;
   const wanted = topics && topics.length ? new Set(topics) : null;
-  const primary = bucketize(wanted ? bank.filter((q) => wanted.has(q.topic)) : bank);
-  const fallback = bucketize(wanted ? bank.filter((q) => !wanted.has(q.topic)) : []);
+  const wantedYears = years && years.length ? new Set(years) : null;
+  // Both filters are preferences, and a question has to satisfy both to be
+  // preferred. Whatever they leave out still tops the ladder up, so a narrow
+  // pick never leaves the run short of 15 questions.
+  const preferred = (q: QuizQuestion) =>
+    (!wanted || wanted.has(q.topic)) &&
+    (!wantedYears || wantedYears.has(questionSource(q)?.year ?? -1));
+  const filtering = !!wanted || !!wantedYears;
+  const primary = bucketize(filtering ? bank.filter(preferred) : bank);
+  const fallback = bucketize(filtering ? bank.filter((q) => !preferred(q)) : []);
 
   const used = new Set<string>();
   const takeNearest = (buckets: Map<number, QuizQuestion[]>, target: number): string | null => {
@@ -283,12 +295,12 @@ function toView(run: RunRow): ShowRunView {
 
 export async function startRun(
   playerId: string,
-  opts?: { topics?: string[]; noLifelines?: boolean }
+  opts?: { topics?: string[]; years?: number[]; noLifelines?: boolean }
 ): Promise<ShowRunView> {
   const run = await prisma.showRun.create({
     data: {
       playerId,
-      questionIds: pickLadder(opts?.topics, await getDisabledIds()).join(','),
+      questionIds: pickLadder(opts?.topics, await getDisabledIds(), opts?.years).join(','),
       currentStep: 1,
       prize: 0,
       // Disabling lifelines is modelled as "all already spent" — no schema change,
