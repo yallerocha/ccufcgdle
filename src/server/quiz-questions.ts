@@ -1,8 +1,8 @@
 // Question bank for the daily POSCOMP quiz. These are REAL questions from past
 // POSCOMP exams (Exame Nacional para Ingresso na Pós-Graduação em Computação) —
-// years 2010, 2019, 2022 and 2024. Enunciados and options are transcribed from the
-// official cadernos de questões, and the correct answer of each matches the official
-// gabarito definitivo of that year. The id of every question carries its exam year
+// years 2010, 2019, 2022, 2024 and 2025. Enunciados and options are transcribed from
+// the official cadernos de questões, and the correct answer of each matches the
+// official gabarito definitivo of that year. The id of every question carries its exam year
 // (e.g. mat-2019-01). Questions keep the exam's three areas: Matemática,
 // Fundamentos da Computação and Tecnologia da Computação.
 //
@@ -32,10 +32,10 @@ export interface QuizQuestion {
 }
 
 const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty' | 'topic' | 'explanationLong'>[] = [
-  // ── Matemática — lógica e conceitos (POSCOMP) ──────────────────────────────
-  // Somente questões teóricas/conceituais (lógica, quantificadores). Questões de
-  // cálculo (determinantes, limites, integrais, combinatória, geometria
-  // analítica etc.) foram removidas por opção do produto.
+  // ── Matemática (POSCOMP) ───────────────────────────────────────────────────
+  // Inclui tanto as questões teóricas/conceituais (lógica, quantificadores)
+  // quanto as de cálculo (álgebra linear, integrais, combinatória, geometria
+  // analítica, estatística), que entraram a partir da edição de 2025.
   {
     id: 'mat-2019-15',
     area: 'Matemática',
@@ -1071,11 +1071,844 @@ const RAW_QUESTIONS: Omit<QuizQuestion, 'difficulty' | 'topic' | 'explanationLon
     explanation:
       'No algoritmo centralizado, um coordenador gerencia o acesso: requisição, permissão e liberação — três mensagens por uso da região crítica.',
   },
+
+  // ── Matemática (POSCOMP 2025) ──────────────────────────────────────────────
+  {
+    id: 'mat-2025-01',
+    area: 'Matemática',
+    question:
+      'Utilizando o método de Gauss, determine o valor de z no sistema de equações: 3x − 3y + z = −9; x + y − z = 1; 3x − 5y + z = 7.',
+    options: ['z = −15', 'z = −8', 'z = −6', 'z = −1', 'z = 2'],
+    answer: 0,
+    explanation:
+      'Subtraindo a 3ª equação da 1ª, x e z se cancelam: 2y = −16, logo y = −8. Substituindo na 2ª, x − z = 9. Levando à 1ª: 4z = −60, ou seja, z = −15.',
+  },
+  {
+    id: 'mat-2025-02',
+    area: 'Matemática',
+    question: 'Sobre os autovalores e autovetores da matriz A = [[4, 1], [0, 2]], é correto afirmar que:',
+    options: [
+      'A possui autovalores complexos e não é diagonalizável',
+      'Os autovalores de A são iguais e iguais a 3',
+      'A não possui autovalores porque não é simétrica',
+      'O autovalor 4 possui multiplicidade algébrica 2',
+      'A possui dois autovalores reais e distintos: 4 e 2',
+    ],
+    answer: 4,
+    explanation:
+      'A matriz é triangular superior, então os autovalores são os próprios elementos da diagonal: 4 e 2. Sendo reais e distintos, A é diagonalizável.',
+  },
+  {
+    id: 'mat-2025-03',
+    area: 'Matemática',
+    question:
+      'Em R³ com o produto interno usual, dado o vetor v = (3, 4, 0) e o subespaço W gerado por w = (1, 0, 0), a projeção ortogonal de v sobre W é:',
+    options: ['(0, 4, 0)', '(3, 4, 0)', '(1, 0, 0)', '(0, 0, 0)', '(3, 0, 0)'],
+    answer: 4,
+    explanation:
+      'A projeção é (⟨v, w⟩ / ⟨w, w⟩)·w. Como ⟨v, w⟩ = 3 e ⟨w, w⟩ = 1, o resultado é 3·(1, 0, 0) = (3, 0, 0) — a componente de v na direção do eixo x.',
+  },
+  {
+    id: 'mat-2025-04',
+    area: 'Matemática',
+    question:
+      'Um processador executa tarefas compostas por micro-operações de dois tipos: tipo A, que dura 1 ciclo de clock, e tipo B, que dura 2 ciclos. Quantas sequências distintas de micro-operações formam uma tarefa com duração total de exatamente 8 ciclos?',
+    options: ['21', '26', '34', '42', '55'],
+    answer: 2,
+    explanation:
+      'Seja f(n) o número de sequências que somam n ciclos. A última operação é do tipo A ou B, então f(n) = f(n−1) + f(n−2), com f(0) = f(1) = 1. A sequência é 1, 1, 2, 3, 5, 8, 13, 21, 34 — logo f(8) = 34.',
+  },
+  {
+    id: 'mat-2025-05',
+    area: 'Matemática',
+    question:
+      'Um gerente precisa selecionar 4 especialistas de um grupo de 9. O grupo contém 3 especialistas que não podem trabalhar juntos: nenhum par entre eles pode aparecer na equipe. De quantas maneiras a equipe pode ser formada?',
+    options: ['36', '75', '81', '120', '126'],
+    answer: 1,
+    explanation:
+      'A equipe pode conter no máximo um dos 3 conflitantes. Com nenhum deles: C(6,4) = 15. Com exatamente um: 3 × C(6,3) = 3 × 20 = 60. Total 15 + 60 = 75.',
+  },
+  {
+    id: 'mat-2025-06',
+    area: 'Matemática',
+    question:
+      'Um rack possui 7 slots, nos quais devem ser alocados 3 servidores idênticos do tipo A e 4 do tipo B, um por slot. Por restrições de ventilação, dois servidores do tipo A não podem ocupar slots adjacentes. De quantas maneiras distintas os servidores podem ser dispostos?',
+    options: ['10', '12', '15', '20', '35'],
+    answer: 0,
+    explanation:
+      'Posicionando primeiro os 4 servidores B, formam-se 5 lacunas (antes, entre e depois deles). Basta escolher 3 dessas 5 lacunas para os servidores A, o que garante que nenhum fique adjacente: C(5,3) = 10.',
+  },
+  {
+    id: 'mat-2025-07',
+    area: 'Matemática',
+    question:
+      'Para encontrar os extremos condicionados de uma função f(x, y) sujeita à restrição g(x, y) = 0, o método dos multiplicadores de Lagrange consiste em resolver:',
+    options: ['∇f = λg', '∇f = λ∇g', '∇f + ∇g = λ', 'f(x, y) = λg(x, y)', '∇(f · g) = λ'],
+    answer: 1,
+    explanation:
+      'No ponto de extremo condicionado, a curva de nível de f tangencia a restrição, então os gradientes são paralelos: ∇f = λ∇g, resolvido junto com g(x, y) = 0.',
+  },
+  {
+    id: 'mat-2025-08',
+    area: 'Matemática',
+    question:
+      'Considere f(x) = x² no intervalo [0, 2]. Utilizando a regra dos trapézios com dois subintervalos, a aproximação da integral definida de x² de 0 a 2 é:',
+    options: ['1,0', '2,0', '3,0', '4,0', '5,0'],
+    answer: 2,
+    explanation:
+      'Com h = 1, a regra dos trapézios composta dá (h/2)·[f(0) + 2f(1) + f(2)] = (1/2)·[0 + 2 + 4] = 3. O valor exato é 8/3 ≈ 2,67; o trapézio superestima porque x² é convexa.',
+  },
+  {
+    id: 'mat-2025-09',
+    area: 'Matemática',
+    question: 'Seja a função f(x, y) = x²y + 3y². O gradiente ∇f(x, y) é:',
+    options: [
+      '(2xy, x² + 6y)',
+      '(x² + 3, 2xy + 6y)',
+      '(2x + y, 3y² + x)',
+      '(2x, 3y)',
+      '(xy, y²)',
+    ],
+    answer: 0,
+    explanation:
+      'O gradiente reúne as derivadas parciais. Derivando em x (com y constante): 2xy. Derivando em y (com x constante): x² + 6y. Logo ∇f = (2xy, x² + 6y).',
+  },
+  {
+    id: 'mat-2025-10',
+    area: 'Matemática',
+    question: 'As coordenadas do baricentro de um triângulo ABC, com A(2, −5), B(4, 0) e C(0, 2), são:',
+    options: ['(2, −1)', '(6, −3)', '(3, −3/2)', '(−3/2, 3)', '(−1, 2)'],
+    answer: 0,
+    explanation:
+      'O baricentro é a média aritmética dos vértices: x = (2 + 4 + 0)/3 = 2 e y = (−5 + 0 + 2)/3 = −1. Logo G = (2, −1).',
+  },
+  {
+    id: 'mat-2025-11',
+    area: 'Matemática',
+    question:
+      'A reta r passa pelo ponto P(1, 4, 3) e é paralela ao vetor V = (−3, −2, −3). Determine o ponto de interseção da reta r com o plano xy.',
+    options: ['(0, −2, 3)', '(−2, 2, 0)', '(2, −2, 0)', '(0, −2, 2)', '(−3, −2, 0)'],
+    answer: 1,
+    explanation:
+      'A reta é (1 − 3t, 4 − 2t, 3 − 3t). O plano xy é z = 0, então 3 − 3t = 0 dá t = 1. Substituindo: x = −2 e y = 2, ou seja, (−2, 2, 0).',
+  },
+  {
+    id: 'mat-2025-12',
+    area: 'Matemática',
+    question: 'Determine a coordenada cartesiana do ponto P cuja coordenada polar é (3, π).',
+    options: ['(3, 0)', '(π, 3)', '(3, π)', '(0, −3)', '(−3, 0)'],
+    answer: 4,
+    explanation:
+      'A conversão é x = r·cos θ e y = r·sen θ. Com r = 3 e θ = π: x = 3·(−1) = −3 e y = 3·0 = 0. Logo P = (−3, 0).',
+  },
+  {
+    id: 'mat-2025-14',
+    area: 'Matemática',
+    question:
+      'Quantas linhas tem a tabela-verdade da fórmula (p ∧ q) → r, considerando que existem três proposições (p, q e r)?',
+    options: ['3', '6', '8', '12', '16'],
+    answer: 2,
+    explanation:
+      'Cada proposição assume dois valores, e a tabela precisa cobrir todas as combinações: 2³ = 8 linhas. O número de conectivos não altera a contagem, só o número de proposições distintas.',
+  },
+  {
+    id: 'mat-2025-15',
+    area: 'Matemática',
+    question: 'Considerando a lógica de primeira ordem, qual das frases abaixo pode ser representada por ∀x P(x)?',
+    options: [
+      'Existe um número que é par',
+      'Nenhum aluno passou na prova',
+      'Todos os alunos estudaram',
+      'Alguns alunos faltaram',
+      'Pedro estudou para a prova',
+    ],
+    answer: 2,
+    explanation:
+      'O quantificador ∀ afirma que a propriedade vale para todos os elementos do domínio, que é exatamente a leitura de "Todos os alunos estudaram".',
+  },
+  {
+    id: 'mat-2025-16',
+    area: 'Matemática',
+    question:
+      'Considere a definição recursiva f(n) = 1 se n = 0, e f(n) = n · f(n − 1) se n > 0. Qual é o valor de f(4)?',
+    options: ['12', '16', '20', '24', '32'],
+    answer: 3,
+    explanation:
+      'A definição é a do fatorial. Desenrolando: f(4) = 4 · f(3) = 4 · 3 · f(2) = 4 · 3 · 2 · f(1) = 4 · 3 · 2 · 1 · f(0) = 24.',
+  },
+  {
+    id: 'mat-2025-17',
+    area: 'Matemática',
+    question: 'Considerando um código de Hamming (7,4), qual das alternativas representa corretamente uma propriedade desse código?',
+    options: [
+      'Detecta até 3 erros e corrige até 2',
+      'Corrige até 2 erros de bit por palavra',
+      'Detecta até 2 erros e corrige até 1 erro',
+      'Apenas detecta, mas não corrige erros',
+      'Utiliza uma matriz geradora de 7 colunas e 3 linhas',
+    ],
+    answer: 2,
+    explanation:
+      'O Hamming (7,4) tem distância mínima 3. Com d = 3, detectam-se até d − 1 = 2 erros e corrige-se até ⌊(d − 1)/2⌋ = 1 erro por palavra.',
+  },
+  {
+    id: 'mat-2025-18',
+    area: 'Matemática',
+    question: 'Sejam A = {x ∈ Z | −2 ≤ x ≤ 3} e B = {x ∈ Z | x é par e 0 ≤ x ≤ 6}. Qual é o conjunto A ∩ B?',
+    options: ['{0, 2}', '{0, 2, 4}', '{−2, 0, 2}', '{−2, 0, 2, 4}', '{−2, −1, 0, 1, 2, 3}'],
+    answer: 0,
+    explanation:
+      'A = {−2, −1, 0, 1, 2, 3} e B = {0, 2, 4, 6}. Os elementos comuns são apenas 0 e 2 — o 4 pertence a B mas não a A, e −2 pertence a A mas não a B.',
+  },
+  {
+    id: 'mat-2025-19',
+    area: 'Matemática',
+    question: 'Sobre a correlação, assinale a alternativa correta.',
+    options: [
+      'A correlação linear procura medir o grau da relação entre duas variáveis determinísticas X e Y através da disposição dos pontos (X, Y) em torno de uma hipérbole',
+      'A correlação é considerada negativa se os valores crescentes de X estiverem associados aos valores crescentes de Y',
+      'A correlação é considerada positiva quando os valores crescentes de X estiverem associados a valores decrescentes de Y',
+      'Na correlação linear perfeita positiva, os pontos (X, Y) estão perfeitamente alinhados; quando alinhados em sentido contrário, a correlação é denominada perfeita negativa',
+      'Quando duas variáveis X e Y forem independentes, o coeficiente de correlação é espúrio, podendo apresentar valor próximo de ±1',
+    ],
+    answer: 3,
+    explanation:
+      'Correlação linear perfeita significa pontos exatamente sobre uma reta: r = +1 se a reta é crescente, r = −1 se decrescente. As demais trocam os sinais ou falam de hipérbole, não de reta.',
+  },
+  {
+    id: 'mat-2025-20',
+    area: 'Matemática',
+    question:
+      'Em relação às séries estatísticas, analise as assertivas e assinale V (verdadeira) ou F (falsa). I. A série temporal, também chamada cronológica ou histórica, identifica-se pelo caráter variável do fator cronológico. II. A série geográfica, ou de localização, apresenta como caráter variável somente o fator geográfico. III. Série heterógrada é aquela em que a variável apresenta variação discreta; são heterógradas a série temporal, a geográfica e a específica. IV. Série homógrada é aquela na qual o fenômeno apresenta subdivisões, e a distribuição de frequências é uma série homógrada. A ordem correta, de cima para baixo, é:',
+    options: ['V – F – F – V', 'V – V – F – F', 'V – F – V – F', 'F – V – F – V', 'F – F – V – V'],
+    answer: 1,
+    explanation:
+      'I e II são as definições corretas de série temporal e geográfica. III e IV estão invertidas: homógrada é a que não se subdivide (temporal, geográfica, específica) e heterógrada é a que se subdivide, como a distribuição de frequências.',
+  },
+
+  // ── Fundamentos da Computação (POSCOMP 2025) ───────────────────────────────
+  {
+    id: 'fun-2025-21',
+    area: 'Fundamentos da Computação',
+    question:
+      'Um robô de resgate precisa decidir rapidamente a cada encruzilhada de um labirinto, sem poder voltar atrás nem ver o mapa completo, escolhendo sempre o caminho que parece melhor no momento. Qual estratégia algorítmica o robô estaria usando?',
+    options: [
+      'Força bruta, testando todas as combinações de caminhos',
+      'Programação dinâmica, construindo soluções a partir de subproblemas menores',
+      'Algoritmos gulosos (greedy), fazendo a melhor escolha local a cada passo',
+      'Backtracking, explorando caminhos e retornando se não levarem ao objetivo',
+      'Divisão e conquista, quebrando o problema em subproblemas independentes',
+    ],
+    answer: 2,
+    explanation:
+      'Decidir pelo melhor imediato, sem revisão e sem visão global, é a definição de algoritmo guloso. A impossibilidade de voltar atrás elimina backtracking, e a falta do mapa completo elimina as demais.',
+  },
+  {
+    id: 'fun-2025-22',
+    area: 'Fundamentos da Computação',
+    question:
+      'Considere a função recursiva: calcula_algo(n) retorna 1 se n ≤ 1, senão retorna calcula_algo(n−1) + calcula_algo(n−2). Sobre a complexidade de tempo T(N) e de espaço S(N) dessa implementação, é correto afirmar que:',
+    options: [
+      'T(N) = O(N) e S(N) = O(log N), devido à otimização de compilação',
+      'T(N) = O(2^N) e S(N) = O(N), pela duplicação exponencial de chamadas e pela profundidade da pilha',
+      'T(N) = O(N²) e S(N) = O(N), porque cada chamada adiciona uma entrada à pilha',
+      'T(N) = O(N log N) e S(N) = O(1), pois a maioria das chamadas é memorizada implicitamente',
+      'T(N) = O(log N) e S(N) = O(N), assumindo gerenciamento otimizado da pilha',
+    ],
+    answer: 1,
+    explanation:
+      'É Fibonacci ingênuo: cada chamada gera duas, formando uma árvore de tamanho exponencial, T(N) = O(2^N). O espaço segue a profundidade máxima da pilha, que é O(N), pois só um ramo fica ativo por vez.',
+  },
+  {
+    id: 'fun-2025-23',
+    area: 'Fundamentos da Computação',
+    question: 'Sobre a notação assintótica, assinale a alternativa INCORRETA.',
+    options: [
+      'f(n) = O(g(n)) significa que f(n) cresce no máximo tão rápido quanto g(n), assintoticamente',
+      'Se f(n) = 2n² + 3n e g(n) = n², então f(n) = O(g(n))',
+      'O(c·g(n)) = O(g(n)) para qualquer constante c > 0',
+      'A notação O (Big O) fornece um limite inferior assintótico para o tempo de execução de um algoritmo',
+      'Se f(n) = O(g(n)) e g(n) = O(h(n)), então f(n) = O(h(n))',
+    ],
+    answer: 3,
+    explanation:
+      'Big O é limite superior, não inferior — quem dá limite inferior é Ω. As demais estão corretas: constantes somem, a transitividade vale e 2n² + 3n é O(n²).',
+  },
+  {
+    id: 'fun-2025-24',
+    area: 'Fundamentos da Computação',
+    question:
+      'A ordenação por inserção troca apenas itens adjacentes, então o menor item na posição mais à direita exige n−1 comparações e movimentações. Qual algoritmo contorna isso permitindo trocas entre registros distantes, rearranjando itens separados h posições de modo que todo h-ésimo item forme uma sequência ordenada (h-ordenada)?',
+    options: ['Shellsort', 'Quicksort', 'Heapsort', 'Intercalação polifásica', 'Ordenação por seleção'],
+    answer: 0,
+    explanation:
+      'O Shellsort é exatamente a inserção generalizada por incrementos h decrescentes. Trocas a distância h movem itens muito fora de lugar em poucos passos, e o último passo com h = 1 termina o serviço com o vetor quase ordenado.',
+  },
+  {
+    id: 'fun-2025-25',
+    area: 'Fundamentos da Computação',
+    question:
+      'Sobre pilhas e filas, analise as assertivas e assinale V (verdadeira) ou F (falsa). I. As pilhas possuem a propriedade de que o último item inserido é o primeiro a ser retirado. II. A ordem linear das pilhas é a ordem de chegada; pilhas são usadas quando se deseja processar itens na ordem "primeiro que chega, primeiro atendido". III. Uma fila é uma lista linear em que todas as inserções são realizadas em um extremo e todas as retiradas no outro. IV. Existe uma ordem linear para as filas, que é a ordem "do mais recente para o menos recente". A ordem correta, de cima para baixo, é:',
+    options: ['V – F – F – V', 'V – V – F – F', 'V – F – V – F', 'F – V – F – V', 'F – F – V – V'],
+    answer: 2,
+    explanation:
+      'I define LIFO (pilha) e III define FIFO (fila), ambas corretas. II atribui à pilha o comportamento da fila, e IV inverte a ordem da fila, que atende do mais antigo para o mais recente.',
+  },
+  {
+    id: 'fun-2025-26',
+    area: 'Fundamentos da Computação',
+    question:
+      'Em uma tabela hash, como duas ou mais chaves podem ser transformadas no mesmo endereço, é preciso tratar colisões. Uma forma de resolvê-las é construir uma _____________ para cada endereço da tabela, na qual todas as chaves com o mesmo endereço são armazenadas sequencialmente. Assinale a alternativa que preenche corretamente a lacuna.',
+    options: ['lista generalizada', 'lista encadeada', 'pilha em arranjo', 'fila de prioridades', 'árvore de pesquisa binária'],
+    answer: 1,
+    explanation:
+      'É o encadeamento separado (separate chaining): cada posição da tabela guarda o início de uma lista encadeada com todas as chaves que colidiram naquele endereço.',
+  },
+  {
+    id: 'fun-2025-27',
+    area: 'Fundamentos da Computação',
+    question:
+      'Um barramento de dados possui largura de 32 bits e opera a 200 MHz. A taxa de transferência máxima desse barramento é de quantos Mbps?',
+    options: ['800', '1.600', '3.200', '6.400', '12.800'],
+    answer: 3,
+    explanation:
+      'A taxa é largura × frequência: 32 bits × 200×10⁶ transferências/s = 6,4×10⁹ bits/s, ou seja, 6.400 Mbps.',
+  },
+  {
+    id: 'fun-2025-28',
+    area: 'Fundamentos da Computação',
+    question:
+      'O tipo de função de mapeamento que permite que cada bloco da memória principal seja carregado em qualquer linha da memória cache é o mapeamento:',
+    options: ['relativo', 'aleatório', 'associativo por conjunto', 'direto', 'associativo'],
+    answer: 4,
+    explanation:
+      'No mapeamento totalmente associativo, qualquer bloco pode ocupar qualquer linha. O direto fixa uma única linha por bloco, e o associativo por conjunto permite qualquer linha dentro de um conjunto restrito.',
+  },
+  {
+    id: 'fun-2025-29',
+    area: 'Fundamentos da Computação',
+    question:
+      'Sobre o tratamento de interrupções no ciclo de execução de um processador, analise as assertivas. I. Antes de executar a rotina de tratamento, é necessário salvar o contexto do processo corrente. II. Ao constatar a interrupção, o processador sinaliza que a reconheceu e em seguida realiza as tratativas para executar a rotina. III. A rotina de tratamento é executada em modo usuário, pois trata-se de uma função do programa em execução. Quais estão corretas?',
+    options: ['Apenas I', 'Apenas II', 'Apenas III', 'Apenas I e II', 'I, II e III'],
+    answer: 3,
+    explanation:
+      'I e II descrevem o protocolo padrão de interrupção. III está errada: o tratador roda em modo núcleo (kernel), com privilégios que o programa de usuário não possui.',
+  },
+  {
+    id: 'fun-2025-30',
+    area: 'Fundamentos da Computação',
+    question: 'Considerando a função F(A,B,C) = A·C̄ + A·B̄·C + A·(B + C), qual é a função dual de F?',
+    options: [
+      'A·C̄ + A·B̄·C + A·(B + C)',
+      'Ā·C + Ā·B·C̄ + Ā·(B̄ + C̄)',
+      'A·C̄ * A·B̄·C * A·(B * C)',
+      '(Ā + C) * (Ā + B + C̄) * (Ā + B̄ * C̄)',
+      '(A + C̄) * (A + B̄ + C) * (A + B * C)',
+    ],
+    answer: 4,
+    explanation:
+      'O dual troca todo AND por OR e todo OR por AND, mantendo as variáveis e suas negações. Assim A·C̄ vira (A + C̄), A·B̄·C vira (A + B̄ + C) e A·(B + C) vira (A + B·C).',
+  },
+  {
+    id: 'fun-2025-31',
+    area: 'Fundamentos da Computação',
+    question:
+      'Considere a função F(W, X, Y, Z) com termos mínimos (minterms) = {11, 12, 14, 15} e termos não essenciais (don’t care) = {5, 6, 7}. Simplificada como soma de produtos, seria obtido:',
+    options: ['W·X·Z̄ + W·Y·Z', 'W·X·Z̄ + W·Y·Z + X·Y', 'W·X·Z̄ + W·Y·Z + X·W̄', 'W·X·Z̄·Ȳ + W·Y·Z + X·Y·W', 'X·Y + W·Y·Z + W·X·Z̄·Ȳ'],
+    answer: 0,
+    explanation:
+      'W·X·Z̄ cobre 1100 (12) e 1110 (14); W·Y·Z cobre 1011 (11) e 1111 (15). Os dois termos juntos cobrem exatamente os minterms pedidos, sem precisar recorrer aos don’t cares.',
+  },
+  {
+    id: 'fun-2025-33',
+    area: 'Fundamentos da Computação',
+    question:
+      'Relacione os paradigmas (1. Imperativo, 2. Funcional, 3. Orientado a Objetos, 4. Lógico, 5. Declarativo) às características, na ordem: ( ) aplicação de funções matemáticas, com imutabilidade e ausência de efeitos colaterais; ( ) foca no "quê", descrevendo o resultado sem especificar a sequência de passos; ( ) resolve problemas por encadeamento de regras e fatos, com inferência automática; ( ) centrada na modificação explícita de estados da memória por comandos sequenciais; ( ) organiza o programa em entidades que encapsulam dados e comportamentos, com herança. A ordem correta é:',
+    options: ['3 – 5 – 2 – 1 – 4', '2 – 4 – 5 – 1 – 3', '5 – 3 – 2 – 4 – 1', '4 – 2 – 5 – 3 – 1', '2 – 5 – 4 – 1 – 3'],
+    answer: 4,
+    explanation:
+      'Funções matemáticas sem efeitos colaterais é funcional (2); descrever o "quê" é declarativo (5); regras, fatos e inferência é lógico (4); estados e comandos sequenciais é imperativo (1); encapsulamento e herança é orientado a objetos (3).',
+  },
+  {
+    id: 'fun-2025-34',
+    area: 'Fundamentos da Computação',
+    question: 'Sobre verificação de tipos e inferência de tipos em linguagens de programação, assinale a alternativa correta.',
+    options: [
+      'A verificação de tipos estática ocorre em tempo de execução, sendo comum em linguagens de script',
+      'A inferência de tipos exige que o programador declare o tipo de cada variável, aumentando a verbosidade',
+      'Linguagens com verificação dinâmica não detectam erros de tipo até que o trecho com erro seja executado',
+      'A inferência de tipos compromete a segurança de tipos, pois o compilador pode supor tipos incorretos',
+      'Verificação de tipos forte é sinônimo de verificação estática, garantindo detecção antes da execução',
+    ],
+    answer: 2,
+    explanation:
+      'Na tipagem dinâmica o tipo só é conferido quando a linha roda, então o erro pode ficar latente até um caminho raro ser executado. As outras invertem definições: estática é em compilação, inferência dispensa a declaração, e forte é ortogonal a estática.',
+  },
+  {
+    id: 'fun-2025-35',
+    area: 'Fundamentos da Computação',
+    question:
+      'Sobre polimorfismo em POO, analise as assertivas. I. É a capacidade de um objeto assumir diferentes formas, permitindo que métodos de mesmo nome se comportem de modo distinto em classes de uma mesma hierarquia. II. É alcançado principalmente por sobrescrita (overriding) e, em alguns contextos, por sobrecarga (overloading), esta última considerada polimorfismo de tempo de compilação. III. O polimorfismo de inclusão (por subtipo) permite tratar um objeto de subclasse como sendo da superclasse. IV. Visa aumentar a coesão e reduzir o acoplamento, tornando o código mais flexível e extensível. Quais estão corretas?',
+    options: ['Apenas I e III', 'Apenas II e IV', 'Apenas III e IV', 'Apenas I, II e III', 'I, II, III e IV'],
+    answer: 4,
+    explanation:
+      'As quatro descrevem corretamente o conceito: a definição geral, as duas formas de obtê-lo, o polimorfismo por subtipo e o efeito de projeto (menos acoplamento, mais extensibilidade).',
+  },
+  {
+    id: 'fun-2025-36',
+    area: 'Fundamentos da Computação',
+    question:
+      'Analise a expressão regular sobre o alfabeto {a, b}: (a+b)*a(a+b)* + (a+b)*b(a+b)*. A expressão pode ser simplificada como:',
+    options: ['(a+b)*', 'a*b*', 'ab + ba', '(a+b)*(a+b)(a+b)*', 'a + ba + b'],
+    answer: 3,
+    explanation:
+      'A união exige pelo menos um "a" OU pelo menos um "b", ou seja, pelo menos um símbolo qualquer — todas as cadeias não vazias. Isso é (a+b)*(a+b)(a+b)*, e não (a+b)*, que também aceitaria a cadeia vazia.',
+  },
+  {
+    id: 'fun-2025-37',
+    area: 'Fundamentos da Computação',
+    question:
+      'Sobre o lema do bombeamento para linguagens regulares, analise as assertivas. I. Se uma linguagem não satisfaz o lema, então ela não é regular. II. Se uma linguagem satisfaz o lema, então ela é regular. III. Toda linguagem regular satisfaz o lema. IV. O lema pode ser usado para provar que uma linguagem não é regular. V. O lema pode ser usado para provar que uma linguagem é regular. Quais estão corretas?',
+    options: ['Apenas I, II e IV', 'Apenas I, III e IV', 'Apenas II, III e V', 'Apenas I, III, IV e V', 'I, II, III, IV e V'],
+    answer: 1,
+    explanation:
+      'O lema é condição necessária, não suficiente: toda regular o satisfaz (III), então falhar nele prova não regularidade (I e IV). Satisfazê-lo não prova nada a favor, o que derruba II e V.',
+  },
+  {
+    id: 'fun-2025-38',
+    area: 'Fundamentos da Computação',
+    question:
+      'Sobre linguagens e gramáticas livres de contexto e autômatos com pilha, assinale V ou F. I. Derivações à esquerda e à direita de uma mesma cadeia podem resultar em árvores de derivação diferentes. II. Uma gramática é ambígua se existir ao menos uma cadeia com duas ou mais árvores de derivação distintas. III. Toda gramática livre de contexto pode ser transformada, sem alterar a linguagem, na Forma Normal de Chomsky. IV. Toda linguagem livre de contexto pode ser aceita por um autômato com pilha por critério de pilha vazia. V. A simplificação de uma gramática altera a linguagem gerada, pois remove símbolos inúteis e inacessíveis. A ordem correta é:',
+    options: ['V – V – V – V – F', 'F – V – F – F – F', 'V – F – V – F – V', 'V – F – F – V – V', 'F – F – V – F – V'],
+    answer: 0,
+    explanation:
+      'As quatro primeiras são verdadeiras — em gramática ambígua as duas derivações realmente podem dar árvores distintas. A última é falsa: remover símbolos inúteis e inacessíveis preserva exatamente a linguagem gerada.',
+  },
+  {
+    id: 'fun-2025-39',
+    area: 'Fundamentos da Computação',
+    question:
+      'Um Sistema de Gestão de Documentos e Arquivos (SGDA) gerencia o ciclo de vida dos documentos institucionais. São objetivos do SGDA, EXCETO:',
+    options: [
+      'Organizar os documentos, tanto digitais quanto físicos',
+      'Classificar os documentos com base em planos de classificação e tabelas de temporalidade',
+      'Controlar os prazos de guarda e descarte dos documentos',
+      'Assegurar autenticidade, integridade, confiabilidade e acessibilidade dos documentos',
+      'Substituir integralmente os arquivos físicos por versões digitais',
+    ],
+    answer: 4,
+    explanation:
+      'Um SGDA gerencia documentos em qualquer suporte, físico ou digital — a digitalização é um meio, não um objetivo. Substituir integralmente o acervo físico não é meta do sistema, e muitos documentos têm guarda física obrigatória.',
+  },
+  {
+    id: 'fun-2025-40',
+    area: 'Fundamentos da Computação',
+    question:
+      'Sobre compressão de imagens, assinale V ou F. I. RLE é uma técnica sem perdas, usada com frequência em imagens com grandes áreas da mesma cor. II. A compressão com perdas, como JPEG, preserva todos os dados originais após a descompressão. III. O formato BMP usa compressão com perdas para reduzir o tamanho dos arquivos. IV. RLE é mais eficiente em imagens com padrões simples e repetitivos do que em fotografias complexas. V. O BMP suporta alta resolução e profundidade de cor, mas não é adequado para a web pelo tamanho. A ordem correta é:',
+    options: ['V – F – V – V – F', 'V – V – F – F – V', 'F – V – V – F – F', 'V – F – F – V – V', 'F – F – V – F – V'],
+    answer: 3,
+    explanation:
+      'I, IV e V estão corretas. II é falsa por definição: compressão com perdas descarta informação. III também: o BMP é tipicamente não comprimido, e é justamente por isso que gera arquivos grandes.',
+  },
+  {
+    id: 'fun-2025-41',
+    area: 'Fundamentos da Computação',
+    question: 'Qual é a técnica utilizada para a pesquisa por conteúdo textual dentro de arquivos em sistemas de arquivos virtuais?',
+    options: [
+      'Indexação e pesquisa full-text',
+      'Armazenamento em blocos',
+      'Hashing para localização de arquivos',
+      'Uso de árvores R-tree',
+      'Compactação por redundância',
+    ],
+    answer: 0,
+    explanation:
+      'Buscar por conteúdo exige um índice invertido que mapeia termos para os arquivos onde aparecem — a indexação full-text. As demais tratam de layout físico, localização por nome ou dados espaciais.',
+  },
+  {
+    id: 'fun-2025-42',
+    area: 'Fundamentos da Computação',
+    question:
+      'Processos alternam ciclos de CPU (tempo médio exec_t) e de espera de E/S, sob escalonamento round-robin preemptivo com troca de contexto de custo médio switch_t e fatia de tempo quantum. Assinale a alternativa que melhor minimiza o tempo médio de turnaround.',
+    options: [
+      '(exec_t > switch_t) e (exec_t > quantum)',
+      '(exec_t < switch_t) e (exec_t < quantum)',
+      '(exec_t > switch_t) e (exec_t < quantum)',
+      '(exec_t < switch_t) e (exec_t > quantum)',
+      '(exec_t + switch_t) > quantum',
+    ],
+    answer: 2,
+    explanation:
+      'Duas condições precisam valer juntas: o ciclo de CPU deve ser maior que a troca de contexto, senão o overhead domina; e menor que o quantum, para o processo terminar seu ciclo sem sofrer preempção e voltar para o fim da fila.',
+  },
+  {
+    id: 'fun-2025-45',
+    area: 'Fundamentos da Computação',
+    question:
+      'O comando de seleção ___________ permite que a execução de um trecho de programa dependa de uma condição ser verdadeira, vinculando a execução de um ou mais comandos ao resultado da avaliação de uma expressão lógica. Assinale a alternativa que preenche corretamente a lacuna.',
+    options: ['simples', 'dupla', 'aninhada', 'múltipla', 'aleatória'],
+    answer: 0,
+    explanation:
+      'A seleção simples (if sem else) executa o bloco apenas quando a condição é verdadeira. A dupla teria um caminho alternativo, e a múltipla escolheria entre vários casos.',
+  },
+  {
+    id: 'fun-2025-46',
+    area: 'Fundamentos da Computação',
+    question:
+      'Qual é a instrução adequada para quando o número de iterações é conhecido a priori, isto é, antes de iniciar a repetição?',
+    options: ['while', 'break', 'continue', 'for', 'if'],
+    answer: 3,
+    explanation:
+      'O for reúne inicialização, condição e incremento numa única linha, sendo a forma natural de repetição contada. O while atende melhor quando o fim depende de uma condição avaliada a cada passo.',
+  },
+  {
+    id: 'fun-2025-47',
+    area: 'Fundamentos da Computação',
+    question:
+      'Qual é o método de desenvolvimento de algoritmos que decompõe um problema em um número finito de subtarefas e explora sistematicamente suas possibilidades por meio de sucessivos testes até alcançar uma solução viável?',
+    options: ['Tentativa e erro', 'Divisão e conquista', 'Recursividade', 'Programação dinâmica', 'Algoritmos gulosos'],
+    answer: 0,
+    explanation:
+      'A descrição é a de tentativa e erro (backtracking): testar sistematicamente as possibilidades e desfazer escolhas que não levam a uma solução viável.',
+  },
+  {
+    id: 'fun-2025-48',
+    area: 'Fundamentos da Computação',
+    question: 'Sobre grafos orientados e não orientados, é correto afirmar que:',
+    options: [
+      'Um grafo direcionado é desconexo se cada dois vértices quaisquer são alcançáveis a partir um do outro',
+      'Em um grafo direcionado, a aresta (u,v) sai de u e entra em v; se (u,v) é aresta de G, então v é adjacente a u',
+      'O grau de um vértice em um grafo direcionado é o número de arestas que incidem nele',
+      'Em um grafo não direcionado, o grau de um vértice é o número de arestas que saem mais as que chegam',
+      'Um grafo não direcionado é fortemente conectado se cada par de vértices está conectado por um caminho',
+    ],
+    answer: 1,
+    explanation:
+      'Só a segunda está correta. A primeira descreve grafo conexo, não desconexo; em grafo direcionado fala-se em grau de entrada e de saída; e "fortemente conectado" é termo exclusivo de grafos direcionados.',
+  },
+  {
+    id: 'fun-2025-49',
+    area: 'Fundamentos da Computação',
+    question:
+      'A _____________ de um grafo direcionado acíclico G = (V, A) é uma ordenação linear de todos os seus vértices tal que, se G contém uma aresta (u,v), então u aparece antes de v. Assinale a alternativa que preenche corretamente a lacuna.',
+    options: ['ordenação topológica', 'árvore geradora mínima', 'lista de adjacência', 'árvore geradora máxima', 'matriz de adjacência'],
+    answer: 0,
+    explanation:
+      'É a definição de ordenação topológica, que só existe em grafos acíclicos: qualquer ciclo tornaria impossível colocar todos os vértices numa linha com as arestas apontando sempre para a frente.',
+  },
+  {
+    id: 'fun-2025-50',
+    area: 'Fundamentos da Computação',
+    question:
+      'Dado um grafo G(V, A), qual é o algoritmo de busca que descobre todos os vértices a uma distância k do vértice origem antes de descobrir qualquer vértice a uma distância k+1?',
+    options: ['Busca binária', 'Busca sequencial', 'Busca em largura', 'Caminhamento pós-fixado', 'Busca em profundidade'],
+    answer: 2,
+    explanation:
+      'A busca em largura (BFS) usa uma fila e avança por camadas de distância, o que garante essa ordem e faz dela o algoritmo natural para caminho mínimo em grafos não ponderados.',
+  },
+
+  // ── Tecnologia da Computação (POSCOMP 2025) ────────────────────────────────
+  {
+    id: 'tec-2025-51',
+    area: 'Tecnologia da Computação',
+    question:
+      'Na relação BEM(id, nome, valor), seja V o conjunto de valores distintos. Considere: SELECT id, nome, valor FROM BEM AS B1 WHERE 1 >= (SELECT COUNT(DISTINCT B2.valor) FROM BEM AS B2 WHERE B2.valor < B1.valor). A execução resulta no(s) bem(ns) cujo valor é igual ao:',
+    options: [
+      'maior valor em V',
+      'maior valor em V ou ao segundo maior valor em V',
+      'menor valor em V',
+      'menor valor em V ou ao segundo menor valor em V',
+      'menor valor em V ou ao maior valor em V',
+    ],
+    answer: 3,
+    explanation:
+      'A subconsulta conta quantos valores distintos são menores que o da linha atual. Esse contador vale 0 para o menor valor e 1 para o segundo menor; a condição 1 >= contador aceita exatamente esses dois casos.',
+  },
+  {
+    id: 'tec-2025-52',
+    area: 'Tecnologia da Computação',
+    question:
+      'Sobre escalonamentos de transações, um escalonamento não serial S de n transações é dito serializável se: I. for equivalente em conflito a algum escalonamento serial das mesmas n transações; II. o estado final de S for o mesmo de algum escalonamento serial, com relação a pelo menos um estado inicial; III. o estado final de S for o mesmo de algum escalonamento serial, com relação a todos os estados iniciais. Quais estão corretas?',
+    options: ['Apenas I', 'Apenas II', 'Apenas III', 'Apenas I e II', 'Apenas I e III'],
+    answer: 4,
+    explanation:
+      'I é a serializabilidade por conflito e III é a serializabilidade por visão, ambas definições válidas. II é fraca demais: coincidir o estado final para um único estado inicial pode ser coincidência, sem garantir equivalência.',
+  },
+  {
+    id: 'tec-2025-53',
+    area: 'Tecnologia da Computação',
+    question:
+      'Sobre as regras steal/no-steal e force/no-force na recuperação de SGBDs, analise: I. a regra force determina que todas as páginas atualizadas por uma transação são gravadas em memória secundária antes que ela confirme; II. na regra no-force, uma página atualizada por transação já confirmada pode ainda estar em cache quando outra transação precisar atualizá-la; III. na regra no-steal, operações de UNDO nunca serão necessárias durante a recuperação.',
+    options: [
+      'Todas as assertivas estão corretas',
+      'Todas as assertivas estão incorretas',
+      'Apenas as assertivas I e II estão corretas',
+      'Apenas as assertivas I e III estão corretas',
+      'Apenas as assertivas II e III estão corretas',
+    ],
+    answer: 0,
+    explanation:
+      'As três descrevem corretamente as regras. Em especial, no-steal impede que páginas de transações não confirmadas cheguem ao disco, então nunca há efeito de transação abortada para desfazer — daí a dispensa do UNDO.',
+  },
+  {
+    id: 'tec-2025-54',
+    area: 'Tecnologia da Computação',
+    question:
+      'A forma da derivação implementada por um analisador sintático ascendente (LR, bottom-up) durante o reconhecimento de uma cadeia lida da esquerda para a direita é:',
+    options: [
+      'Mais à esquerda (leftmost), a partir do símbolo de partida da gramática',
+      'Mais à esquerda (leftmost), de forma reversa',
+      'Mais à direita (rightmost), de forma reversa, partindo da cadeia até o símbolo de partida',
+      'Mais à direita (rightmost), partindo do símbolo de partida até a cadeia',
+      'Aleatória, escolhendo qualquer não terminal a cada passo',
+    ],
+    answer: 2,
+    explanation:
+      'O analisador LR parte da cadeia e vai reduzindo até o símbolo inicial. Cada redução desfaz o último passo de uma derivação mais à direita, então a sequência de reduções é uma derivação rightmost em ordem reversa.',
+  },
+  {
+    id: 'tec-2025-55',
+    area: 'Tecnologia da Computação',
+    question:
+      'No contexto das Definições Dirigidas pela Sintaxe, os grafos de dependência servem para descrever:',
+    options: [
+      'o fluxo de controle entre as instruções geradas para um programa fonte',
+      'restrições de integridade entre elementos da tabela de símbolos',
+      'o processamento de gramáticas de operadores quanto a precedência e associatividade',
+      'o relacionamento entre cada lexema do programa fonte e o token recebido pelo analisador sintático',
+      'o fluxo de informação entre instâncias de atributos associados aos símbolos que aparecem em uma árvore sintática',
+    ],
+    answer: 4,
+    explanation:
+      'Cada nó do grafo é uma instância de atributo e cada arco indica que um atributo é calculado a partir de outro. É esse grafo que determina em que ordem os atributos podem ser avaliados.',
+  },
+  {
+    id: 'tec-2025-56',
+    area: 'Tecnologia da Computação',
+    question:
+      'No pipeline de computação gráfica, considerando somente as tarefas de remoção de superfícies ocultas e de aplicação de modelos de tonalização (shading), assinale a alternativa que apresenta algoritmos pertencentes a essa parte específica do pipeline.',
+    options: [
+      'Algoritmo Z-Buffer, método de Gouraud e método de Phong',
+      'Geração de curvas de Bézier, transformações geométricas e X-Ray',
+      'Algoritmo de flood fill, algoritmo de divisão recursiva e mapeamento de texturas',
+      'Coordenadas homogêneas, construção de árvore BSP e transformação de iluminação global',
+      'Algoritmo de Bresenham, algoritmo de Cohen-Sutherland e geração de mipmaps',
+    ],
+    answer: 0,
+    explanation:
+      'O Z-Buffer resolve visibilidade comparando profundidades por pixel, e Gouraud e Phong são justamente os dois modelos clássicos de tonalização. Os demais itens pertencem a outras etapas: modelagem, rasterização ou recorte.',
+  },
+  {
+    id: 'tec-2025-57',
+    area: 'Tecnologia da Computação',
+    question: 'É correto afirmar que o mipmapping é um(a):',
+    options: [
+      'método de filtragem que suaviza transições de cor entre pixels de duas texturas adjacentes',
+      'técnica que ajusta as coordenadas da textura para remover distorções em superfícies curvas',
+      'algoritmo que calcula previamente detalhes de superfície como rugosidade e reflexividade',
+      'algoritmo que calcula como a luz interage com a superfície de um objeto com textura',
+      'processo de criar versões pré-filtradas de uma textura em resoluções menores, usadas conforme a distância do objeto à câmera',
+    ],
+    answer: 4,
+    explanation:
+      'O mipmap é uma pirâmide de versões da textura em resoluções decrescentes, geradas antecipadamente. Objetos distantes usam níveis menores, o que evita aliasing e melhora a localidade de acesso à memória.',
+  },
+  {
+    id: 'tec-2025-58',
+    area: 'Tecnologia da Computação',
+    question:
+      'Um módulo calcula um valor de forma determinística e deve poder ser trocado por um modelo treinado de IA, alternando entre eles em tempo de execução e permitindo acrescentar novas formas de cálculo, tudo encapsulado para quem consome o módulo. Qual padrão de projeto deve ser usado?',
+    options: ['Decorator', 'Factory Method', 'Proxy', 'Builder', 'Strategy'],
+    answer: 4,
+    explanation:
+      'O Strategy encapsula cada algoritmo atrás de uma interface comum e permite trocar a implementação em tempo de execução. Acrescentar uma nova forma de cálculo vira uma nova classe, sem alterar quem usa o módulo.',
+  },
+  {
+    id: 'tec-2025-59',
+    area: 'Tecnologia da Computação',
+    question:
+      'Um sistema será entregue em versões operacionais sucessivas: primeiro as funcionalidades essenciais de rastreamento, depois o módulo de manutenção e por fim a otimização de rotas, sendo cada entrega um software completo e utilizável que se integra aos anteriores. Qual modelo de ciclo de vida essa abordagem descreve?',
+    options: ['Modelo espiral', 'Modelo incremental', 'Modelo cascata', 'Prototipação', 'Modelo em V'],
+    answer: 1,
+    explanation:
+      'O modelo incremental entrega incrementos funcionais e utilizáveis, definidos previamente, que se somam ao produto. O espiral é orientado a ciclos de análise de risco, e cascata e V entregam tudo ao final.',
+  },
+  {
+    id: 'tec-2025-60',
+    area: 'Tecnologia da Computação',
+    question:
+      'Uma instituição catalogou seus sistemas legados por importância e custo (análise de inventário), reestruturou a documentação técnica, aplicou engenharia reversa para extrair regras de negócio e arquitetura do código, e então reestruturou código e dados. Que processo descreve essa sequência?',
+    options: [
+      'Refatoração de software',
+      'Manutenção adaptativa de software',
+      'Reengenharia de software',
+      'Melhoria do processo de software',
+      'Garantia da qualidade de software',
+    ],
+    answer: 2,
+    explanation:
+      'A sequência inventário → reestruturação de documentos → engenharia reversa → reestruturação de código e dados é o processo canônico de reengenharia. A refatoração é apenas uma das etapas e não envolve inventário nem engenharia reversa.',
+  },
+  {
+    id: 'tec-2025-61',
+    area: 'Tecnologia da Computação',
+    question:
+      'Em árvores de decisão, a pureza de um nó mede a homogeneidade das amostras em relação à variável alvo. Assinale a alternativa que descreve corretamente o que ocorre quando um nó apresenta pureza máxima ou mínima.',
+    options: [
+      'Quando a pureza é máxima, o nó é sempre dividido; quando é mínima, torna-se folha',
+      'Um nó com pureza máxima não precisa ser dividido, pois todas as amostras pertencem à mesma classe, enquanto um nó com pureza mínima tem as classes igualmente distribuídas e é candidato a nova divisão',
+      'Pureza máxima indica classes equilibradas, e pureza mínima indica predominância de uma classe',
+      'Quando a pureza é mínima, o nó não é dividido para evitar overfitting',
+      'Pureza mínima representa o estado ideal de separação, e pureza máxima indica perda de capacidade de generalização',
+    ],
+    answer: 1,
+    explanation:
+      'Pureza máxima significa nó homogêneo — todas as amostras da mesma classe —, então dividir não traria ganho e ele vira folha. Pureza mínima é o oposto: classes igualmente misturadas, o caso em que a divisão tem mais a ganhar.',
+  },
+  {
+    id: 'tec-2025-62',
+    area: 'Tecnologia da Computação',
+    question:
+      'Assinale a alternativa que corretamente descreve o objetivo do aprendizado por transferência (transfer learning) em deep learning.',
+    options: [
+      'Treinar redes do zero com um conjunto de dados sempre maior que o da tarefa original',
+      'Evitar o uso de redes convolucionais pré-treinadas, priorizando dados sintéticos',
+      'Reduzir o desempenho do modelo original para aumentar a generalização',
+      'Reutilizar conhecimento aprendido em uma tarefa fonte para acelerar o treinamento e reduzir custos na tarefa alvo',
+      'Substituir o aprendizado supervisionado, dispensando a rotulagem de dados',
+    ],
+    answer: 3,
+    explanation:
+      'As camadas iniciais de uma rede treinada em uma base grande aprendem representações genéricas (bordas, texturas) que servem a outras tarefas. Reaproveitá-las permite treinar com menos dados rotulados e menos computação.',
+  },
+  {
+    id: 'tec-2025-63',
+    area: 'Tecnologia da Computação',
+    question:
+      'Considerando um filtro de média de tamanho M×M para imagens no domínio espacial, é correto afirmar que aumentar o valor de M:',
+    options: [
+      'aumenta o efeito de suavização (borramento) da imagem',
+      'provoca um alargamento de contraste da imagem',
+      'aumenta o efeito de aguçamento (realce) da imagem',
+      'reduz o efeito de suavização (borramento) da imagem',
+      'aumenta a resolução espacial da imagem',
+    ],
+    answer: 0,
+    explanation:
+      'A média é um filtro passa-baixa: quanto maior a vizinhança, mais pixels entram na média e mais as altas frequências (bordas e detalhes) são atenuadas, aumentando o borramento.',
+  },
+  {
+    id: 'tec-2025-64',
+    area: 'Tecnologia da Computação',
+    question: 'Sobre a codificação de imagens no padrão JPEG, é correto afirmar que:',
+    options: [
+      'O JPEG utiliza a transformada de Fourier, preservando apenas as frequências mais baixas',
+      'A compressão JPEG é sempre sem perdas, garantindo reconstrução exata',
+      'A transformada discreta do cosseno (DCT) é usada para converter blocos de pixels do domínio espacial para o domínio da frequência',
+      'A compressão baseia-se em reduzir a profundidade de bits por pixel, eliminando canais de cor',
+      'O padrão substitui blocos de 8×8 pixels por blocos de 2×2 pixels',
+    ],
+    answer: 2,
+    explanation:
+      'O JPEG aplica a DCT em blocos de 8×8, levando-os ao domínio da frequência. A perda vem da etapa seguinte, a quantização, que descarta coeficientes de alta frequência aos quais o olho é menos sensível.',
+  },
+  {
+    id: 'tec-2025-65',
+    area: 'Tecnologia da Computação',
+    question: 'Sobre a camada de aplicação, é correto afirmar que:',
+    options: [
+      'O DNS utiliza como padrão o protocolo TCP',
+      'O SMTP utiliza como padrão o protocolo UDP',
+      'O protocolo HTTP permite criar carrinhos de compras porque é um protocolo com estado',
+      'O HTML é uma linguagem baseada em hipertexto para definição da estrutura lógica dos documentos',
+      'O protocolo POP é o sucessor do protocolo IMAP',
+    ],
+    answer: 3,
+    explanation:
+      'Só a definição de HTML está correta. O DNS usa UDP por padrão e o SMTP usa TCP; o HTTP é sem estado (carrinhos dependem de cookies e sessão); e o IMAP é posterior ao POP, não o contrário.',
+  },
+  {
+    id: 'tec-2025-66',
+    area: 'Tecnologia da Computação',
+    question: 'Sobre a velocidade de sinalização, assinale a alternativa INCORRETA.',
+    options: [
+      'É medida em bauds',
+      'Uma linha de b bauds não transmite necessariamente b bits/s',
+      'Indica o número de vezes por segundo que o valor de um sinal é injetado na linha',
+      'Indica o número de bits/s',
+      'A taxa de transmissão depende da velocidade de sinalização',
+    ],
+    answer: 3,
+    explanation:
+      'Baud mede símbolos por segundo, não bits por segundo. Como um símbolo pode carregar vários bits (em QAM-16, quatro), a taxa em bits/s é o produto da taxa de símbolos pelos bits por símbolo.',
+  },
+  {
+    id: 'tec-2025-67',
+    area: 'Tecnologia da Computação',
+    question: 'Em um ataque de negação de serviço que explora o handshake TCP, qual flag é utilizada?',
+    options: ['ACK', 'SYN', 'FIN', 'SYN+ACK', 'FIN+ACK'],
+    answer: 1,
+    explanation:
+      'No SYN flood o atacante envia muitos segmentos SYN sem completar o handshake. Cada um consome uma entrada na fila de conexões semiabertas do servidor até esgotá-la.',
+  },
+  {
+    id: 'tec-2025-68',
+    area: 'Tecnologia da Computação',
+    question:
+      'Em sistemas de arquivos distribuídos, os programas clientes devem continuar funcionando satisfatoriamente enquanto a carga sobre o serviço varia dentro de um intervalo especificado. Esse exemplo define qual forma de transparência?',
+    options: ['Acesso', 'Desempenho', 'Mobilidade', 'Mudança de escala', 'Localização'],
+    answer: 1,
+    explanation:
+      'Transparência de desempenho é a que trata da variação de carga: o cliente não percebe degradação enquanto a carga se mantém na faixa prevista. Mudança de escala refere-se a crescer o sistema sem alterar a estrutura ou a aplicação.',
+  },
+  {
+    id: 'tec-2025-69',
+    area: 'Tecnologia da Computação',
+    question:
+      'Em sistemas distribuídos, o controle de concorrência _____________ permite que as transações prossigam sem qualquer verificação até serem concluídas, sendo validadas antes de poderem ser confirmadas. Assinale a alternativa que preenche corretamente a lacuna.',
+    options: ['por separação', 'ordenação por carimbo de tempo', 'por bloqueios em duas fases', 'otimista', 'por aninhamento'],
+    answer: 3,
+    explanation:
+      'O controle otimista aposta que conflitos são raros: não bloqueia nada durante a execução e só na fase de validação, antes do commit, verifica se houve conflito — abortando a transação se houver.',
+  },
+  {
+    id: 'tec-2025-70',
+    area: 'Tecnologia da Computação',
+    question:
+      'Uma forma de construir exclusão mútua entre N processos distribuídos é organizá-los em um círculo lógico, no qual cada processo só precisa de um canal com o seguinte, e a exclusão é concedida pela obtenção de uma ficha passada de processo para processo em uma única direção. Esse é o algoritmo:',
+    options: [
+      'que emprega um servidor central',
+      'que utiliza multicast e relógios lógicos',
+      'baseado em anel',
+      'de votação de Maekawa',
+      'de eleição',
+    ],
+    answer: 2,
+    explanation:
+      'É o algoritmo de anel com ficha (token ring): quem detém a ficha pode entrar na região crítica e, ao sair, repassa-a ao vizinho. Cada processo só conhece o seguinte, o que dispensa coordenador central.',
+  },
 ];
 
 // Per-question difficulty (1 fácil .. 5 difícil). Ids not listed default to 3.
 // Kept as a compact map so it can be retuned without touching the question data.
 const DIFFICULTY_BY_ID: Record<string, number> = {
+  'tec-2025-51': 5, 'tec-2025-52': 4, 'tec-2025-53': 4, 'tec-2025-54': 4,
+  'tec-2025-55': 4, 'tec-2025-56': 3, 'tec-2025-57': 3, 'tec-2025-58': 3,
+  'tec-2025-59': 2, 'tec-2025-60': 3, 'tec-2025-61': 3, 'tec-2025-62': 2,
+  'tec-2025-63': 2, 'tec-2025-64': 2, 'tec-2025-65': 3, 'tec-2025-66': 3,
+  'tec-2025-67': 2, 'tec-2025-68': 3, 'tec-2025-69': 3, 'tec-2025-70': 3,
+  'fun-2025-21': 2, 'fun-2025-22': 3, 'fun-2025-23': 2, 'fun-2025-24': 3,
+  'fun-2025-25': 2, 'fun-2025-26': 2, 'fun-2025-27': 2, 'fun-2025-28': 2,
+  'fun-2025-29': 3, 'fun-2025-30': 4, 'fun-2025-31': 5, 'fun-2025-33': 3,
+  'fun-2025-34': 3, 'fun-2025-35': 3, 'fun-2025-36': 4, 'fun-2025-37': 4,
+  'fun-2025-38': 4, 'fun-2025-39': 2, 'fun-2025-40': 3, 'fun-2025-41': 2,
+  'fun-2025-42': 5, 'fun-2025-45': 1, 'fun-2025-46': 1, 'fun-2025-47': 2,
+  'fun-2025-48': 3, 'fun-2025-49': 2, 'fun-2025-50': 1,
+  'mat-2025-01': 2, 'mat-2025-02': 2, 'mat-2025-03': 2, 'mat-2025-04': 4,
+  'mat-2025-05': 4, 'mat-2025-06': 4, 'mat-2025-07': 2, 'mat-2025-08': 3,
+  'mat-2025-09': 2, 'mat-2025-10': 1, 'mat-2025-11': 3, 'mat-2025-12': 1,
+  'mat-2025-14': 1, 'mat-2025-15': 1, 'mat-2025-16': 1, 'mat-2025-17': 3,
+  'mat-2025-18': 2, 'mat-2025-19': 3, 'mat-2025-20': 4,
   'mat-2019-15': 2, 'fun-2019-21': 5, 'fun-2019-22': 4, 'fun-2019-23': 3,
   'fun-2019-24': 1, 'fun-2019-25': 4, 'tec-2019-52': 2, 'tec-2019-54': 2,
   'tec-2019-57': 2, 'tec-2019-58': 2, 'tec-2019-60': 3, 'tec-2019-64': 3,
@@ -1104,6 +1937,44 @@ const DIFFICULTY_BY_ID: Record<string, number> = {
 // Fine-grained theme per question (players can filter the run by these). Same
 // compact-map pattern as DIFFICULTY_BY_ID; unlisted ids fall into 'Outros'.
 const TOPIC_BY_ID: Record<string, string> = {
+  // Tecnologia (POSCOMP 2025)
+  'tec-2025-51': 'Banco de Dados', 'tec-2025-52': 'Banco de Dados', 'tec-2025-53': 'Banco de Dados',
+  'tec-2025-54': 'Programação e Compiladores', 'tec-2025-55': 'Programação e Compiladores',
+  'tec-2025-56': 'Computação Gráfica', 'tec-2025-57': 'Computação Gráfica',
+  'tec-2025-63': 'Computação Gráfica', 'tec-2025-64': 'Computação Gráfica',
+  'tec-2025-58': 'Engenharia de Software', 'tec-2025-59': 'Engenharia de Software',
+  'tec-2025-60': 'Engenharia de Software',
+  'tec-2025-61': 'IA e Dados', 'tec-2025-62': 'IA e Dados',
+  'tec-2025-65': 'Redes', 'tec-2025-66': 'Redes', 'tec-2025-67': 'Redes',
+  'tec-2025-68': 'Sistemas Distribuídos', 'tec-2025-69': 'Sistemas Distribuídos',
+  'tec-2025-70': 'Sistemas Distribuídos',
+  // Fundamentos (POSCOMP 2025)
+  'fun-2025-21': 'Algoritmos e Complexidade', 'fun-2025-22': 'Algoritmos e Complexidade',
+  'fun-2025-23': 'Algoritmos e Complexidade', 'fun-2025-24': 'Algoritmos e Complexidade',
+  'fun-2025-47': 'Algoritmos e Complexidade',
+  'fun-2025-25': 'Estruturas de Dados', 'fun-2025-26': 'Estruturas de Dados',
+  'fun-2025-48': 'Estruturas de Dados', 'fun-2025-49': 'Estruturas de Dados',
+  'fun-2025-50': 'Estruturas de Dados',
+  'fun-2025-27': 'SO e Arquitetura', 'fun-2025-28': 'SO e Arquitetura',
+  'fun-2025-29': 'SO e Arquitetura', 'fun-2025-30': 'SO e Arquitetura',
+  'fun-2025-31': 'SO e Arquitetura', 'fun-2025-41': 'SO e Arquitetura',
+  'fun-2025-42': 'SO e Arquitetura',
+  'fun-2025-33': 'Programação e Compiladores', 'fun-2025-34': 'Programação e Compiladores',
+  'fun-2025-35': 'Programação e Compiladores', 'fun-2025-45': 'Programação e Compiladores',
+  'fun-2025-46': 'Programação e Compiladores',
+  'fun-2025-36': 'Teoria da Computação', 'fun-2025-37': 'Teoria da Computação',
+  'fun-2025-38': 'Teoria da Computação',
+  'fun-2025-39': 'Engenharia de Software',
+  'fun-2025-40': 'Computação Gráfica',
+  // Álgebra Linear / Cálculo / Geometria (POSCOMP 2025)
+  'mat-2025-01': 'Álgebra Linear', 'mat-2025-02': 'Álgebra Linear', 'mat-2025-03': 'Álgebra Linear',
+  'mat-2025-07': 'Cálculo', 'mat-2025-08': 'Cálculo', 'mat-2025-09': 'Cálculo',
+  'mat-2025-10': 'Geometria Analítica', 'mat-2025-11': 'Geometria Analítica',
+  'mat-2025-12': 'Geometria Analítica',
+  'mat-2025-04': 'Combinatória', 'mat-2025-05': 'Combinatória', 'mat-2025-06': 'Combinatória',
+  'mat-2025-14': 'Lógica', 'mat-2025-15': 'Lógica', 'mat-2025-16': 'Lógica', 'mat-2025-18': 'Lógica',
+  'mat-2025-17': 'Teoria da Informação',
+  'mat-2025-19': 'Estatística', 'mat-2025-20': 'Estatística',
   // Lógica
   'mat-2019-15': 'Lógica', 'mat-2022-11': 'Lógica', 'mat-2019-12': 'Lógica', 'mat-2024-13': 'Lógica',
   'mat-2024-14': 'Lógica', 'mat-2024-15': 'Lógica',
@@ -1160,6 +2031,336 @@ const TOPIC_BY_ID: Record<string, string> = {
 // que leva à resposta, por que as demais alternativas caem e o conceito a fixar.
 // Parágrafos são separados por '\n\n' (a UI preserva as quebras).
 const LONG_EXPLANATION_BY_ID: Record<string, string> = {
+  'tec-2025-51':
+    'A consulta usa uma subconsulta correlacionada: para cada linha B1, ela conta quantos valores distintos da tabela são estritamente menores que o valor daquela linha.\n\n' +
+    'Esse contador funciona como um ranking começando em zero. Para o menor valor de V, não existe nada menor, então o contador é 0. Para o segundo menor, existe exatamente um valor menor, e o contador é 1. Para o terceiro menor já seria 2, e assim por diante.\n\n' +
+    'A condição do WHERE é 1 >= contador, ou seja, contador ∈ {0, 1}. Isso seleciona precisamente as linhas cujo valor é o menor ou o segundo menor de V.\n\n' +
+    'Dois detalhes decidem a questão: o DISTINCT faz o ranking ser sobre valores distintos (empates não consomem posições) e o < estrito garante que o menor valor receba contador 0. Trocar por <= deslocaria todo o ranking em um.',
+  'tec-2025-52':
+    'Serializabilidade é a garantia de que um escalonamento concorrente produz o mesmo efeito de alguma execução serial. As definições formais aceitas são duas.\n\n' +
+    'A serializabilidade por conflito (assertiva I) exige que S possa ser transformado em um escalonamento serial trocando apenas operações não conflitantes. É a definição usada na prática, porque pode ser testada com o grafo de precedência: S é serializável por conflito se e somente se esse grafo é acíclico.\n\n' +
+    'A serializabilidade por visão (assertiva III) é mais abrangente e exige que o estado final coincida com o de um escalonamento serial para todos os estados iniciais possíveis — é isso que caracteriza equivalência de verdade.\n\n' +
+    'A assertiva II enfraquece a III ao pedir a coincidência para apenas um estado inicial, o que pode acontecer por acaso, sem que os escalonamentos sejam equivalentes. Vale notar que todo escalonamento serializável por conflito também é por visão, mas não o contrário.',
+  'tec-2025-53':
+    'As duas políticas tratam de quando páginas sujas podem ou devem ir para o disco, e cada combinação define de que operações a recuperação vai precisar.\n\n' +
+    'Force significa gravar todas as páginas atualizadas antes do commit (assertiva I), o que dispensa REDO mas encarece cada confirmação. No-force permite que páginas de uma transação já confirmada continuem em cache (assertiva II), o que é mais eficiente mas exige REDO após falha.\n\n' +
+    'Steal permite que o gerenciador de buffers roube um quadro e grave no disco a página de uma transação ainda não confirmada — daí a necessidade de UNDO. No-steal proíbe isso, então nenhum efeito de transação não confirmada chega ao disco e o UNDO se torna desnecessário (assertiva III).\n\n' +
+    'As três estão corretas. Na prática, os SGBDs adotam steal/no-force, a combinação mais eficiente, e por isso precisam tanto de UNDO quanto de REDO — o que motiva o protocolo ARIES com write-ahead logging.',
+  'tec-2025-54':
+    'Analisadores descendentes e ascendentes percorrem a árvore de derivação em sentidos opostos, e cada um corresponde a um tipo de derivação.\n\n' +
+    'O analisador LR é ascendente: começa pela cadeia de entrada e vai reduzindo trechos a não terminais até chegar ao símbolo de partida. Cada redução é o inverso de uma aplicação de regra.\n\n' +
+    'Se invertermos a sequência de reduções, obtemos uma derivação que parte do símbolo inicial e, a cada passo, expande o não terminal mais à direita — uma derivação rightmost. Por isso se diz que o LR constrói uma derivação mais à direita em ordem reversa.\n\n' +
+    'O contraponto é o analisador LL, descendente, que constrói diretamente uma derivação leftmost. Vale lembrar o que as siglas dizem: em LR, o L é ler a entrada da esquerda para a direita e o R é rightmost; em LL, o segundo L é leftmost.',
+  'tec-2025-55':
+    'Numa definição dirigida pela sintaxe, cada símbolo da gramática carrega atributos, e as regras semânticas dizem como calcular uns a partir dos outros.\n\n' +
+    'O grafo de dependência materializa essas relações para uma árvore sintática concreta: cada nó é uma instância de atributo e cada arco vai do atributo usado para o atributo calculado.\n\n' +
+    'A utilidade é definir a ordem de avaliação. Qualquer ordem topológica do grafo é uma ordem válida, e a existência de ciclo significa que a definição não pode ser avaliada.\n\n' +
+    'É esse grafo que separa as classes de definições: com atributos apenas sintetizados (S-atribuídas), a avaliação é bottom-up; com herdados em posição controlada (L-atribuídas), ainda é possível avaliar em uma única passada durante a análise sintática.',
+  'tec-2025-56':
+    'O enunciado restringe o escopo a duas tarefas do estágio de rendering: decidir o que é visível e decidir com que cor a superfície aparece.\n\n' +
+    'O Z-Buffer resolve a primeira: mantém, para cada pixel, a profundidade do fragmento mais próximo já desenhado, e só sobrescreve o pixel quando chega um fragmento mais à frente. É a solução padrão para remoção de superfícies ocultas em hardware.\n\n' +
+    'Gouraud e Phong resolvem a segunda. O de Gouraud calcula a iluminação nos vértices e interpola as cores pela face; o de Phong interpola as normais e calcula a iluminação por pixel, o que custa mais e reproduz melhor os brilhos especulares.\n\n' +
+    'Os itens das outras alternativas pertencem a etapas diferentes: Bézier e coordenadas homogêneas são modelagem e transformação, Bresenham é rasterização de linhas, Cohen-Sutherland é recorte e mipmap é filtragem de textura.',
+  'tec-2025-57':
+    'O problema que o mipmapping resolve é o aliasing de minificação: quando um objeto está longe, um único pixel na tela cobre muitos texels, e amostrar apenas um deles produz ruído e cintilação conforme a câmera se move.\n\n' +
+    'A solução é pré-calcular uma pirâmide de versões da textura, cada nível com metade da resolução do anterior e já devidamente filtrado. Na hora de desenhar, escolhe-se o nível cuja densidade de texels mais se aproxima da densidade de pixels.\n\n' +
+    'O ganho é duplo: a imagem fica estável, porque a média já foi calculada antecipadamente, e o desempenho melhora, porque níveis menores cabem melhor no cache de textura.\n\n' +
+    'O custo é cerca de 33% de memória adicional (a soma da série 1 + 1/4 + 1/16 + …). Filtragem trilinear interpola entre dois níveis vizinhos para evitar a transição brusca de um nível para o outro.',
+  'tec-2025-58':
+    'Os requisitos do enunciado apontam para um único padrão. São eles: várias implementações intercambiáveis do mesmo cálculo, troca em tempo de execução, extensibilidade para novas formas e encapsulamento em relação a quem consome.\n\n' +
+    'O Strategy define uma interface para a família de algoritmos e coloca cada implementação em uma classe própria. O contexto guarda uma referência à interface, o que permite substituir a implementação a qualquer momento sem que os chamadores percebam.\n\n' +
+    'Acrescentar o modelo de IA vira apenas mais uma classe que implementa a interface — o código existente não muda, o que atende ao princípio aberto/fechado.\n\n' +
+    'Os outros padrões resolvem outros problemas: Decorator acrescenta comportamento envolvendo um objeto, Factory Method trata da criação, Proxy controla o acesso e Builder monta objetos complexos por etapas.',
+  'tec-2025-59':
+    'A descrição tem três marcas do modelo incremental: entregas sucessivas, cada uma um software completo e utilizável, e um conjunto de funcionalidades definido previamente.\n\n' +
+    'No incremental o escopo total é conhecido desde o início e fatiado em incrementos. O primeiro entrega o núcleo (aqui, o rastreamento) e os seguintes acrescentam módulos que se integram ao que já existe.\n\n' +
+    'A motivação citada — evitar o risco de uma substituição completa e simultânea — é exatamente o argumento a favor do incremental: valor entra em produção cedo e o risco se distribui.\n\n' +
+    'O espiral também é iterativo, mas seus ciclos giram em torno de análise de risco e prototipação, sem exigir entrega operacional a cada volta. Cascata e V entregam tudo de uma vez no final, e a prototipação produz artefatos para validar requisitos, não versões de produção.',
+  'tec-2025-60':
+    'Cada etapa citada é uma fase nomeada do processo de reengenharia de software, e é a sequência completa que identifica o processo.\n\n' +
+    'A análise de inventário cataloga e prioriza os sistemas por valor de negócio e custo. A reestruturação de documentos organiza o que existe de documentação. A engenharia reversa parte do código para recuperar o projeto perdido: regras de negócio, arquitetura e modelo de dados.\n\n' +
+    'Com esse entendimento, vêm a reestruturação de código, que melhora a modularidade sem mudar o comportamento, e a reestruturação de dados, que costuma ser a etapa mais cara por afetar todos os programas que tocam o esquema.\n\n' +
+    'Refatoração é apenas a etapa de reestruturação de código, sem inventário nem engenharia reversa. Manutenção adaptativa é ajustar o sistema a um novo ambiente, e não reconstruí-lo. O detalhe que fecha a resposta é a engenharia reversa: ela não aparece nos outros processos.',
+  'tec-2025-61':
+    'Pureza mede o quanto as amostras de um nó pertencem a uma mesma classe, e é ela que guia a decisão de dividir ou parar.\n\n' +
+    'Pureza máxima significa nó homogêneo: todas as amostras são da mesma classe. Nesse caso não há informação a ganhar dividindo, o nó vira folha e passa a prever aquela classe. Em termos de entropia, o valor é zero.\n\n' +
+    'Pureza mínima é o extremo oposto: as classes aparecem igualmente distribuídas, a entropia é máxima e o nó é justamente o candidato mais promissor a uma nova divisão, porque é onde o ganho de informação pode ser maior.\n\n' +
+    'Os critérios usuais (ganho de informação com entropia, ou índice de Gini) formalizam isso escolhendo o atributo que mais reduz a impureza. Como levar a divisão ao limite gera overfitting, usa-se poda ou critérios de parada como profundidade máxima e número mínimo de amostras por folha.',
+  'tec-2025-62':
+    'Treinar uma rede profunda do zero exige muitos dados rotulados e muito poder computacional — restrições que a maioria dos projetos não consegue satisfazer.\n\n' +
+    'O aprendizado por transferência contorna isso reaproveitando um modelo já treinado em uma base grande. Em redes convolucionais, as camadas iniciais aprendem representações genéricas (bordas, texturas, padrões simples) que servem a praticamente qualquer tarefa de visão; a especialização fica nas camadas finais.\n\n' +
+    'Na prática, congelam-se as camadas iniciais e treinam-se apenas as últimas com os dados da tarefa alvo, ou faz-se fine-tuning com taxa de aprendizado baixa. O resultado é convergência mais rápida e desempenho melhor com poucos dados.\n\n' +
+    'As alternativas erradas invertem o objetivo: transferência não dispensa rotulagem (o fine-tuning continua supervisionado), não busca reduzir desempenho e não exige base maior que a original — o ponto é justamente precisar de menos.',
+  'tec-2025-63':
+    'O filtro de média substitui cada pixel pela média dos pixels de uma janela M×M ao redor dele. É um filtro passa-baixa: preserva as variações lentas e atenua as rápidas.\n\n' +
+    'Aumentar M amplia a vizinhança considerada, então cada pixel de saída passa a ser a média de mais pixels. Detalhes finos e bordas, que são altas frequências, são progressivamente diluídos.\n\n' +
+    'O efeito visível é mais borramento. No domínio da frequência, a explicação é direta: uma janela mais larga no domínio espacial corresponde a uma resposta mais estreita em frequência, cortando mais componentes altas.\n\n' +
+    'Aguçamento é o oposto e exige filtros passa-alta, como o laplaciano ou a máscara de nitidez. E o filtro não altera a resolução espacial: a imagem continua com as mesmas dimensões, apenas com menos detalhe.',
+  'tec-2025-64':
+    'O JPEG comprime em etapas encadeadas, e a questão testa se a transformada usada é reconhecida corretamente.\n\n' +
+    'Depois de converter para um espaço de cor com luminância e crominância separadas (e frequentemente subamostrar a crominância), a imagem é dividida em blocos de 8×8 pixels. Cada bloco passa pela transformada discreta do cosseno (DCT), que o leva do domínio espacial para o domínio da frequência.\n\n' +
+    'A perda vem da etapa seguinte: a quantização divide os coeficientes por uma tabela que castiga as altas frequências, às quais o olho humano é menos sensível. Muitos coeficientes viram zero, e é isso que o codificador de entropia (RLE mais Huffman) comprime bem.\n\n' +
+    'Por isso a compressão é com perdas, e não sem perdas — a quantização é irreversível. A DCT em si é reversível; quem descarta informação é o passo posterior. A escolha da DCT em vez da transformada de Fourier se deve à melhor compactação de energia em sinais reais.',
+  'tec-2025-65':
+    'Cada alternativa toca em um ponto clássico da camada de aplicação, e apenas a definição de HTML resiste.\n\n' +
+    'O DNS usa UDP por padrão, porque consultas cabem em um datagrama e a ausência de handshake reduz a latência; só recorre a TCP em respostas grandes ou transferência de zona. O SMTP faz o contrário: usa TCP, pois entrega de mensagem exige confiabilidade.\n\n' +
+    'O HTTP é sem estado por projeto: cada requisição é independente. Carrinhos de compras funcionam apesar disso, com cookies e sessão do lado do servidor — não porque o protocolo tenha estado.\n\n' +
+    'O IMAP é posterior ao POP e mantém as mensagens no servidor, permitindo acesso por vários dispositivos, enquanto o POP tradicionalmente baixa e remove. Dizer que o POP sucede o IMAP inverte a cronologia.',
+  'tec-2025-66':
+    'A questão explora a diferença entre duas grandezas frequentemente confundidas: velocidade de sinalização e taxa de transmissão.\n\n' +
+    'A velocidade de sinalização é medida em bauds e conta quantos símbolos (mudanças de estado do sinal) são colocados na linha por segundo. É uma característica física da modulação.\n\n' +
+    'A taxa de transmissão, em bits por segundo, depende também de quantos bits cada símbolo carrega. Com modulação QAM-16, por exemplo, cada símbolo codifica 4 bits, então 1.000 bauds equivalem a 4.000 bits/s.\n\n' +
+    'Por isso a alternativa que iguala velocidade de sinalização a bits/s é a incorreta, e é justamente ela que contradiz a alternativa anterior, que afirma que b bauds não transmitem necessariamente b bits/s. As duas só coincidem no caso particular de 1 bit por símbolo.',
+  'tec-2025-67':
+    'O estabelecimento de conexão TCP tem três passos: o cliente envia SYN, o servidor responde SYN+ACK e reserva recursos para a conexão semiaberta, e o cliente confirma com ACK.\n\n' +
+    'O SYN flood explora a janela entre o segundo e o terceiro passo. O atacante envia uma enxurrada de SYN, geralmente com endereço de origem forjado, e nunca envia o ACK final.\n\n' +
+    'Cada SYN faz o servidor alocar uma entrada na fila de conexões semiabertas e aguardar um ACK que não virá, até o timeout. Com volume suficiente, a fila enche e conexões legítimas passam a ser recusadas.\n\n' +
+    'A defesa clássica são os SYN cookies: em vez de guardar estado, o servidor codifica as informações da conexão no próprio número de sequência do SYN+ACK, e só aloca recursos quando o ACK válido chega.',
+  'tec-2025-68':
+    'Sistemas distribuídos definem várias formas de transparência, cada uma escondendo um aspecto diferente da distribuição. A chave é identificar o que o enunciado está escondendo.\n\n' +
+    'Aqui o ponto é a variação de carga sobre o serviço: o cliente deve continuar funcionando satisfatoriamente enquanto ela oscila dentro de uma faixa. Esconder o efeito da carga sobre a qualidade percebida é transparência de desempenho.\n\n' +
+    'As demais tratam de outras dimensões: acesso esconde a diferença entre operar sobre recurso local ou remoto; localização esconde onde o recurso está; mobilidade permite mover o recurso sem afetar quem o usa.\n\n' +
+    'A que mais confunde é a de escala, e a distinção é sutil: escala trata de o sistema poder crescer (em usuários ou recursos) sem mudança estrutural, enquanto desempenho trata de manter a qualidade sob variação de carga na configuração atual.',
+  'tec-2025-69':
+    'As famílias de controle de concorrência diferem em quando verificam conflitos: antes, durante ou depois da execução.\n\n' +
+    'O controle otimista aposta que conflitos são raros. A transação executa livremente sobre cópias locais, sem adquirir bloqueios, e só ao final entra na fase de validação, que confere se algum dado lido foi alterado por outra transação enquanto isso. Se houve conflito, a transação é abortada e reiniciada.\n\n' +
+    'É exatamente o comportamento descrito: prosseguir sem qualquer verificação até concluir, e validar antes de confirmar.\n\n' +
+    'As alternativas são pessimistas ou usam outro critério: bloqueio em duas fases previne conflitos adquirindo travas antes do acesso, e ordenação por carimbo de tempo impõe uma ordem seriada desde o início. O otimista compensa em cargas com muita leitura e pouca escrita, e é a base do controle de concorrência multiversão em vários SGBDs modernos.',
+  'tec-2025-70':
+    'O enunciado dá três pistas que apontam para a mesma solução: topologia em círculo lógico, cada processo conhecendo apenas o seguinte e uma ficha circulando em uma única direção.\n\n' +
+    'No algoritmo de anel com ficha (token ring), quem possui a ficha tem o direito de entrar na região crítica. Ao terminar (ou se não precisar dela), o processo repassa a ficha ao vizinho, e ela segue circulando indefinidamente.\n\n' +
+    'A exclusão mútua é garantida por construção, já que existe uma única ficha. A espera é limitada: no pior caso, um processo aguarda N−1 repasses.\n\n' +
+    'A desvantagem é o tráfego constante mesmo sem ninguém querendo a região crítica, e a fragilidade a falhas: perder a ficha ou perder um processo do anel exige um protocolo de recuperação. O algoritmo de servidor central seria mais simples, mas concentra a falha num único ponto.',
+  'fun-2025-21':
+    'A pista está nas três restrições do enunciado: decidir rápido, sem voltar atrás e sem enxergar o mapa completo. Cada uma elimina uma família de algoritmos.\n\n' +
+    'Sem voltar atrás, cai o backtracking, cuja essência é justamente desfazer escolhas ruins. Sem o mapa completo, caem força bruta e programação dinâmica, que precisam enumerar ou tabelar o espaço de soluções. Sem subproblemas independentes, cai divisão e conquista.\n\n' +
+    'Sobra a estratégia gulosa: a cada passo, tomar a decisão que parece melhor localmente e nunca revisá-la. É barata (uma decisão por encruzilhada) e simples de implementar.\n\n' +
+    'O preço é que o guloso não garante o ótimo global — ele só o alcança em problemas com estrutura específica, como matroides. Para caminho mínimo em grafo com pesos não negativos, por exemplo, o guloso do Dijkstra funciona; num labirinto arbitrário, pode se enfiar num beco.',
+  'fun-2025-22':
+    'A função é a definição ingênua de Fibonacci: cada chamada dispara outras duas, uma com n−1 e outra com n−2, sem guardar resultados já calculados.\n\n' +
+    'A árvore de chamadas resultante quase dobra de tamanho a cada nível, e o número de nós cresce proporcionalmente ao próprio Fibonacci — daí T(N) exponencial, escrito como O(2^N) na alternativa. O trabalho é desperdiçado: calcula_algo(n−2), por exemplo, é recomputado várias vezes.\n\n' +
+    'O espaço, porém, não é exponencial. A pilha só guarda o ramo que está sendo executado no momento, e o ramo mais profundo tem N níveis, logo S(N) = O(N).\n\n' +
+    'Essa diferença entre tempo e espaço é o ponto da questão: a árvore inteira nunca existe ao mesmo tempo na memória. Com memoização, o tempo cai para O(N) mantendo O(N) de espaço, e com iteração de duas variáveis chega-se a O(N) de tempo com O(1) de espaço.',
+  'fun-2025-23':
+    'As notações assintóticas descrevem limites diferentes: O dá limite superior (cresce no máximo tanto quanto), Ω dá limite inferior (cresce pelo menos tanto quanto) e Θ dá os dois ao mesmo tempo.\n\n' +
+    'A alternativa incorreta troca justamente esses papéis, atribuindo a O o significado de limite inferior — que pertence a Ω.\n\n' +
+    'As demais são propriedades válidas: constantes multiplicativas são absorvidas, O(c·g) = O(g); termos de menor ordem somem, então 2n² + 3n é O(n²); e a relação é transitiva, o que permite encadear estimativas.\n\n' +
+    'Uma confusão comum vale registrar: dizer que o pior caso do quicksort é O(n²) e o melhor é O(n log n) mistura as coisas. O correto é usar Θ dentro de cada caso e reservar O e Ω para os limites.',
+  'fun-2025-24':
+    'A ordenação por inserção só troca elementos vizinhos. Um item que precisa andar k posições exige k trocas, e por isso o pior caso é quadrático: o menor elemento na ponta direita percorre o vetor inteiro de um em um.\n\n' +
+    'O Shellsort ataca exatamente essa limitação. Ele executa várias passadas de inserção usando um incremento h: em vez de comparar vizinhos, compara elementos separados por h posições, o que move um item para longe em uma única troca.\n\n' +
+    'A cada passada, h diminui, e o vetor vai ficando "h-ordenado" — todo h-ésimo item já em ordem. A última passada usa h = 1, ou seja, é uma inserção comum, mas agora sobre um vetor quase ordenado, caso em que a inserção é praticamente linear.\n\n' +
+    'Quicksort e heapsort também fazem trocas a distância, mas nenhum deles é descrito como sequências h-ordenadas — essa formulação identifica o Shellsort sem ambiguidade.',
+  'fun-2025-25':
+    'Pilha e fila diferem apenas na disciplina de retirada, e a questão testa se os rótulos não estão trocados.\n\n' +
+    'A pilha é LIFO (last in, first out): entra e sai pelo mesmo extremo, então o último a chegar é o primeiro a sair — o que valida a assertiva I. A fila é FIFO: insere-se em um extremo e retira-se no outro, exatamente como diz a assertiva III.\n\n' +
+    'A assertiva II descreve "primeiro que chega, primeiro atendido" atribuindo isso à pilha, quando esse é o comportamento da fila. E a IV diz que a fila ordena "do mais recente para o menos recente", invertendo: a fila atende do mais antigo para o mais recente.\n\n' +
+    'Daí a ordem V – F – V – F. Na prática, a pilha aparece na pilha de chamadas e no desfazer de editores; a fila, em escalonamento e em busca em largura.',
+  'fun-2025-26':
+    'Uma tabela hash mapeia chaves para posições por meio de uma função de espalhamento. Como o espaço de chaves costuma ser muito maior que o da tabela, colisões são inevitáveis, e o método precisa de uma política para tratá-las.\n\n' +
+    'O encadeamento separado transforma cada posição da tabela no início de uma lista encadeada. Todas as chaves que colidem naquele endereço são armazenadas sequencialmente nessa lista, que é justamente o que a lacuna descreve.\n\n' +
+    'A busca passa a ter duas etapas: calcular o endereço (custo constante) e percorrer a lista daquele endereço. Com uma boa função de espalhamento e fator de carga controlado, as listas ficam curtas e a busca continua O(1) em média.\n\n' +
+    'A alternativa é o endereçamento aberto, que procura outra posição livre na própria tabela (sondagem linear, quadrática ou duplo hash) em vez de manter listas externas.',
+  'fun-2025-27':
+    'A taxa máxima de um barramento é o produto de quantos bits ele transporta por vez pela frequência com que faz essas transferências.\n\n' +
+    'Aqui são 32 bits por transferência e 200 MHz, ou seja, 200 milhões de transferências por segundo: 32 × 200×10⁶ = 6,4×10⁹ bits por segundo.\n\n' +
+    'Convertendo para megabits por segundo, 6,4×10⁹ bits/s = 6.400 Mbps.\n\n' +
+    'Atenção à unidade: a resposta é pedida em Mbps (megabits), não MB/s (megabytes). Em bytes seriam 800 MB/s — que é justamente a primeira alternativa, a armadilha de quem divide por 8 sem perceber.',
+  'fun-2025-28':
+    'As funções de mapeamento de cache diferem em quanta liberdade um bloco de memória tem para escolher onde ficar.\n\n' +
+    'No mapeamento direto, cada bloco tem uma única linha possível, calculada pelo resto da divisão do endereço. É barato de implementar, mas dois blocos que disputam a mesma linha se expulsam mutuamente mesmo com a cache vazia.\n\n' +
+    'No totalmente associativo, qualquer bloco pode ocupar qualquer linha — que é o caso descrito no enunciado. Isso elimina os conflitos, mas exige comparar a tag com todas as linhas simultaneamente, o que encarece o hardware.\n\n' +
+    'O associativo por conjunto é o meio-termo adotado na prática: a cache é dividida em conjuntos, o bloco vai para um conjunto fixo e, dentro dele, para qualquer linha. Uma cache 4-way associativa compara só 4 tags, com quase o mesmo desempenho do totalmente associativo.',
+  'fun-2025-29':
+    'A interrupção é o mecanismo que permite ao hardware avisar a CPU de um evento sem que ela precise ficar perguntando. O protocolo tem uma ordem bem definida.\n\n' +
+    'Primeiro a CPU termina a instrução corrente e reconhece a interrupção, sinalizando ao dispositivo (assertiva II). Em seguida salva o contexto do processo interrompido — contador de programa, registradores e flags — para poder retomá-lo depois (assertiva I). Só então desvia para o vetor de interrupção.\n\n' +
+    'A assertiva III é a errada: a rotina de tratamento pertence ao sistema operacional e roda em modo núcleo. Executá-la em modo usuário daria ao programa acesso direto ao hardware e destruiria o isolamento entre processos.\n\n' +
+    'É justamente a troca de modo que torna a interrupção cara, e é por isso que sistemas de alto desempenho usam técnicas como interrupt coalescing para reduzir a frequência delas.',
+  'fun-2025-30':
+    'O dual de uma expressão booleana é obtido trocando todo operador AND por OR e todo OR por AND, e trocando as constantes 0 e 1 entre si. As variáveis e suas negações ficam exatamente como estão — esse é o ponto que a questão testa.\n\n' +
+    'Aplicando termo a termo em F = A·C̄ + A·B̄·C + A·(B + C): o produto A·C̄ vira a soma (A + C̄); o produto A·B̄·C vira (A + B̄ + C); e A·(B + C) vira A + (B·C), ou seja, (A + B·C).\n\n' +
+    'As três somas resultantes eram ligadas por OR na expressão original, então passam a ser ligadas por AND: (A + C̄) · (A + B̄ + C) · (A + B·C).\n\n' +
+    'A armadilha está nas alternativas que também negam as variáveis. Negar tudo além de trocar os operadores não produz o dual, e sim o complemento da função, pelo teorema de De Morgan — são conceitos diferentes.',
+  'fun-2025-31':
+    'Com quatro variáveis W, X, Y, Z (W como bit mais significativo), os minterms viram combinações binárias: 11 = 1011, 12 = 1100, 14 = 1110 e 15 = 1111.\n\n' +
+    'Agrupando 12 (1100) e 14 (1110), o que se mantém é W = 1, X = 1 e Z = 0, enquanto Y varia — esse par gera o termo W·X·Z̄.\n\n' +
+    'Agrupando 11 (1011) e 15 (1111), o que se mantém é W = 1, Y = 1 e Z = 1, enquanto X varia — esse par gera W·Y·Z.\n\n' +
+    'Os dois termos cobrem exatamente os quatro minterms exigidos, então a soma mínima é W·X·Z̄ + W·Y·Z. Os don’t cares {5, 6, 7} poderiam ser usados para ampliar grupos, mas aqui nenhum deles ajuda: todos têm W = 0, e ambos os grupos exigem W = 1. As demais alternativas acrescentam termos redundantes que cobririam minterms fora do conjunto.',
+  'fun-2025-33':
+    'Cada característica descrita aponta para o traço definidor de um paradigma, e a associação sai lendo o que é enfatizado.\n\n' +
+    'Funções matemáticas, imutabilidade e ausência de efeitos colaterais definem o paradigma funcional (2). Descrever o "quê" sem a sequência de passos é a marca do declarativo (5). Regras, fatos e inferência automática caracterizam o lógico (4), de que Prolog é o exemplo canônico.\n\n' +
+    'Modificação explícita de estado por comandos sequenciais e atribuições é o imperativo (1) — o modelo mais próximo de como a máquina realmente funciona. Encapsular dados e comportamento com herança e reúso é orientação a objetos (3).\n\n' +
+    'A ordem fica 2 – 5 – 4 – 1 – 3. Vale notar que funcional e lógico são ambos subfamílias do declarativo, o que costuma confundir: aqui "declarativo" aparece no sentido genérico, e a distinção está no mecanismo (aplicar funções vs. inferir a partir de regras).',
+  'fun-2025-34':
+    'Duas dimensões independentes costumam ser embaralhadas nessa questão: quando a verificação acontece (estática, em compilação, ou dinâmica, em execução) e quão rígida ela é (forte ou fraca, quanto a conversões implícitas).\n\n' +
+    'A alternativa correta descreve a consequência prática da tipagem dinâmica: o erro de tipo só se manifesta quando aquela linha é executada. Um caminho raro de código pode carregar um erro por muito tempo, o que explica a ênfase em testes automatizados nessas linguagens.\n\n' +
+    'As demais invertem definições. Verificação estática ocorre em compilação, não em execução. Inferência de tipos é o oposto de exigir declarações: o compilador deduz o tipo do contexto, como fazem Haskell, Rust ou o var do Java.\n\n' +
+    'E inferência não enfraquece a segurança de tipos — o tipo inferido é verificado com o mesmo rigor de um tipo escrito à mão. Forte e estática também não são sinônimos: Python é dinâmica e forte, C é estática e relativamente fraca.',
+  'fun-2025-35':
+    'As quatro assertivas cobrem ângulos diferentes do mesmo conceito, e todas se sustentam.\n\n' +
+    'A primeira é a definição geral: um mesmo nome de método produz comportamentos diferentes conforme a classe concreta do objeto. A segunda separa as duas formas de obtê-lo — sobrescrita, resolvida em tempo de execução pelo despacho dinâmico, e sobrecarga, resolvida em compilação pela assinatura, daí ser chamada de polimorfismo estático.\n\n' +
+    'A terceira nomeia o polimorfismo de inclusão ou por subtipo, que permite tratar um objeto da subclasse onde se espera a superclasse — a base do princípio de substituição de Liskov.\n\n' +
+    'A quarta traz o efeito de projeto: código escrito contra a superclasse não precisa conhecer as subclasses, o que reduz acoplamento e permite estender o sistema sem alterar o que já existe. Como nenhuma contém erro, a resposta inclui as quatro.',
+  'fun-2025-36':
+    'Convém ler cada parcela separadamente. (a+b)*a(a+b)* descreve as cadeias que contêm pelo menos um "a" em alguma posição, com qualquer coisa antes e depois. A segunda parcela faz o mesmo para o "b".\n\n' +
+    'A união das duas é o conjunto das cadeias que têm pelo menos um "a" OU pelo menos um "b". Como o alfabeto só tem esses dois símbolos, ter pelo menos um deles é o mesmo que ter pelo menos um símbolo qualquer.\n\n' +
+    'Ou seja, a linguagem é a de todas as cadeias não vazias, que se escreve (a+b)*(a+b)(a+b)* — o símbolo do meio força comprimento mínimo 1.\n\n' +
+    'A armadilha é responder (a+b)*, que gera todas as cadeias inclusive a vazia ε. A cadeia vazia não contém nem "a" nem "b", então não pertence a nenhuma das duas parcelas originais — e é exatamente essa cadeia que separa a alternativa correta da errada.',
+  'fun-2025-37':
+    'O lema do bombeamento é uma condição necessária para regularidade, nunca suficiente. Toda a questão gira em torno dessa assimetria.\n\n' +
+    'Da necessidade sai a assertiva III (toda regular satisfaz o lema) e, por contraposição, a I (não satisfazer implica não ser regular). É esse raciocínio por contraposição que sustenta a IV: o uso prático do lema é provar não regularidade, exibindo uma cadeia que não pode ser bombeada.\n\n' +
+    'As assertivas II e V tentam usar a recíproca, que é falsa. Existem linguagens não regulares que satisfazem as condições do lema, então satisfazê-lo não prova nada a favor.\n\n' +
+    'Para provar que uma linguagem É regular, o caminho é construtivo: exibir um autômato finito, uma expressão regular ou uma gramática regular que a gere. O lema serve só para o lado negativo.',
+  'fun-2025-38':
+    'A primeira assertiva depende de uma leitura atenta do verbo "podem". Numa gramática não ambígua, as derivações à esquerda e à direita de uma cadeia produzem a mesma árvore; mas numa gramática ambígua elas realmente podem produzir árvores distintas, então a possibilidade existe e a assertiva é verdadeira.\n\n' +
+    'A segunda é a definição literal de ambiguidade. A terceira é um teorema clássico: toda GLC admite uma equivalente na Forma Normal de Chomsky (com o cuidado usual quanto à cadeia vazia), e é essa forma que viabiliza o algoritmo CYK.\n\n' +
+    'A quarta também é teorema: aceitação por estado final e por pilha vazia têm o mesmo poder de reconhecimento em autômatos com pilha não determinísticos, então toda LLC é aceita por pilha vazia.\n\n' +
+    'A última é a única falsa. Remover símbolos inúteis (que não derivam terminais) e inacessíveis (que não são alcançados do símbolo inicial) preserva exatamente a linguagem — se alterasse, a simplificação não teria utilidade. Daí V – V – V – V – F.',
+  'fun-2025-39':
+    'A questão pede a EXCEÇÃO, então quatro alternativas descrevem objetivos legítimos e uma extrapola.\n\n' +
+    'Organizar o acervo, classificar por plano de classificação e tabela de temporalidade, controlar prazos de guarda e descarte e assegurar autenticidade, integridade, confiabilidade e acessibilidade são funções centrais de um SGDA — as três últimas, aliás, são requisitos previstos em normas de gestão arquivística.\n\n' +
+    'Substituir integralmente os arquivos físicos por versões digitais não é objetivo do sistema. Um SGDA gerencia documentos em qualquer suporte; a digitalização é um meio possível, não a finalidade.\n\n' +
+    'Há ainda uma razão prática: documentos com valor legal ou histórico frequentemente têm guarda física obrigatória, e a digitalização não elimina o original. Confundir gestão documental com digitalização é justamente o erro que a alternativa explora.',
+  'fun-2025-40':
+    'Duas ideias separam as verdadeiras das falsas: a diferença entre compressão com e sem perdas, e o fato de o BMP ser essencialmente não comprimido.\n\n' +
+    'A primeira assertiva está correta: RLE codifica sequências repetidas como par (valor, contagem), é reversível bit a bit e brilha em imagens com grandes áreas de cor uniforme. Pelo mesmo motivo, a quarta também é verdadeira — em fotografias, os valores variam a cada pixel e o RLE pode até aumentar o arquivo.\n\n' +
+    'A segunda é falsa por definição: JPEG descarta informação (quantização dos coeficientes DCT), então o resultado da descompressão não é idêntico ao original. A terceira também: o BMP tipicamente não comprime nada, guardando cada pixel diretamente.\n\n' +
+    'A quinta é verdadeira e decorre da terceira: por armazenar tudo sem compressão, o BMP suporta alta profundidade de cor com fidelidade total, mas gera arquivos grandes demais para a web. A ordem é V – F – F – V – V.',
+  'fun-2025-41':
+    'Buscar por nome de arquivo e buscar por conteúdo são problemas diferentes. O primeiro se resolve com a estrutura de diretórios; o segundo exige olhar dentro de cada arquivo.\n\n' +
+    'Varrer todos os arquivos a cada consulta seria inviável, então a solução é construir antecipadamente um índice invertido: uma estrutura que, para cada termo, guarda a lista de arquivos (e posições) onde ele aparece. É a indexação full-text.\n\n' +
+    'Com o índice pronto, a consulta deixa de depender do tamanho do acervo e passa a depender apenas do número de ocorrências do termo.\n\n' +
+    'As demais alternativas resolvem outros problemas: armazenamento em blocos é organização física do disco, hashing localiza arquivos por nome, R-trees indexam dados espaciais e compactação trata do tamanho, não da busca.',
+  'fun-2025-42':
+    'O turnaround de um processo é o tempo total entre a chegada e o término, e no round-robin ele sofre com dois efeitos opostos que o quantum precisa equilibrar.\n\n' +
+    'Se o ciclo de CPU for menor que o custo da troca de contexto, o processador gasta mais tempo trocando de processo do que executando — a sobrecarga domina. Daí a exigência exec_t > switch_t.\n\n' +
+    'Por outro lado, se o ciclo de CPU exceder o quantum, o processo é preemptado no meio do trabalho, volta para o fim da fila e ainda paga uma troca de contexto extra, alongando seu turnaround. Daí a exigência exec_t < quantum.\n\n' +
+    'As duas condições precisam valer ao mesmo tempo, ou seja, switch_t < exec_t < quantum. É o raciocínio clássico de dimensionamento do quantum: grande o bastante para a maioria dos ciclos de CPU caber inteiro, pequeno o bastante para manter a interatividade.',
+  'fun-2025-45':
+    'As estruturas de seleção são classificadas pelo número de caminhos que oferecem.\n\n' +
+    'A seleção simples tem um só caminho condicional: se a expressão lógica for verdadeira, o bloco é executado; se for falsa, o fluxo simplesmente segue adiante. Corresponde ao if sem else, e é exatamente o que o enunciado descreve.\n\n' +
+    'A seleção dupla acrescenta um caminho alternativo (if/else), e a múltipla escolhe entre vários casos a partir do valor de uma expressão (switch/case).\n\n' +
+    'A seleção aninhada não é um quarto tipo, e sim o encaixe de uma seleção dentro de outra. E "aleatória" não existe como estrutura de controle — está ali apenas como distrator.',
+  'fun-2025-46':
+    'A escolha entre estruturas de repetição depende de quando o número de iterações é conhecido.\n\n' +
+    'Quando ele é conhecido de antemão, o for é a forma natural: ele reúne inicialização, condição de parada e incremento num único cabeçalho, deixando o contrato da repetição explícito para quem lê.\n\n' +
+    'O while atende ao caso oposto, em que o fim depende de uma condição avaliada a cada passo — ler até o fim do arquivo, repetir até o usuário digitar algo válido.\n\n' +
+    'As outras alternativas nem são estruturas de repetição: break e continue alteram o fluxo dentro de um laço já existente, e if é seleção. Vale notar que for e while têm o mesmo poder expressivo; a escolha é de clareza, não de capacidade.',
+  'fun-2025-47':
+    'O enunciado descreve três elementos: decompor em subtarefas finitas, explorar sistematicamente as possibilidades e fazer sucessivos testes até chegar a uma solução viável.\n\n' +
+    'Essa combinação caracteriza tentativa e erro, também chamada de backtracking: percorre-se a árvore de possibilidades, e sempre que um caminho se mostra inviável, desfaz-se a última escolha e tenta-se a próxima.\n\n' +
+    'Divisão e conquista quebra o problema em subproblemas independentes e combina as soluções, sem esse vaivém. Programação dinâmica também decompõe, mas guarda resultados de subproblemas sobrepostos em vez de testar alternativas. Algoritmos gulosos escolhem e nunca revisam.\n\n' +
+    'Recursividade é a que mais confunde: ela é a técnica de implementação usada com frequência pelo backtracking, mas é um mecanismo de programação, não um método de projeto de algoritmos. Problemas clássicos resolvidos assim são as oito rainhas, o sudoku e o passeio do cavalo.',
+  'fun-2025-48':
+    'Cada alternativa errada troca um termo por outro de definição próxima, então vale conferir uma a uma.\n\n' +
+    'A correta descreve a orientação da aresta: em (u,v) a aresta sai de u e chega em v, e dizer que v é adjacente a u respeita esse sentido — a relação de adjacência em grafo direcionado não é simétrica.\n\n' +
+    'A primeira inverte conexo com desconexo: se todo par de vértices é mutuamente alcançável, o grafo é fortemente conexo, não desconexo. A terceira ignora que grafos direcionados têm grau de entrada e grau de saída separados, não um grau único.\n\n' +
+    'A quarta aplica a grafos não direcionados a contagem de entrada e saída, que só faz sentido quando há orientação. E a quinta usa "fortemente conectado", termo exclusivo de grafos direcionados — em não direcionados o conceito equivalente é simplesmente conexo.',
+  'fun-2025-49':
+    'A ordenação topológica arruma os vértices numa linha de modo que toda aresta aponte da esquerda para a direita, respeitando as dependências.\n\n' +
+    'A exigência de o grafo ser acíclico não é detalhe: um ciclo criaria uma dependência circular, e nenhum de seus vértices poderia vir antes de todos os seus sucessores. Por isso a ordenação existe se e somente se o grafo é um DAG.\n\n' +
+    'Os dois algoritmos usuais são o de Kahn, que remove repetidamente vértices de grau de entrada zero, e a busca em profundidade, que empilha cada vértice ao terminá-lo e devolve a pilha invertida. Ambos rodam em O(V + A).\n\n' +
+    'As demais alternativas são de outras famílias: árvore geradora mínima resolve conexão de custo mínimo, e listas e matrizes de adjacência são formas de representar o grafo, não de ordená-lo. Aplicações típicas são ordem de compilação, resolução de dependências de pacotes e escalonamento de tarefas.',
+  'fun-2025-50':
+    'A propriedade descrita — esgotar a distância k antes de tocar em qualquer vértice de distância k+1 — é a definição de exploração por camadas, que caracteriza a busca em largura.\n\n' +
+    'O que garante essa ordem é a estrutura de dados: a BFS usa uma fila. Como a fila é FIFO, os vértices descobertos primeiro (mais próximos) são também os primeiros a ser expandidos, e nenhum vértice mais distante é alcançado antes.\n\n' +
+    'A busca em profundidade faz o oposto: usa pilha (ou recursão) e mergulha o mais fundo possível antes de voltar, podendo alcançar um vértice distante logo no começo.\n\n' +
+    'A consequência prática é importante: em grafos não ponderados, a BFS encontra o caminho mínimo em número de arestas, porque a camada em que um vértice é descoberto é exatamente sua distância à origem. Busca binária e busca sequencial nem operam sobre grafos.',
+  'mat-2025-01':
+    'O método de Gauss elimina incógnitas combinando linhas. Aqui vale procurar a combinação que apaga duas de uma vez: a 1ª e a 3ª equação têm o mesmo 3x e o mesmo +z, então subtrair uma da outra deixa só y.\n\n' +
+    '(3x − 3y + z) − (3x − 5y + z) = −9 − 7 dá 2y = −16, logo y = −8. Com y conhecido, a 2ª equação vira x − 8 − z = 1, ou seja, x = 9 + z.\n\n' +
+    'Substituindo os dois na 1ª: 3(9 + z) − 3(−8) + z = −9 → 27 + 3z + 24 + z = −9 → 4z = −60 → z = −15.\n\n' +
+    'A lição é escolher a ordem da eliminação em vez de seguir o pivô mecanicamente: reparar que duas equações compartilham coeficientes economiza metade da conta.',
+  'mat-2025-02':
+    'A matriz é triangular superior (tudo abaixo da diagonal é zero). Para essas matrizes, o polinômio característico já sai fatorado: det(A − λI) = (4 − λ)(2 − λ), porque o determinante de uma triangular é o produto da diagonal.\n\n' +
+    'Logo os autovalores são exatamente os elementos da diagonal, 4 e 2 — reais e distintos. Como uma matriz n×n com n autovalores distintos sempre tem n autovetores linearmente independentes, A é diagonalizável.\n\n' +
+    'As outras alternativas erram em pontos clássicos: autovalores complexos exigiriam discriminante negativo, o que não é o caso; a simetria é condição suficiente para autovalores reais, não necessária; e a multiplicidade de 4 é 1, não 2.\n\n' +
+    'Vale fixar o atalho: diante de matriz triangular (ou diagonal), leia os autovalores direto da diagonal, sem montar o polinômio característico.',
+  'mat-2025-03':
+    'Projetar v sobre o subespaço gerado por w é encontrar o múltiplo de w mais próximo de v. A fórmula é proj_W(v) = (⟨v, w⟩ / ⟨w, w⟩) · w.\n\n' +
+    'Com v = (3, 4, 0) e w = (1, 0, 0): ⟨v, w⟩ = 3·1 + 4·0 + 0·0 = 3 e ⟨w, w⟩ = 1. O escalar é 3/1 = 3, e a projeção é 3·(1, 0, 0) = (3, 0, 0).\n\n' +
+    'Como w é o versor do eixo x, o resultado tem interpretação direta: a projeção guarda só a componente x de v e descarta o resto. O vetor descartado, (0, 4, 0), é a parte de v ortogonal a W.\n\n' +
+    'Repare que (3, 4, 0) é o próprio v (projeção só devolve v se v já estivesse em W) e (0, 4, 0) é justamente a componente perpendicular — as duas armadilhas mais comuns da questão.',
+  'mat-2025-04':
+    'O truque é montar uma recorrência olhando para a última micro-operação da sequência. Se ela é do tipo A (1 ciclo), o que veio antes soma n − 1 ciclos; se é do tipo B (2 ciclos), o que veio antes soma n − 2.\n\n' +
+    'Como os dois casos são disjuntos e cobrem tudo, f(n) = f(n − 1) + f(n − 2). Os casos-base: f(0) = 1 (a sequência vazia) e f(1) = 1 (só um A cabe em 1 ciclo).\n\n' +
+    'Isso é exatamente Fibonacci deslocado: 1, 1, 2, 3, 5, 8, 13, 21, 34 para n = 0 até 8. Logo f(8) = 34.\n\n' +
+    'A alternativa 21 é a resposta para 7 ciclos e a 55 para 9 — erros de deslocar o índice em um. Contar os casos-base com cuidado é o que separa as três.',
+  'mat-2025-05':
+    'A restrição diz que a equipe não pode conter dois dos 3 especialistas conflitantes. Ou seja, ela contém no máximo um deles, o que já sugere separar em casos.\n\n' +
+    'Caso 1 — nenhum dos 3: escolhem-se os 4 entre os outros 6, C(6,4) = 15. Caso 2 — exatamente um dos 3: são 3 escolhas para ele e C(6,3) = 20 para completar a equipe, dando 3 × 20 = 60.\n\n' +
+    'Os casos são mutuamente exclusivos, então basta somar: 15 + 60 = 75.\n\n' +
+    'Dá para conferir pelo complementar: o total sem restrição é C(9,4) = 126, e as equipes proibidas (com dois ou três conflitantes) somam 51 — 126 − 51 = 75. A alternativa 126 é justamente a armadilha de ignorar a restrição.',
+  'mat-2025-06':
+    'Quando a restrição é "não podem ficar adjacentes", a técnica padrão é posicionar primeiro os elementos sem restrição e só depois encaixar os restritos nos espaços entre eles.\n\n' +
+    'Aqui os 4 servidores B ocupam suas posições e criam 5 lacunas: uma antes do primeiro, três entre eles e uma depois do último. Colocar cada A em uma lacuna diferente garante automaticamente que dois A nunca fiquem lado a lado.\n\n' +
+    'Como os servidores de cada tipo são idênticos, só importa quais lacunas foram escolhidas: C(5,3) = 10.\n\n' +
+    'A alternativa 35 é C(7,3), o total de disposições sem a restrição de ventilação — o erro de quem esquece a condição. A diferença entre 35 e 10 mostra o quanto a restrição corta o espaço de soluções.',
+  'mat-2025-07':
+    'A ideia geométrica é: caminhando sobre a curva g(x, y) = 0, o valor de f só para de crescer quando a direção de maior crescimento de f não tem componente ao longo da restrição. Isso acontece quando a curva de nível de f tangencia a restrição.\n\n' +
+    'Dois gradientes são perpendiculares às suas respectivas curvas de nível. Se as curvas se tangenciam, os gradientes ficam paralelos, e paralelismo se escreve como ∇f = λ∇g, sendo λ o multiplicador de Lagrange.\n\n' +
+    'O sistema a resolver junta essa igualdade (uma equação por variável) com a própria restrição g(x, y) = 0, que fecha o número de equações.\n\n' +
+    'As demais alternativas erram na natureza dos objetos: ∇f = λg iguala um vetor a um escalar, e f = λg iguala valores da função em vez de direções de crescimento.',
+  'mat-2025-08':
+    'A regra dos trapézios aproxima a área sob a curva por trapézios. Na forma composta com n subintervalos de largura h, a fórmula é (h/2)·[f(x₀) + 2f(x₁) + … + 2f(xₙ₋₁) + f(xₙ)] — os pontos internos entram com peso 2 porque são compartilhados por dois trapézios.\n\n' +
+    'Com o intervalo [0, 2] e dois subintervalos, h = 1 e os pontos são 0, 1 e 2, com f(0) = 0, f(1) = 1 e f(2) = 4.\n\n' +
+    'Aplicando: (1/2)·[0 + 2·1 + 4] = (1/2)·6 = 3.\n\n' +
+    'O valor exato da integral é 8/3 ≈ 2,67, então a aproximação superestima. Isso não é acaso: para funções convexas como x², a corda fica acima da curva e o trapézio sempre erra para cima.',
+  'mat-2025-09':
+    'O gradiente é o vetor que reúne as derivadas parciais: ∇f = (∂f/∂x, ∂f/∂y). Cada parcial trata as demais variáveis como constantes.\n\n' +
+    'Derivando f = x²y + 3y² em relação a x, o termo 3y² é constante e some; sobra 2xy.\n\n' +
+    'Derivando em relação a y, o termo x²y tem x² como constante e vira x²; o termo 3y² vira 6y. Logo ∂f/∂y = x² + 6y.\n\n' +
+    'As alternativas erradas misturam as variáveis, tratando x e y como se ambas variassem na mesma derivada — o erro mais comum ao começar cálculo de várias variáveis.',
+  'mat-2025-10':
+    'O baricentro é o ponto de encontro das medianas de um triângulo e coincide com a média aritmética dos três vértices, coordenada a coordenada.\n\n' +
+    'Somando as abscissas: 2 + 4 + 0 = 6, dividido por 3 dá x = 2. Somando as ordenadas: −5 + 0 + 2 = −3, dividido por 3 dá y = −1.\n\n' +
+    'Portanto G = (2, −1). A alternativa (6, −3) é a soma sem dividir por 3, o descuido mais frequente aqui.\n\n' +
+    'Vale lembrar a propriedade que dá origem à fórmula: o baricentro divide cada mediana na razão 2:1 a partir do vértice, e é o centro de massa de três massas iguais nos vértices.',
+  'mat-2025-11':
+    'A reta em forma paramétrica parte do ponto e caminha na direção do vetor: (x, y, z) = (1, 4, 3) + t·(−3, −2, −3), ou seja, x = 1 − 3t, y = 4 − 2t e z = 3 − 3t.\n\n' +
+    'O plano xy é caracterizado por z = 0. Basta então achar o t que zera a terceira coordenada: 3 − 3t = 0 → t = 1.\n\n' +
+    'Com t = 1: x = 1 − 3 = −2 e y = 4 − 2 = 2. O ponto de interseção é (−2, 2, 0).\n\n' +
+    'O passo que decide a questão é traduzir "plano xy" para a equação z = 0. Trocar por x = 0 ou y = 0 leva direto às alternativas erradas que começam com 0.',
+  'mat-2025-12':
+    'Na coordenada polar (r, θ), r é a distância à origem e θ o ângulo medido a partir do eixo x positivo. A conversão para cartesianas é x = r·cos θ e y = r·sen θ.\n\n' +
+    'Com r = 3 e θ = π (meia volta, 180°): cos π = −1 e sen π = 0.\n\n' +
+    'Logo x = 3·(−1) = −3 e y = 3·0 = 0, ou seja, P = (−3, 0).\n\n' +
+    'Geometricamente: caminhar 3 unidades na direção oposta ao eixo x positivo. A alternativa (3, π) é a armadilha de copiar o par polar sem converter, e (3, 0) esquece a meia volta.',
+  'mat-2025-14':
+    'A tabela-verdade precisa esgotar todas as atribuições possíveis de valores às proposições atômicas. Cada uma pode ser V ou F, de forma independente das outras.\n\n' +
+    'Com 3 proposições (p, q e r), o número de combinações é 2 × 2 × 2 = 2³ = 8. A regra geral é 2ⁿ linhas para n proposições distintas.\n\n' +
+    'O número de conectivos da fórmula não muda essa contagem: (p ∧ q) → r tem dois conectivos, mas eles apenas acrescentam colunas intermediárias, não linhas.\n\n' +
+    'Esse é o motivo prático de a verificação por tabela-verdade ser inviável em fórmulas grandes: o custo dobra a cada nova proposição, e a satisfatibilidade proposicional é o problema NP-completo original.',
+  'mat-2025-15':
+    'O quantificador universal ∀x P(x) afirma que a propriedade P vale para todo elemento do domínio, sem exceção. A leitura natural é "para todo x, P(x)".\n\n' +
+    '"Todos os alunos estudaram" é exatamente essa forma, com o domínio sendo os alunos e P(x) = "x estudou".\n\n' +
+    'As demais usam outras estruturas: "existe" e "alguns" pedem o quantificador existencial ∃x P(x); "nenhum aluno passou" é ∀x ¬P(x) (ou, equivalentemente, ¬∃x P(x)); e "Pedro estudou" é uma proposição sobre uma constante, P(pedro), sem quantificador.\n\n' +
+    'Vale gravar a dualidade que aparece o tempo todo em provas: ¬∀x P(x) ≡ ∃x ¬P(x) e ¬∃x P(x) ≡ ∀x ¬P(x).',
+  'mat-2025-16':
+    'A definição tem os dois ingredientes de toda recursão: um caso-base que encerra (f(0) = 1) e um passo recursivo que reduz o problema (f(n) = n · f(n − 1)).\n\n' +
+    'Desenrolando de fora para dentro: f(4) = 4 · f(3); f(3) = 3 · f(2); f(2) = 2 · f(1); f(1) = 1 · f(0); e f(0) = 1 encerra a cadeia.\n\n' +
+    'Multiplicando na volta: 1 → 1 → 2 → 6 → 24. Logo f(4) = 24.\n\n' +
+    'Essa é a definição clássica do fatorial, e serve de modelo para entender a pilha de chamadas: cada chamada fica suspensa esperando a de baixo terminar, e é o caso-base que impede a recursão infinita.',
+  'mat-2025-17':
+    'O código de Hamming (7,4) transmite 7 bits para cada 4 bits de dados, usando 3 bits de paridade. Sua distância mínima de Hamming é 3: duas palavras válidas quaisquer diferem em pelo menos 3 posições.\n\n' +
+    'Da distância mínima d saem as duas capacidades: detectam-se até d − 1 erros e corrigem-se até ⌊(d − 1)/2⌋. Com d = 3, isso dá detecção de 2 erros e correção de 1.\n\n' +
+    'A intuição é geométrica: com d = 3, uma palavra com 1 erro ainda está mais perto da original do que de qualquer outra válida, então dá para corrigi-la. Com 2 erros ela fica equidistante — dá para perceber que houve erro, mas não para saber qual era a original.\n\n' +
+    'A matriz geradora, por sinal, é 4×7 (4 linhas de dados, 7 colunas de saída), e não 3×7 como sugere a última alternativa.',
+  'mat-2025-18':
+    'Vale listar os dois conjuntos antes de intersectar. A = {x ∈ Z | −2 ≤ x ≤ 3} contém os inteiros de −2 a 3: {−2, −1, 0, 1, 2, 3}.\n\n' +
+    'B = {x ∈ Z | x é par e 0 ≤ x ≤ 6} contém os pares de 0 a 6: {0, 2, 4, 6}.\n\n' +
+    'A interseção guarda só o que está nos dois: 0 e 2. O 4 e o 6 estão em B mas passam do limite superior de A; os negativos e os ímpares estão em A mas não em B.\n\n' +
+    'Os distratores exploram exatamente esses dois descuidos: {0, 2, 4} inclui um elemento fora de A, e {−2, 0, 2} inclui um par negativo que está fora de B.',
+  'mat-2025-19':
+    'O coeficiente de correlação linear mede o quanto os pontos (X, Y) se aproximam de uma reta, e seu sinal indica o sentido dessa reta.\n\n' +
+    'Quando o alinhamento é perfeito, r vale exatamente +1 (reta crescente, correlação perfeita positiva) ou −1 (reta decrescente, correlação perfeita negativa) — que é o que a alternativa correta descreve.\n\n' +
+    'As demais trocam as definições: correlação negativa é X crescente com Y decrescente (e não crescente com crescente), positiva é o oposto disso, e a referência a uma hipérbole está errada porque a correlação linear se apoia em reta.\n\n' +
+    'Um alerta importante: r próximo de zero descarta relação linear, mas não descarta dependência — variáveis ligadas por uma parábola, por exemplo, podem ter r ≈ 0. E correlação alta nunca implica causalidade.',
+  'mat-2025-20':
+    'As duas primeiras assertivas repetem as definições padrão: a série temporal (ou cronológica, ou histórica) varia no tempo, e a série geográfica varia apenas no local. Ambas verdadeiras.\n\n' +
+    'A terceira e a quarta estão trocadas entre si. Série homógrada é aquela em que o fenômeno NÃO se subdivide — é o caso da temporal, da geográfica e da específica, justamente as que a assertiva III chama de heterógradas.\n\n' +
+    'Série heterógrada é a que se subdivide, com o fenômeno variando em intensidade — a distribuição de frequências é o exemplo clássico, e a assertiva IV a classifica como homógrada, invertendo os termos.\n\n' +
+    'Daí a ordem V – V – F – F. O padrão da banca aqui é clássico: definições corretas nas primeiras assertivas e uma troca de nomes nas últimas, para separar quem decorou o rótulo de quem entendeu o critério (subdividir ou não).',
   'mat-2019-15':
     'Toda implicação é equivalente à sua contrapositiva: A → B ≡ ∼B → ∼A. Lendo ∼q → ∼p nessa forma, com A = ∼q e B = ∼p, a contrapositiva é p → q. Ou seja, negar os dois lados e inverter o sentido da flecha devolve a implicação original.\n\n' +
     'Falta só reescrever p → q sem a flecha. Pela definição de implicação material, p → q ≡ ∼p ∨ q — a implicação só é falsa quando p é verdadeira e q é falsa, exatamente o único caso em que ∼p ∨ q também é falsa.\n\n' +
