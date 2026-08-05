@@ -1006,18 +1006,22 @@ export default function ShowPage() {
           </div>
 
           {(() => {
+            // Relógio parado: durante o resultado e durante a mensagem entre
+            // perguntas. Nos dois a barra fica cheia — o overlay é translúcido,
+            // então voltar ao tempo da resposta aparece por baixo dele.
+            const paused = !!reveal || !!transition;
             const pct = (timeLeft / QUESTION_SECONDS) * 100;
             const level = timeLeft <= TIMER_DANGER ? 'danger' : timeLeft <= TIMER_WARN ? 'warn' : 'ok';
             return (
               <div className={`show-timer show-timer--${level}`} role="timer" aria-label={t('show.timeLeft')}>
                 <div className="show-timer-track">
                   <div
-                    key={`${clockRun}-${reveal ? 'reveal' : 'run'}`}
+                    key={`${clockRun}-${paused ? 'paused' : 'run'}`}
                     className="show-timer-fill"
-                    style={{ width: `${reveal ? 100 : pct}%` }}
+                    style={{ width: `${paused ? 100 : pct}%` }}
                   />
                 </div>
-                <span className="show-timer-count">{reveal ? '—' : `${timeLeft}s`}</span>
+                <span className="show-timer-count">{paused ? '—' : `${timeLeft}s`}</span>
               </div>
             );
           })()}
