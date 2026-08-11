@@ -8,6 +8,7 @@ export const en: Dictionary = {
     retry: 'Try again',
     close: 'Close',
     back: 'Back',
+    cancel: 'Cancel',
   },
   nav: {
     play: 'Play',
@@ -473,6 +474,8 @@ export const en: Dictionary = {
     statusBody: 'Hello, {{name}}! You are registered in the game. To avoid being removed for inactivity, you must log in once every {{days}} days.',
     activeBadge: '● Active Profile',
     attrTitle: 'Your Attributes',
+    editName: 'Edit name',
+    statsTitle: 'Your Stats',
     attrSubtitle: 'Update the information other players use to guess who you are.',
     nameLabel: 'Name / nickname in the game',
     namePlaceholder: 'E.g. Yalle Silva',

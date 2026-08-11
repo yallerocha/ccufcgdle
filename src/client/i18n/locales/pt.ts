@@ -4,6 +4,7 @@ export const pt = {
     retry: 'Tentar novamente',
     close: 'Fechar',
     back: 'Voltar',
+    cancel: 'Cancelar',
   },
   nav: {
     play: 'Jogar',
@@ -469,6 +470,8 @@ export const pt = {
     statusBody: 'Olá, {{name}}! Você está cadastrado no jogo. Para evitar ser removido por inatividade, você deve logar uma vez a cada {{days}} dias.',
     activeBadge: '● Perfil Ativo',
     attrTitle: 'Seus Atributos',
+    editName: 'Editar nome',
+    statsTitle: 'Suas Estatísticas',
     attrSubtitle: 'Atualize as informações utilizadas pelos outros jogadores para adivinhar quem é você.',
     nameLabel: 'Nome / Apelido no jogo',
     namePlaceholder: 'Ex: Yalle Silva',

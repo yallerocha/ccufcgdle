@@ -3,16 +3,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Camera, Save, AlertTriangle, Settings2, Settings, Trash2, KeyRound, User as UserIcon, Lock, LockKeyhole, ChevronRight, ArrowLeft, X, Languages } from 'lucide-react';
+import { Camera, Save, AlertTriangle, Settings, Trash2, KeyRound, Lock, LockKeyhole, ChevronRight, ArrowLeft, X, Languages, Mail, Coins, Target, Trophy, Gamepad2, Crown, Pencil } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { User } from '@/client/context/AuthContext';
 import { isStrongPassword } from '@/shared/validation';
 import { LANG_STORAGE_KEY } from '@/client/i18n/I18nProvider';
 import { apiFetch, setToken } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
+import { formatPrize } from '@/client/lib/format';
+import { useModalDismiss } from '@/client/hooks/useModalDismiss';
 import { PhotoCropModal } from '@/client/components/PhotoCropModal';
 import { Toast } from '@/client/components/Toast';
 import { PasswordInput } from '@/client/components/PasswordInput';
+
+// Mesmo payload que o modal de estatísticas do pódio consome.
+interface OwnStats {
+  runs: number;
+  wins: number;
+  totalWinnings: number;
+  bestPrize: number;
+  bestCleared: number;
+  totalSteps: number;
+}
+
+// Uma navegação segurada pelo aviso de alterações não salvas. O clique num link
+// vira 'push'; o voltar do navegador vira 'back', que não tem href nenhum.
+type PendingNav = { kind: 'push'; href: string } | { kind: 'back' };
 
 interface ProfileEditFormProps {
   user: User;
@@ -39,9 +55,12 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
   const [changingPassword, setChangingPassword] = useState(false);
 
   const router = useRouter();
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [pendingNav, setPendingNav] = useState<PendingNav | null>(null);
   // Settings modal: null (closed) | 'menu' (option list) | 'password' (change form).
   const [settingsView, setSettingsView] = useState<'menu' | 'password' | null>(null);
+  const [stats, setStats] = useState<OwnStats | null>(null);
+  // O nome só vira campo depois do lápis; no resto do tempo é só um título.
+  const [editingName, setEditingName] = useState(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -50,10 +69,27 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
     setPhotoUrl(user.photoUrl || '');
   }, [user]);
 
+  // As mesmas estatísticas que o pódio mostra de qualquer jogador — o endpoint já
+  // existe. Falha em silêncio: o bloco some, o resto do perfil continua de pé.
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(`/api/community/members/${user.id}/stats`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (!cancelled && data?.stats) setStats(data.stats); })
+      .catch(() => { /* perfil funciona sem elas */ });
+    return () => { cancelled = true; };
+  }, [user.id]);
+
   // Photo saves immediately, so the only unsaved change is the name.
   const isDirty = name !== user.name;
   const dirtyRef = useRef(isDirty);
-  dirtyRef.current = isDirty;
+  // Escrever no ref durante a renderização não é seguro: o React pode descartar
+  // um render e o ref fica com um valor que nunca foi para a tela. Como é ele
+  // que decide se o aviso de "não salvou" aparece, o preço do erro é perder o
+  // que a pessoa digitou.
+  useEffect(() => {
+    dirtyRef.current = isDirty;
+  }, [isDirty]);
 
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -75,18 +111,51 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
       if (!href || href.startsWith('#') || anchor.target === '_blank') return;
       if (href === window.location.pathname) return;
       e.preventDefault();
-      setPendingHref(href);
+      setPendingNav({ kind: 'push', href });
     };
     document.addEventListener('click', onClick, true);
     return () => document.removeEventListener('click', onClick, true);
   }, []);
 
+  // O guarda acima só enxerga clique em <a>. O voltar do navegador — que no
+  // celular é o gesto principal — escapava e a alteração sumia calada. Enquanto
+  // houver algo por salvar deixamos uma entrada sentinela no histórico: o voltar
+  // consome ela em vez de sair da página, e aí perguntamos.
+  useEffect(() => {
+    if (!isDirty) return;
+    window.history.pushState(null, '', window.location.href);
+    const onPop = () => setPendingNav({ kind: 'back' });
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [isDirty]);
+
   const confirmLeave = () => {
-    const href = pendingHref;
-    setPendingHref(null);
+    const nav = pendingNav;
+    setPendingNav(null);
     dirtyRef.current = false;
-    if (href) router.push(href);
+    if (!nav) return;
+    if (nav.kind === 'push') router.push(nav.href);
+    else router.back();
   };
+
+  // Ficar na página depois de um voltar barrado precisa repor a sentinela, senão
+  // o próximo voltar sai sem avisar.
+  const cancelLeave = () => {
+    if (pendingNav?.kind === 'back') window.history.pushState(null, '', window.location.href);
+    setPendingNav(null);
+  };
+
+  // Cancelar devolve o nome salvo — sair da edição com o campo alterado deixaria
+  // o aviso de "não salvou" preso, barrando a navegação por algo já descartado.
+  const cancelNameEdit = () => {
+    setName(user.name);
+    setErrorMsg('');
+    setEditingName(false);
+  };
+
+  // Esc fecha, como em todos os outros modais do site.
+  useModalDismiss(!!settingsView, () => setSettingsView(null));
+  useModalDismiss(!!pendingNav, cancelLeave);
 
   const notifyPhoto = (msg: string, type: 'success' | 'error' = 'error') => {
     setPhotoMsgType(type);
@@ -154,6 +223,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
         if (data.token) setToken(data.token);
         setSuccessMsg(t('profileEdit.success'));
         dirtyRef.current = false;
+        setEditingName(false);
         refreshUser();
       } else { setErrorMsg(data.error || t('profileEdit.error')); }
     } catch { setSubmitting(false); setErrorMsg(t('profileEdit.errorConn')); }
@@ -245,53 +315,101 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
 
           <Toast message={photoMsg} type={photoMsgType} onClose={() => setPhotoMsg('')} />
 
+          <Toast
+            message={errorMsg || successMsg}
+            type={errorMsg ? 'error' : 'success'}
+            onClose={() => { setErrorMsg(''); setSuccessMsg(''); }}
+          />
+
           <div className="profile-hero-info">
-            <h2 className="profile-hero-name">{name}</h2>
+            {editingName ? (
+              <form className="profile-name-edit" onSubmit={handleSubmit}>
+                <input
+                  id="profile-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t('profileEdit.namePlaceholder')}
+                  aria-label={t('profileEdit.nameLabel')}
+                  minLength={3}
+                  maxLength={25}
+                  required
+                  autoFocus
+                />
+                <button type="submit" disabled={submitting} className="profile-name-btn is-save" title={t('profileEdit.save')} aria-label={t('profileEdit.save')}>
+                  <Save size={16} />
+                </button>
+                <button type="button" onClick={cancelNameEdit} className="profile-name-btn" title={t('common.cancel')} aria-label={t('common.cancel')}>
+                  <X size={16} />
+                </button>
+              </form>
+            ) : (
+              <div className="profile-name-row">
+                <h2 className="profile-hero-name">{name}</h2>
+                <button
+                  type="button"
+                  className="profile-name-btn"
+                  onClick={() => setEditingName(true)}
+                  title={t('profileEdit.editName')}
+                  aria-label={t('profileEdit.editName')}
+                >
+                  <Pencil size={15} />
+                </button>
+              </div>
+            )}
+            {/* Com login por Google e por senha convivendo, saber em qual conta
+                você está não era possível em lugar nenhum da página. */}
+            <p className="profile-hero-email" title={user.email}>
+              <Mail size={14} aria-hidden="true" /> {user.email}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Name */}
-      <div className="card">
-        <h2 className="card-title">
-          <Settings2 size={22} style={{ color: 'var(--gold)' }} /> {t('profileEdit.attrTitle')}
-        </h2>
+      {/* As suas estatísticas — as mesmas que o pódio mostra dos outros. */}
+      {stats && stats.runs > 0 && (
+        <div className="card">
+          <h2 className="card-title">
+            <Coins size={22} style={{ color: 'var(--gold)' }} /> {t('profileEdit.statsTitle')}
+          </h2>
 
-        <Toast
-          message={errorMsg || successMsg}
-          type={errorMsg ? 'error' : 'success'}
-          onClose={() => { setErrorMsg(''); setSuccessMsg(''); }}
-        />
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="profile-field-label" htmlFor="profile-name">
-              <UserIcon size={15} style={{ color: 'var(--tech)' }} /> {t('profileEdit.nameLabel')}
-            </label>
-            <input
-              id="profile-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('profileEdit.namePlaceholder')}
-              minLength={3}
-              maxLength={25}
-              required
-            />
+          <div className="player-total">
+            <span className="player-total-label"><Coins size={15} /> {t('members.totalWinnings')}</span>
+            <span className="player-total-value">{formatPrize(stats.totalWinnings)}</span>
           </div>
 
-          <div className="profile-save-bar">
-            {isDirty && (
-              <span className="profile-dirty-hint">
-                <AlertTriangle size={13} /> {t('profileEdit.unsavedTitle')}
-              </span>
-            )}
-            <button type="submit" disabled={submitting} className="btn profile-save-btn">
-              <Save size={18} /> {submitting ? t('profileEdit.saving') : t('profileEdit.save')}
-            </button>
+          <div className="player-progress">
+            <div className="player-progress-head">
+              <span><Target size={14} /> {t('members.bestStep')}</span>
+              <strong>{stats.bestCleared}/{stats.totalSteps}</strong>
+            </div>
+            <div className="player-progress-track">
+              <div
+                className="player-progress-fill"
+                style={{ width: `${stats.totalSteps ? Math.round((stats.bestCleared / stats.totalSteps) * 100) : 0}%` }}
+              />
+            </div>
           </div>
-        </form>
-      </div>
+
+          <div className="player-tiles">
+            <div className="player-tile">
+              <Trophy size={18} />
+              <span className="player-tile-val">{formatPrize(stats.bestPrize)}</span>
+              <span className="player-tile-lbl">{t('members.bestPrize')}</span>
+            </div>
+            <div className="player-tile">
+              <Gamepad2 size={18} />
+              <span className="player-tile-val">{stats.runs}</span>
+              <span className="player-tile-lbl">{t('members.runsPlayed')}</span>
+            </div>
+            <div className="player-tile">
+              <Crown size={18} />
+              <span className="player-tile-val">{stats.wins}</span>
+              <span className="player-tile-lbl">{t('members.millionaire')}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings modal: option menu → change-password form */}
       {mounted && settingsView && createPortal(
@@ -418,8 +536,8 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
       )}
 
       {/* Unsaved-changes confirmation */}
-      {mounted && pendingHref && createPortal(
-        <div className="modal-overlay" onClick={() => setPendingHref(null)}>
+      {mounted && pendingNav && createPortal(
+        <div className="modal-overlay" onClick={cancelLeave}>
           <div className="modal-content" style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
             <AlertTriangle size={44} style={{ color: 'var(--accent)', margin: '0 auto 1rem auto' }} />
             <h2 className="modal-title">{t('profileEdit.unsavedTitle')}</h2>
@@ -428,7 +546,7 @@ export function ProfileEditForm({ user, refreshUser }: ProfileEditFormProps) {
               <button onClick={confirmLeave} className="btn btn-secondary" style={{ width: '100%' }}>
                 {t('profileEdit.unsavedLeave')}
               </button>
-              <button onClick={() => setPendingHref(null)} className="btn" style={{ width: '100%' }}>
+              <button onClick={cancelLeave} className="btn" style={{ width: '100%' }}>
                 {t('profileEdit.unsavedStay')}
               </button>
             </div>
