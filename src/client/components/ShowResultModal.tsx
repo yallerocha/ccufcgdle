@@ -58,7 +58,7 @@ export function ShowResultModal({ run, onClose, onPlayAgain }: ShowResultModalPr
             <div className="show-result-plate">
               <span className="show-result-label">{t('show.resultBanked')}</span>
               <div className="show-result-prize">
-                <Trophy size={22} /> {formatPrize(run.securedPrize)}
+                {formatPrize(run.securedPrize)}
               </div>
             </div>
           )}

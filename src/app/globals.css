@@ -2488,6 +2488,11 @@ a:focus-visible,
 
 .podium-col {
   flex: 1 1 0;
+  /* Sem isto o min-width:auto do flex deixa o nome do jogador ditar a largura
+     da coluna, e aí os três degraus saem com espessuras diferentes: quem tem
+     nome longo ganha uma barra mais larga. Com 0, o flex-basis manda e as três
+     ficam idênticas — o nome passa a caber via ellipsis, como já previsto. */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2597,31 +2602,67 @@ a:focus-visible,
     border-radius: 999px;
   }
 
+  /* O .admin-table vira cards empilhados no mobile (linha 2036), com o rótulo
+     de cada campo vindo de um data-label nos td. A tabela do pódio reaproveita
+     a classe mas não tem data-label, então o rótulo saía vazio e cada jogador
+     virava quatro linhas soltas e desalinhadas. Aqui ela volta a ser tabela. */
+  .podium-ranking-table,
+  .podium-ranking-table tbody { display: table; width: 100%; }
+  .podium-ranking-table tbody { display: table-row-group; }
+  .podium-ranking-table thead { display: table-header-group; }
+  .podium-ranking-table tr {
+    display: table-row;
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+  }
+  .podium-ranking-table td {
+    display: table-cell;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .podium-ranking-table td::before { content: none; }
+
+  /* Sem largura mínima: era ela que empurrava a tabela para fora do card. Com
+     table-layout fixed as três colunas estreitas reservam o que precisam e a do
+     jogador fica com o resto, encolhendo o nome por ellipsis — cabe a partir de
+     360px sem rolagem lateral. */
   .podium-ranking-table {
-    min-width: 22rem;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .podium-ranking-table th,
+  .podium-ranking-table td {
+    padding: 0.7rem 0.4rem;
   }
 
   .podium-ranking-table th:nth-child(1),
   .podium-ranking-table td:nth-child(1) {
-    width: 3rem;
     white-space: nowrap;
   }
 
-  .podium-ranking-table th:nth-child(2),
-  .podium-ranking-table td:nth-child(2) {
-    min-width: 9.5rem;
+  /* Com table-layout fixed é a primeira linha que define as colunas, então as
+     larguras têm de estar nos th. Os títulos podem quebrar em duas linhas —
+     "MILHÕES" e "TOTAL GANHO" não cabem lado a lado e invadiam um ao outro. */
+  .podium-ranking-table th {
+    font-size: 0.62rem;
+    white-space: normal;
+    line-height: 1.2;
+    padding: 0.5rem 0.4rem;
   }
 
-  .podium-ranking-table th:nth-child(3),
+  .podium-ranking-table th:nth-child(3) { width: 3.2rem; }
+  .podium-ranking-table th:nth-child(4) { width: 5.6rem; }
+
   .podium-ranking-table td:nth-child(3),
-  .podium-ranking-table th:nth-child(4),
   .podium-ranking-table td:nth-child(4) {
     white-space: nowrap;
   }
 
   .podium-ranking-table .ranking-player-name {
     white-space: nowrap;
-    max-width: 14rem;
     overflow: hidden;
     text-overflow: ellipsis;
     overflow-wrap: normal;

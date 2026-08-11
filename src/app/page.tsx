@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Trophy, Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, BookOpen, X, ListChecks, CalendarDays } from 'lucide-react';
+import { Play, HandCoins, Layers, SkipForward, Users, GraduationCap, Volume2, VolumeX, Check, SlidersHorizontal, Flag, Scissors, ArrowLeft, ChevronRight, BookOpen, X, ListChecks, CalendarDays } from 'lucide-react';
 import { useAuth } from '@/client/context/AuthContext';
 import { apiFetch } from '@/client/lib/api';
 import { formatPrize } from '@/client/lib/format';
@@ -779,7 +779,7 @@ export default function ShowPage() {
         </section>
 
         <div className="card show-intro-card">
-          <h2 className="card-title"><Trophy size={20} /> {t('show.howToTitle')}</h2>
+          <h2 className="card-title">{t('show.howToTitle')}</h2>
           <ul className="show-rules">
             <li>{t('show.rule1')}</li>
             <li>{t('show.rule2')}</li>

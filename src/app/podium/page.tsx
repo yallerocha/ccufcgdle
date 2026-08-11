@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/client/context/AuthContext';
-import { Trophy, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { apiFetch } from '@/client/lib/api';
 import { avatarColorForName } from '@/client/lib/avatar';
 import { formatPrize } from '@/client/lib/format';
@@ -105,7 +105,7 @@ export default function PodiumPage() {
 
       <div className="hero" style={{ padding: '1rem 0 1.5rem 0' }}>
         <h1 className="page-heading">
-          <Trophy size={30} style={{ color: 'var(--color-partial)' }} /> {t('podium.title')}
+          {t('podium.title')}
         </h1>
         <p>{t('podium.subtitle')}</p>
       </div>
@@ -144,7 +144,8 @@ export default function PodiumPage() {
                 <table className="admin-table podium-ranking-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '3rem' }}>{t('podium.thRank')}</th>
+                      {/* Centralizado como o valor da célula logo abaixo. */}
+                      <th style={{ width: '3rem', textAlign: 'center' }}>{t('podium.thRank')}</th>
                       <th>{t('podium.thPlayer')}</th>
                       <th style={{ textAlign: 'center' }}>{t('podium.thWins')}</th>
                       <th style={{ textAlign: 'center' }}>{t('podium.thPoints')}</th>
